@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W1 Holding Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="logo-img">
+            </div>
+           <ul class="plans">
+    <li><a href="#" class="plan-item active" data-plan="pura" onclick="selectPlan('pura')">Pura</a></li>
+    <li><a href="#" class="plan-item" data-plan="mista" onclick="selectPlan('mista')">Mista</a></li>
+    <li><a href="#" class="plan-item" data-plan="familiar" onclick="selectPlan('familiar')">Familiar</a></li>
+</ul>
+
+            <ul class="nav-links">
+                <li><a href="#">Início</a></li>
+                <li><a href="/advantages/">Holding</a></li>
+                <li><a href="#">Benefícios</a></li>
+                <li><a href="#">Contato</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <video class="hero-video" autoplay loop muted playsinline poster="{% static 'images/hero-poster.jpg' %}">
+                <source src="{% static 'videos/profit.mp4' %}" type="video/mp4">
+                Seu navegador não suporta o elemento de vídeo.
+            </video>
+            <div class="hero-content">
+                <h1>Maximize Sua Segurança Financeira</h1>
+                <p class="subtitle">Proteja seu patrimônio e planeje o futuro com uma holding estruturada pela W1.</p>
+                <div class="buttons">
+                    <button onclick="createAccount()">Crie sua Conta</button>
+                    <button onclick="comparePrices()">Compare Nossos Preços</button>
+                </div>
+            </div>
+        </section>
+        <section class="holding-info">
+            <div class="holding-container">
+                <div class="holding-text">
+                    <h2>O Que é uma Holding e Por Que Criar Uma?</h2>
+                    <p class="holding-subtitle">Uma holding é uma empresa criada para gerenciar e proteger bens, otimizando a gestão financeira e sucessória. Com a W1, você estrutura seu patrimônio de forma eficiente e segura.</p>
+                </div>
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-card-up">
+                            <i class="fas fa-shield-alt benefit-icon"></i>
+                            <h3>Proteção Patrimonial</h3>
+                        </div> 
+                        <p>Separe seus bens pessoais dos empresariais, reduzindo riscos financeiros e jurídicos.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-card-up">
+                           <i class="fas fa-users benefit-icon"></i>
+                        <h3>Planejamento Sucessório</h3>
+                        </div> 
+                        <p>Facilite a transferência de bens aos herdeiros, com menos custos e burocracia.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-card-up">
+                           <i class="fas fa-percentage benefit-icon"></i>
+                        <h3>Benefícios Fiscais</h3>
+                        </div> 
+                        
+                        <p>Reduza a carga tributária com estratégias legais e personalizadas.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-card-up">
+                          <i class="fas fa-cogs benefit-icon"></i>
+                        <h3>Gestão Simplificada</h3>
+                        </div> 
+                        
+                        <p>Controle múltiplos ativos ou empresas em uma única estrutura centralizada.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="comparison">
+            <h2>Quanto Você Pode Economizar com uma Holding?</h2>
+            <p class="comparison-subtitle">Adicione seus bens (carros, casas, dinheiro) e veja como uma holding reduz custos ao longo dos anos.</p>
+            <div class="items-container">
+                <div class="item-card">
+                    <i class="fas fa-car item-icon"></i>
+                    <h3>Carro</h3>
+                    <p>R$100.000 por unidade</p>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn minus" onclick="adjustQuantity('car', -1)">-</button>
+                        <span class="quantity" id="car-quantity">0</span>
+                        <button class="quantity-btn plus" onclick="adjustQuantity('car', 1)">+</button>
+                    </div>
+                </div>
+                <div class="item-card">
+                    <i class="fas fa-home item-icon"></i>
+                    <h3>Casa</h3>
+                    <p>R$1.000.000 por unidade</p>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn minus" onclick="adjustQuantity('house', -1)">-</button>
+                        <span class="quantity" id="house-quantity">0</span>
+                        <button class="quantity-btn plus" onclick="adjustQuantity('house', 1)">+</button>
+                    </div>
+                </div>
+                <div class="item-card">
+                    <i class="fas fa-money-bill-wave item-icon"></i>
+                    <h3>Dinheiro</h3>
+                    <p>R$500.000 por unidade</p>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn minus" onclick="adjustQuantity('cash', -1)">-</button>
+                        <span class="quantity" id="cash-quantity">0</span>
+                        <button class="quantity-btn plus" onclick="adjustQuantity('cash', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p class="copyright">© 2025 W1 Holding Platform. Todos os direitos reservados.</p>
+        <p class="production">Uma produção de  <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Diogo Coutinho</a> e <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Guilherme Stern</a></p>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+</html>
