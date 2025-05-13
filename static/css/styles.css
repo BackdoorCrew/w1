@@ -4,7 +4,9 @@
   font-style: normal;
 }
 
-
+html {
+    scroll-behavior: smooth;
+}
 
 body {
     font-family: 'Roboto', Arial, sans-serif;
@@ -114,6 +116,26 @@ header {
     background-color: rgba(95, 222, 212, 0.25);
 }
 
+.login-button {
+    background-color: #5fded4;
+    color: #022028;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.login-button:hover {
+    background-color: #49c4ba;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
 
 
 .hero {
@@ -187,12 +209,34 @@ button {
     border-radius: 5px;
     font-family: 'Montserrat', sans-serif;
     font-weight: bold;
+    text-decoration: none;
     cursor: pointer;
     font-size: 1rem;
     transition: all 0.3s ease;
 }
 
 button:hover {
+    background-color: #5fded4;
+    color: #022028;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn {
+    background-color: #022028;
+    border: 2px solid #5fded4;
+    color: #5fded4;
+    padding: 12px 24px;
+    border-radius: 5px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
     background-color: #5fded4;
     color: #022028;
     transform: scale(1.05);
@@ -225,7 +269,7 @@ button:hover {
 .holding-info h2 {
     font-size: 2.5rem;
     font-family: "Cal Sans", sans-serif;
-    color: #5fded4;
+    color: #fff;
     margin: 0;
 }
 
@@ -267,6 +311,7 @@ button:hover {
 .benefit-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    
 }
 
 .benefit-icon {
@@ -298,7 +343,7 @@ button:hover {
 .comparison h2 {
     font-size: 2.5rem;
     font-family: "Cal Sans", sans-serif;
-    color: #5fded4;
+    color: #fff;
     margin-bottom: 20px;
 }
 
@@ -333,14 +378,14 @@ button:hover {
 
 .item-icon {
     font-size: 2.5rem;
-    color: #5fded4;
+    color: #fff;
     margin-bottom: 10px;
 }
 
 .item-card h3 {
     font-family: 'Montserrat', sans-serif;
     font-size: 1.5rem;
-    color: #5fded4;
+    color: #fff;
     margin: 0 0 10px;
 }
 
@@ -428,4 +473,184 @@ footer {
     0% { transform: scale(1); }
     50% { transform: scale(1.2); }
     100% { transform: scale(1); }
+}
+
+/* Estilos para páginas de autenticação (login e signup) */
+/* Estilos para páginas de autenticação (login e signup) */
+.auth-page {
+    background-color: #022028;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.auth-section {
+    width: 50vw;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.auth-form-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.auth-form-container p {
+    font-family: 'Montserrat', sans-serif;
+    color: #fff;
+}
+
+.auth-logo {
+    width: 100px;
+    margin-bottom: 20px;
+}
+
+.auth-section h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.8rem;
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.form-group label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    color: #fff;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.forgot-password {
+    display: block;
+    text-align: right;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    color: #5fded4;
+    text-decoration: none;
+    margin-bottom: 15px;
+}
+
+.forgot-password:hover {
+    color: #4ac7b7;
+}
+
+.auth-btn {
+    width: 100%;
+    background: #5fded4;
+    border: none;
+    color: #022028;
+    padding: 12px;
+    border-radius: 5px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+}
+
+.auth-btn:hover {
+    background: #4ac7b7;
+    transform: scale(1.05);
+}
+
+.google-signin {
+    margin: 20px 0;
+}
+.google-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 20vw;
+    margin: auto;
+    background-color: #fff;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+    border-radius: 6px;
+    padding: 0 16px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.google-login-btn:hover {
+    background-color: #f7f8f8;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.google-icon {
+    width: 40px;
+    height: 40px;
+}
+
+
+.auth-switch {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    color: #fff;
+    margin-top: 15px;
+}
+
+.auth-switch a {
+    color: #5fded4;
+    text-decoration: none;
+}
+
+.auth-switch a:hover {
+    color: #4ac7b7;
+}
+
+/* Estilos para mensagens de erro */
+.error {
+    color: #ff6b6b; /* Vermelho claro para maior visibilidade */
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    text-align: center;
+    background: rgba(255, 107, 107, 0.2); /* Fundo leve para destaque */
+    padding: 8px;
+    border-radius: 5px;
+}
+
+/* Garantir que erros do formulário (ul.errorlist) também sejam estilizados */
+.form-group ul.errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 10px 0;
+    color: #ff6b6b;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+}
+.form-group ul.errorlist li {
+    margin-bottom: 5px;
 }

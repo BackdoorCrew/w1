@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>W1 Holding Platform</title>
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -24,16 +25,17 @@
 </ul>
 
             <ul class="nav-links">
-                <li><a href="#">Início</a></li>
-                <li><a href="/advantages/">Holding</a></li>
-                <li><a href="#">Benefícios</a></li>
-                <li><a href="#">Contato</a></li>
-            </ul>
+    <li><a href="#hero">Início</a></li>
+    <li><a href="#holding-info">Holding</a></li>
+    <li><a href="#comparison">Benefícios</a></li>
+    <li><a href="#">Contato</a></li>
+</ul>
+<a href="{% url 'login' %}" class="login-button">Entrar</a>
         </nav>
     </header>
 
     <main>
-        <section class="hero">
+        <section class="hero" id="hero">
             <video class="hero-video" autoplay loop muted playsinline poster="{% static 'images/hero-poster.jpg' %}">
                 <source src="{% static 'videos/profit.mp4' %}" type="video/mp4">
                 Seu navegador não suporta o elemento de vídeo.
@@ -42,12 +44,12 @@
                 <h1>Maximize Sua Segurança Financeira</h1>
                 <p class="subtitle">Proteja seu patrimônio e planeje o futuro com uma holding estruturada pela W1.</p>
                 <div class="buttons">
-                    <button onclick="createAccount()">Crie sua Conta</button>
+                    <a href="{% url 'signup' %}" class="btn">Crie sua Conta</a>
                     <button onclick="comparePrices()">Compare Nossos Preços</button>
                 </div>
             </div>
         </section>
-        <section class="holding-info">
+        <section class="holding-info" id="holding-info">
             <div class="holding-container">
                 <div class="holding-text">
                     <h2>O Que é uma Holding e Por Que Criar Uma?</h2>
@@ -87,7 +89,7 @@
                 </div>
             </div>
         </section>
-        <section class="comparison">
+        <section class="comparison" id="comparison">
             <h2>Quanto Você Pode Economizar com uma Holding?</h2>
             <p class="comparison-subtitle">Adicione seus bens (carros, casas, dinheiro) e veja como uma holding reduz custos ao longo dos anos.</p>
             <div class="items-container">
