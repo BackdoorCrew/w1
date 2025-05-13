@@ -19,16 +19,14 @@
                 <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="logo-img">
             </div>
            <ul class="plans">
-    <li><a href="#" class="plan-item active" data-plan="pura" onclick="selectPlan('pura')">Pura</a></li>
-    <li><a href="#" class="plan-item" data-plan="mista" onclick="selectPlan('mista')">Mista</a></li>
-    <li><a href="#" class="plan-item" data-plan="familiar" onclick="selectPlan('familiar')">Familiar</a></li>
+    
 </ul>
 
             <ul class="nav-links">
     <li><a href="#hero">Início</a></li>
     <li><a href="#holding-info">Holding</a></li>
     <li><a href="#comparison">Benefícios</a></li>
-    <li><a href="#">Contato</a></li>
+    <li><a href="#steps">Etapas</a></li>
 </ul>
 <a href="{% url 'login' %}" class="login-button">Entrar</a>
         </nav>
@@ -128,6 +126,83 @@
                 <canvas id="comparisonChart"></canvas>
             </div>
         </section>
+        <section class="steps" id="steps">
+        <h2>Como Criar Sua Holding com a W1</h2>
+        <p class="steps-subtitle">Estruture sua holding em poucos passos simples e rápidos. Proteja seu patrimônio em minutos!</p>
+        <div class="steps-row" data-row="1">
+            <div class="timeline-line"></div>
+            <div class="start-ball"></div>
+            <div class="end-ball"></div>
+            <div class="steps-container">
+                <div class="step" data-step="1">
+                    <div class="step-content">
+                        <i class="fas fa-user-plus step-icon"></i>
+                        <h3>Cadastro na Plataforma</h3>
+                        <p>Você cria sua conta na W1 e escolhe o tipo de holding ideal: Pura, Mista ou Familiar.</p>
+                    </div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-content">
+                        <i class="fas fa-file-upload step-icon"></i>
+                        <h3>Envio de Informações e Documentos</h3>
+                        <p>Você preenche um formulário simples com seus dados, lista de bens e informações sobre herdeiros ou sócios.</p>
+                    </div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-content">
+                        <i class="fas fa-chart-line step-icon"></i>
+                        <h3>Análise Estratégica</h3>
+                        <p>Nosso sistema analisa automaticamente: Qual o melhor modelo tributário e societário, Possibilidades de economia fiscal, Forma ideal de proteger seus bens.</p>
+                    </div>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-content">
+                        <i class="fas fa-file-signature step-icon"></i>
+                        <h3>Criação do Estatuto e Contrato Social</h3>
+                        <p>Com as informações fornecidas, são gerados documentos jurídicos prontos para registro, como contrato social, estatuto e cláusulas de proteção e sucessão.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="steps-row" data-row="2">
+            <div class="timeline-line"></div>
+            <div class="start-ball"></div>
+            <div class="end-ball"></div>
+            <div class="steps-container">
+                <div class="step" data-step="5">
+                    <div class="step-content">
+                        <i class="fas fa-pen-fancy step-icon"></i>
+                        <h3>Assinatura Digital</h3>
+                        <p>Você assina os documentos diretamente pela plataforma com segurança jurídica e validade legal.</p>
+                    </div>
+                </div>
+                <div class="step" data-step="6">
+                    <div class="step-content">
+                        <i class="fas fa-building step-icon"></i>
+                        <h3>Registro da Empresa</h3>
+                        <p>A W1 cuida do registro: Na Junta Comercial, Obtenção de CNPJ, Cadastro de atividades e capital social.</p>
+                    </div>
+                </div>
+                <div class="step" data-step="7">
+                    <div class="step-content">
+                        <i class="fas fa-exchange-alt step-icon"></i>
+                        <h3>Transferência dos Bens</h3>
+                        <p>Após o registro, você transfere os bens desejados para a holding com apoio do nosso sistema.</p>
+                    </div>
+                </div>
+                <div class="step" data-step="8">
+                    <div class="step-content">
+                        <i class="fas fa-headset step-icon"></i>
+                        <h3>Acompanhamento e Suporte</h3>
+                        <p>Após a criação, oferecemos suporte e acompanhamento contínuo.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="steps-cta">
+            <a href="{% url 'signup' %}" class="btn">Comece Agora</a>
+        </div>
+    </section>
     </main>
 
     <footer>
