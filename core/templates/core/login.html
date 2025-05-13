@@ -1,0 +1,62 @@
+{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - W1 Holding</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body class="auth-page">
+    <main>
+        <section class="auth-section">
+            <div class="auth-form-container">
+                <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="auth-logo">
+                <h1>Acesse sua conta</h1>
+                {% if form.errors %}
+                    <p class="error">E-mail ou senha incorretos. Tente novamente.</p>
+                {% endif %}
+                <form method="POST" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_login">E-mail</label>
+                        {{ form.login }}
+                        {% if form.login.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.login.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_password">Senha</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.password.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'account_reset_password' %}" class="forgot-password">Esqueceu sua senha?</a>
+                    <button type="submit" class="auth-btn">Entrar</button>
+                </form>
+                <p>Ou entre com:</p>
+                <a href="{% provider_login_url 'google' %}" class="google-login-btn">
+    <img src="{% static 'images/google.webp' %}" alt="Google Logo" class="google-icon">
+    <span>Entrar com Google</span>
+</a>
+
+                <p class="auth-switch">Novo na W1? <a href="{% url 'signup' %}">Crie uma conta</a></p>
+            </div>
+        </section>
+    </main>
+    <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+</html>
