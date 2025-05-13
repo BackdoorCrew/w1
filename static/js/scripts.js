@@ -12,11 +12,9 @@ function selectPlan(plan) {
 }
 
 function comparePrices() {
-    // Função existente ou placeholder
-    console.log("Comparando preços...");
+    document.querySelector('#comparison').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Função para Google Sign-In
 function handleCredentialResponse(response) {
     fetch('/accounts/google/login/', {
         method: 'POST',
@@ -51,7 +49,6 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// Funções do gráfico
 let comparisonChart;
 const itemValues = {
     car: 100000,
@@ -170,16 +167,62 @@ function adjustQuantity(item, change) {
 document.addEventListener('DOMContentLoaded', () => {
     initializeChart();
     updateChart();
-});
 
-// Rolagem suave para links de navegação
-document.querySelectorAll('.nav-links a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const targetId = this.getAttribute('href').substring(1);
-        const targetElement = document.getElementById(targetId);
-        if (targetElement) {
-            targetElement.scrollIntoView({ behavior: 'smooth' });
-        }
+    document.querySelectorAll('.nav-links a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
     });
+
+    const stepsRows = document.querySelectorAll('.steps-row');
+    if (stepsRows.length === 0) {
+        console.error('Steps rows not found');
+        return;
+    }
+
+    function getAbsoluteTop(element) {
+        let top = 0;
+        do {
+            top += element.offsetTop || 0;
+            element = element.offsetParent;
+        } while (element);
+        return top;
+    }
+
+    function updateTimelineLines() {
+        const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+        const viewportHeight = window.innerHeight;
+        const delayVh = 20; // Delay animation by 20vh
+        const delayPx = viewportHeight * (delayVh / 100); // Convert vh to pixels
+
+        stepsRows.forEach(row => {
+            const rowTop = getAbsoluteTop(row);
+            const rowHeight = row.offsetHeight;
+            // Apply delay by offsetting rowTop
+            let progress = (scrollPosition + viewportHeight - (rowTop + delayPx)) / rowHeight;
+            progress = Math.min(Math.max(progress, 0), 1);
+            const line = row.querySelector('.timeline-line');
+            if (line) {
+                line.style.width = `${progress * 100}%`;
+            }
+
+            const steps = row.querySelectorAll('.step');
+            steps.forEach((step, index) => {
+                const threshold = index / (steps.length - 1) || 0;
+                if (progress >= threshold) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+        });
+    }
+
+    window.addEventListener('scroll', updateTimelineLines);
+    window.addEventListener('load', updateTimelineLines);
 });
