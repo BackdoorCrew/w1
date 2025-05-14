@@ -2,12 +2,10 @@ function selectPlan(plan) {
     document.querySelectorAll('.plan-item').forEach(item => {
         item.classList.remove('active');
     });
-
     const selectedItem = document.querySelector(`.plan-item[data-plan="${plan}"]`);
     if (selectedItem) {
         selectedItem.classList.add('active');
     }
-
     console.log(`Plano ${plan} selecionado.`);
 }
 
@@ -50,16 +48,6 @@ function getCookie(name) {
 }
 
 let comparisonChart;
-const itemValues = {
-    car: 100000,
-    house: 1000000,
-    cash: 500000
-};
-let quantities = {
-    car: 0,
-    house: 0,
-    cash: 0
-};
 
 function initializeChart() {
     const ctx = document.getElementById('comparisonChart');
@@ -71,24 +59,14 @@ function initializeChart() {
         type: 'line',
         data: {
             labels: Array.from({ length: 21 }, (_, i) => i),
-            datasets: [
-                {
-                    label: 'Custos com Holding (R$)',
-                    data: [],
-                    borderColor: '#5fded4',
-                    backgroundColor: 'rgba(95, 222, 212, 0.2)',
-                    fill: true,
-                    tension: 0.4
-                },
-                {
-                    label: 'Custos sem Holding (R$)',
-                    data: [],
-                    borderColor: '#ff6b6b',
-                    backgroundColor: 'rgba(255, 107, 107, 0.2)',
-                    fill: true,
-                    tension: 0.4
-                }
-            ]
+            datasets: [{
+                label: 'Economia com Holding (R$)',
+                data: [],
+                borderColor: '#5fded4',
+                backgroundColor: 'rgba(95, 222, 212, 0.2)',
+                fill: true,
+                tension: 0.4
+            }]
         },
         options: {
             responsive: true,
@@ -98,7 +76,7 @@ function initializeChart() {
                     ticks: { color: '#fff' }
                 },
                 y: { 
-                    title: { display: true, text: 'Custo (R$)', color: '#fff' }, 
+                    title: { display: true, text: 'Economia (R$)', color: '#fff' }, 
                     beginAtZero: true,
                     ticks: { color: '#fff' }
                 }
@@ -114,54 +92,47 @@ function initializeChart() {
     });
 }
 
-function calculateCosts(assetsValue) {
+function getAssetsValue() {
+    const vVeiculos = Number(document.getElementById('valor-veiculos').value) || 0;
+    const vImoveis = Number(document.getElementById('valor-imoveis').value) || 0;
+    const vDinheiro = Number(document.getElementById('valor-dinheiro').value) || 0;
+    return { veiculos: vVeiculos, imoveis: vImoveis, dinheiro: vDinheiro };
+}
+
+function calculateSavings(assets) {
     const years = 20;
-    const withHoldingCosts = [];
-    const withoutHoldingCosts = [];
+    const savings = [];
 
-    for (let year = 0; year <= years; year++) {
-        let withCost = year * assetsValue * 0.015;
-        if (year % 10 === 0 && year > 0) {
-            withCost += assetsValue * 0.02;
-        }
-        withHoldingCosts.push(withCost);
+    for (let y = 0; y <= years; y++) {
+        let totalSavings = 0;
 
-        let withoutCost = year * assetsValue * 0.03;
-        if (year % 10 === 0 && year > 0) {
-            withoutCost += assetsValue * 0.08;
-        }
-        withoutHoldingCosts.push(withoutCost);
+        // Veículos: 2.5% IPVA + 15% capital gains every 10y (without); 1% effective (with)
+        const veiculosWithout = assets.veiculos * (0.025 * y + (y >= 10 ? 0.15 : 0) + (y == 20 ? 0.15 : 0));
+        const veiculosWith = assets.veiculos * (0.01 * y);
+        totalSavings += veiculosWithout - veiculosWith;
+
+        // Imóveis: 1% IPTU + 15% gains + 8% ITCMD every 10y (without); 0.5% effective (with)
+        const imoveisWithout = assets.imoveis * (0.01 * y + (y >= 10 ? 0.15 + 0.08 : 0) + (y == 20 ? 0.15 + 0.08 : 0));
+        const imoveisWith = assets.imoveis * (0.005 * y);
+        totalSavings += imoveisWithout - imoveisWith;
+
+        // Dinheiro: 20% on 5% annual return (without); 10% effective (with)
+        const returnRate = 0.05;
+        const dinheiroWithout = assets.dinheiro * returnRate * y * 0.20;
+        const dinheiroWith = assets.dinheiro * returnRate * y * 0.10;
+        totalSavings += dinheiroWithout - dinheiroWith;
+
+        savings.push(totalSavings);
     }
 
-    return { withHoldingCosts, withoutHoldingCosts };
+    return savings;
 }
 
 function updateChart() {
-    const totalValue = 
-        quantities.car * itemValues.car +
-        quantities.house * itemValues.house +
-        quantities.cash * itemValues.cash;
-
-    const { withHoldingCosts, withoutHoldingCosts } = calculateCosts(totalValue);
-
-    if (comparisonChart) {
-        comparisonChart.data.datasets[0].data = withHoldingCosts;
-        comparisonChart.data.datasets[1].data = withoutHoldingCosts;
-        comparisonChart.update();
-    }
-}
-
-function adjustQuantity(item, change) {
-    if (quantities[item] + change < 0) return;
-    quantities[item] += change;
-    const quantityElement = document.getElementById(`${item}-quantity`);
-    if (quantityElement) {
-        quantityElement.textContent = quantities[item];
-    }
-    const btn = event.target;
-    btn.classList.add('animate');
-    setTimeout(() => btn.classList.remove('animate'), 300);
-    updateChart();
+    const assets = getAssetsValue();
+    const savings = calculateSavings(assets);
+    comparisonChart.data.datasets[0].data = savings;
+    comparisonChart.update();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -197,13 +168,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateTimelineLines() {
         const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
         const viewportHeight = window.innerHeight;
-        const delayVh = 20; // Delay animation by 20vh
-        const delayPx = viewportHeight * (delayVh / 100); // Convert vh to pixels
+        const delayVh = 20;
+        const delayPx = viewportHeight * (delayVh / 100);
 
         stepsRows.forEach(row => {
             const rowTop = getAbsoluteTop(row);
             const rowHeight = row.offsetHeight;
-            // Apply delay by offsetting rowTop
             let progress = (scrollPosition + viewportHeight - (rowTop + delayPx)) / rowHeight;
             progress = Math.min(Math.max(progress, 0), 1);
             const line = row.querySelector('.timeline-line');

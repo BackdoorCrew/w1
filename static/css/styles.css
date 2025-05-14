@@ -27,61 +27,47 @@ header {
 .navbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
-    gap: 30px; /* novo */
+    gap: 15px; /* Reduced from 30px to bring elements closer */
 }
-
 
 .logo-img {
     height: 50px;
     width: auto;
 }
 
-.nav-links {
-    margin-left: auto;
-}
-
-
 .plans, .nav-links {
     list-style: none;
     padding: 0;
     margin: 0;
     display: flex;
+    align-items: center;
+}
+
+.nav-links {
+    margin-left: 10px; /* Small margin to separate from logo/plans */
 }
 
 .plans li, .nav-links li {
-    margin: 0 30px;
+    margin: 0 15px; /* Reduced from 30px for tighter spacing */
 }
 
 .plans li a, .nav-links li a {
+    position: relative;
     color: white;
     text-decoration: none;
     font-family: "Montserrat", sans-serif;
     font-weight: bold;
+    font-size: 1.5vw;
     transition: color 0.3s;
 }
 
-.plans li a:hover, .nav-links li a:hover {
-    color: #5fded4;
-}
-
-.plans li a, .nav-links li a {
-    position: relative; /* necessário para o ::after se posicionar corretamente */
-    color: white;
-    text-decoration: none;
-    font-family: "Montserrat", sans-serif;
-    font-weight: 500;
-    transition: color 0.3s;
-}
-
-/* Linha animada abaixo dos links */
- .nav-links li a::after {
+.nav-links li a::after {
     content: "";
     position: absolute;
-    bottom: -4px; /* distância da linha em relação ao texto */
+    bottom: -4px;
     left: 0;
     width: 0;
     height: 2px;
@@ -89,29 +75,24 @@ header {
     transition: width 0.3s ease;
 }
 
-/* Quando o mouse passa por cima */
- .nav-links li a:hover::after {
+.nav-links li a:hover::after {
     width: 100%;
 }
 
-/* Mudança de cor do texto no hover */
- .nav-links li a:hover {
+.plans li a:hover, .nav-links li a:hover {
     color: #5fded4;
 }
 
-/* Estado normal dos planos */
 .plan-item {
     padding: 6px 12px;
     border-radius: 8px;
     transition: background-color 0.3s;
 }
 
-/* Hover: fundo ofuscado */
 .plan-item:hover {
     background-color: rgba(95, 222, 212, 0.1);
 }
 
-/* Plano ativo: fundo forte */
 .plan-item.active {
     background-color: rgba(95, 222, 212, 0.25);
 }
@@ -129,6 +110,7 @@ header {
     border: none;
     cursor: pointer;
     white-space: nowrap;
+    margin-left: auto; /* Pushes login button to the right */
 }
 
 .login-button:hover {
@@ -375,6 +357,21 @@ button:hover {
     transform: translateY(-5px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
+
+.item-card label {
+  display: block;
+  margin-bottom: 8px;
+  color: #fff;
+  font-weight: 500;
+}
+.item-card input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
 
 .item-icon {
     font-size: 2.5rem;
