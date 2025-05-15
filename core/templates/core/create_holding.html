@@ -3,7 +3,7 @@
 
 {% block content %}
 <h2>Criar Sua Holding</h2>
-<p>Preencha as informações abaixo para começarmos a criar sua holding.</p>
+<p>Responda às perguntas abaixo para personalizar sua holding.</p>
 {% if form.errors or form.non_field_errors %}
     <div class="error-messages">
         <p>Por favor, corrija os erros abaixo:</p>
@@ -19,69 +19,139 @@
         </ul>
     </div>
 {% endif %}
-<form method="post" action="{% url 'create_holding' %}">
+<form method="post" action="{% url 'create_holding' %}" id="holding-form">
     {% csrf_token %}
-    <div>
-        <label for="{{ form.nome_holding.id_for_label }}">Nome da sua holding:</label>
-        {{ form.nome_holding }}
+    {{ form.nome_holding.label_tag }} {{ form.nome_holding }}
+    <h3>Sucessão</h3>
+    {{ form.has_successors.label_tag }} {{ form.has_successors }}
+    <div id="succession-details" style="display: none;">
+        {{ form.successor_count.label_tag }} {{ form.successor_count }}
+        {{ form.successor_age_range.label_tag }} {{ form.successor_age_range }}
+        {{ form.has_existing_plan.label_tag }} {{ form.has_existing_plan }}
     </div>
-    <div>
-        <label for="{{ form.has_successors.id_for_label }}">Você tem sucessores (filhos, netos, ou outros herdeiros)?</label>
-        {{ form.has_successors }}
+    <h3>Renda de Aluguéis</h3>
+    {{ form.has_rental_income.label_tag }} {{ form.has_rental_income }}
+    <div id="rental-details" style="display: none;">
+        {{ form.rental_property_count.label_tag }} {{ form.rental_property_count }}
+        <div id="rental-properties">
+            <!-- Dynamic fields added by JS -->
+        </div>
+        <button type="button" onclick="addRentalProperty()">Adicionar Imóvel</button>
+        {{ form.rental_properties }}
     </div>
-    <div>
-        <label for="{{ form.successor_names.id_for_label }}">Se sim, quais são os nomes?</label>
-        {{ form.successor_names }}
+    <h3>Empreendimentos e Outras Rendas</h3>
+    {{ form.has_companies.label_tag }} {{ form.has_companies }}
+    <div id="company-details" style="display: none;">
+        {{ form.company_count.label_tag }} {{ form.company_count }}
+        <div id="companies">
+            <!-- Dynamic fields added by JS -->
+        </div>
+        <button type="button" onclick="addCompany()">Adicionar Empresa</button>
+        {{ form.companies }}
     </div>
-    <div>
-        <label for="{{ form.partner_count.id_for_label }}">Quantas pessoas (sócios ou familiares) estarão envolvidas?</label>
-        {{ form.partner_count }}
+    <h3>Proteção Patrimonial</h3>
+    {{ form.has_protection_concerns.label_tag }} {{ form.has_protection_concerns }}
+    <div id="protection-details" style="display: none;">
+        {{ form.has_litigation_risk.label_tag }} {{ form.has_litigation_risk }}
+        {{ form.protected_assets.label_tag }} {{ form.protected_assets }}
     </div>
-    <div>
-        <label for="{{ form.partner_names.id_for_label }}">Quais são os nomes?</label>
-        {{ form.partner_names }}
+    <h3>Vantagens Fiscais</h3>
+    {{ form.irpf_bracket.label_tag }} {{ form.irpf_bracket }}
+    {{ form.has_dividends.label_tag }} {{ form.has_dividends }}
+    <div id="dividend-details" style="display: none;">
+        {{ form.dividend_amount.label_tag }} {{ form.dividend_amount }}
     </div>
-    <div>
-        <label for="{{ form.asset_types.id_for_label }}">Quais tipos de bens você possui?</label>
-        {{ form.asset_types }}
-    </div>
-    <div>
-        <label for="{{ form.valor_patrimonio_integralizado.id_for_label }}">Valor aproximado do seu patrimônio (em R$):</label>
-        {{ form.valor_patrimonio_integralizado }}
-    </div>
-    <div>
-        <label for="{{ form.main_goal.id_for_label }}">Por que você quer criar uma holding?</label>
-        {{ form.main_goal }}
-    </div>
-    <div>
-        <label for="{{ form.has_subsidiaries.id_for_label }}">Você tem empresas ou filiais para incluir?</label>
-        {{ form.has_subsidiaries }}
-    </div>
-    <div>
-        <label for="{{ form.subsidiary_names.id_for_label }}">Se sim, quais são os nomes?</label>
-        {{ form.subsidiary_names }}
-    </div>
-    <div>
-        <label for="{{ form.timeline.id_for_label }}">Você tem pressa para criar a holding?</label>
-        {{ form.timeline }}
-    </div>
-    <div>
-        <label for="{{ form.has_advisors.id_for_label }}">Você trabalha com advogados ou contadores?</label>
-        {{ form.has_advisors }}
-    </div>
-    <div>
-        <label for="{{ form.advisor_info.id_for_label }}">Se sim, quais são os nomes e contatos?</label>
-        {{ form.advisor_info }}
-    </div>
-    <div>
-        <label for="{{ form.update_frequency.id_for_label }}">Com que frequência quer receber atualizações?</label>
-        {{ form.update_frequency }}
-    </div>
-    <div>
-        <label for="{{ form.important_info.id_for_label }}">Quais informações são mais importantes para você?</label>
-        {{ form.important_info }}
-    </div>
+    <h3>Preferências</h3>
+    {{ form.update_frequency.label_tag }} {{ form.update_frequency }}
     <button type="submit">Enviar</button>
 </form>
 <p><a href="{% url 'dashboard' %}">Voltar ao Dashboard</a></p>
+
+<script>
+    function toggleDetails(checkboxId, detailsId) {
+        const checkbox = document.getElementById(checkboxId);
+        const details = document.getElementById(detailsId);
+        details.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    document.getElementById('id_has_successors').addEventListener('change', () => {
+        toggleDetails('id_has_successors', 'succession-details');
+    });
+    document.getElementById('id_has_rental_income').addEventListener('change', () => {
+        toggleDetails('id_has_rental_income', 'rental-details');
+    });
+    document.getElementById('id_has_companies').addEventListener('change', () => {
+        toggleDetails('id_has_companies', 'company-details');
+    });
+    document.getElementById('id_has_protection_concerns').addEventListener('change', () => {
+        toggleDetails('id_has_protection_concerns', 'protection-details');
+    });
+    document.getElementById('id_has_dividends').addEventListener('change', () => {
+        toggleDetails('id_has_dividends', 'dividend-details');
+    });
+
+    let rentalCount = 0;
+    function addRentalProperty() {
+        rentalCount++;
+        const container = document.getElementById('rental-properties');
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <h4>Imóvel ${rentalCount}</h4>
+            <label>Endereço (opcional):</label>
+            <input type="text" name="rental_address_${rentalCount}">
+            <label>Valor mensal de aluguel (R$):</label>
+            <input type="number" step="0.01" name="rental_value_${rentalCount}" required>
+            <label>Despesas mensais (IPTU, condomínio, etc.) (R$):</label>
+            <input type="number" step="0.01" name="rental_expenses_${rentalCount}">
+        `;
+        container.appendChild(div);
+        updateRentalProperties();
+    }
+
+    let companyCount = 0;
+    function addCompany() {
+        companyCount++;
+        const container = document.getElementById('companies');
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <h4>Empresa ${companyCount}</h4>
+            <label>Receita ou lucro anual (R$):</label>
+            <input type="number" step="0.01" name="company_profit_${companyCount}" required>
+            <label>Regime tributário:</label>
+            <select name="company_regime_${companyCount}">
+                <option value="simples">Simples</option>
+                <option value="presumido">Lucro Presumido</option>
+                <option value="real">Lucro Real</option>
+            </select>
+        `;
+        container.appendChild(div);
+        updateCompanies();
+    }
+
+    function updateRentalProperties() {
+        const properties = [];
+        for (let i = 1; i <= rentalCount; i++) {
+            const address = document.querySelector(`input[name="rental_address_${i}"]`)?.value || '';
+            const value = document.querySelector(`input[name="rental_value_${i}"]`)?.value || 0;
+            const expenses = document.querySelector(`input[name="rental_expenses_${i}"]`)?.value || 0;
+            properties.push({ address, value: parseFloat(value), expenses: parseFloat(expenses) });
+        }
+        document.getElementById('id_rental_properties').value = JSON.stringify(properties);
+    }
+
+    function updateCompanies() {
+        const companies = [];
+        for (let i = 1; i <= companyCount; i++) {
+            const profit = document.querySelector(`input[name="company_profit_${i}"]`)?.value || 0;
+            const regime = document.querySelector(`select[name="company_regime_${i}"]`)?.value || '';
+            companies.push({ profit: parseFloat(profit), regime });
+        }
+        document.getElementById('id_companies').value = JSON.stringify(companies);
+    }
+
+    document.getElementById('holding-form').addEventListener('input', () => {
+        updateRentalProperties();
+        updateCompanies();
+    });
+</script>
 {% endblock %}

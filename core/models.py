@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 
-# Modelo de Usuário Customizado
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
         ('admin', 'Administrador'),
@@ -19,7 +18,6 @@ class User(AbstractUser):
     def __str__(self):
         return self.email
 
-# Perfil do Cliente
 class ClienteProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='cliente_profile')
     patrimonio_total_estimado = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
@@ -28,44 +26,52 @@ class ClienteProfile(models.Model):
     def __str__(self):
         return f"Perfil de {self.user.email}"
 
-# Holding
 class Holding(models.Model):
     nome_holding = models.CharField(max_length=255)
     clientes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='holdings_participadas', limit_choices_to={'user_type': 'cliente'})
     consultor_responsavel = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='holdings_assessoradas', limit_choices_to={'user_type': 'consultor'})
     data_criacao_registro = models.DateField(null=True, blank=True)
-    valor_patrimonio_integralizado = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    # Sucessão
     has_successors = models.BooleanField(default=False)
-    successor_names = models.TextField(blank=True, help_text="Nomes dos sucessores, se aplicável")
-    partner_count = models.PositiveIntegerField(default=1)
-    partner_names = models.TextField(blank=True, help_text="Nomes dos sócios ou familiares")
-    asset_types = models.CharField(max_length=255, blank=True, help_text="Tipos de bens selecionados")
-    main_goal = models.CharField(max_length=100, choices=[
-        ('asset_protection', 'Proteger meus bens'),
-        ('tax_optimization', 'Reduzir impostos'),
-        ('succession', 'Planejar herança'),
-        ('investment', 'Investir melhor'),
+    successor_count = models.PositiveIntegerField(null=True, blank=True)
+    successor_age_range = models.CharField(max_length=50, choices=[
+        ('<18', 'Menores de 18 anos'),
+        ('18-40', '18 a 40 anos'),
+        ('>40', 'Acima de 40 anos'),
     ], blank=True)
-    has_subsidiaries = models.BooleanField(default=False)
-    subsidiary_names = models.TextField(blank=True, help_text="Nomes das empresas/filiais")
-    timeline = models.CharField(max_length=50, choices=[
-        ('<3m', 'Menos de 3 meses'),
-        ('3-6m', '3 a 6 meses'),
-        ('>6m', 'Sem pressa'),
-    ], default='>6m')
-    has_advisors = models.BooleanField(default=False)
-    advisor_info = models.TextField(blank=True, help_text="Nomes e contatos dos advogados/contadores")
+    has_existing_plan = models.BooleanField(default=False)
+    # Renda de Aluguéis
+    has_rental_income = models.BooleanField(default=False)
+    rental_property_count = models.PositiveIntegerField(null=True, blank=True)
+    rental_details = models.TextField(blank=True, help_text="JSON com endereços, valores de aluguel e despesas")
+    # Empreendimentos/Empresas
+    has_companies = models.BooleanField(default=False)
+    company_count = models.PositiveIntegerField(null=True, blank=True)
+    company_details = models.TextField(blank=True, help_text="JSON com receita/lucro e regime tributário")
+    # Proteção Patrimonial
+    has_protection_concerns = models.BooleanField(default=False)
+    has_litigation_risk = models.BooleanField(default=False)
+    protected_assets = models.TextField(blank=True, help_text="Descrição dos bens a proteger")
+    # Vantagens Fiscais
+    irpf_bracket = models.CharField(max_length=50, choices=[
+        ('isento', 'Até R$22.847,76 – Isento'),
+        ('7.5', 'R$22.847,77 a R$33.919,80 – 7,5%'),
+        ('15', 'R$33.919,81 a R$45.012,60 – 15%'),
+        ('22.5', 'R$45.012,61 a R$55.976,16 – 22,5%'),
+        ('27.5', 'Acima de R$55.976,16 – 27,5%'),
+    ], blank=True)
+    has_dividends = models.BooleanField(default=False)
+    dividend_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    # Platform
     update_frequency = models.CharField(max_length=50, choices=[
         ('daily', 'Diária'),
         ('weekly', 'Semanal'),
         ('monthly', 'Mensal'),
     ], default='weekly')
-    important_info = models.CharField(max_length=255, blank=True, help_text="Informações prioritárias selecionadas")
 
     def __str__(self):
         return self.nome_holding
 
-# ProcessoHolding (unchanged)
 class ProcessoHolding(models.Model):
     STATUS_CHOICES = (
         ('aguardando_documentos', 'Aguardando Documentos'),
@@ -87,7 +93,6 @@ class ProcessoHolding(models.Model):
     def __str__(self):
         return f"Processo de {self.cliente_principal.email} - Status: {self.get_status_atual_display()}"
 
-# Documento (unchanged)
 class Documento(models.Model):
     CATEGORIA_CHOICES = (
         ('pessoais_socios', 'Documentos pessoais dos sócios'),
@@ -107,7 +112,6 @@ class Documento(models.Model):
     def __str__(self):
         return f"{self.nome_documento} ({self.processo_holding.cliente_principal.email})"
 
-# AnaliseEconomia (unchanged)
 class AnaliseEconomia(models.Model):
     holding = models.OneToOneField(Holding, on_delete=models.CASCADE, related_name='analise_economia')
     ano_referencia = models.PositiveIntegerField()

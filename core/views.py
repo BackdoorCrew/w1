@@ -3,7 +3,8 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
 from allauth.account.forms import LoginForm, SignupForm
 from .forms import HoldingForm
-from .models import Holding, ProcessoHolding
+from .models import Holding, ProcessoHolding, AnaliseEconomia
+from datetime import date
 
 def index(request):
     return render(request, 'core/index.html')
@@ -48,15 +49,26 @@ def create_holding(request):
     if request.method == 'POST':
         form = HoldingForm(request.POST)
         if form.is_valid():
-            holding = form.save(commit=False)
-            holding.asset_types = ','.join(form.cleaned_data['asset_types'])
-            holding.important_info = ','.join(form.cleaned_data['important_info'])
-            holding.save()
+            holding = form.save()
             holding.clientes.add(request.user)
             ProcessoHolding.objects.create(
                 cliente_principal=request.user,
                 holding_associada=holding,
                 status_atual='aguardando_documentos'
+            )
+            # Basic simulation for AnaliseEconomia
+            economia_tributaria = 0
+            if holding.has_rental_income and holding.rental_details:
+                # Placeholder: Calculate IRPF vs IRPJ/CSLL
+                economia_tributaria += 10000  # Example
+            if holding.has_dividends and holding.dividend_amount:
+                # Placeholder: Dividend tax savings
+                economia_tributaria += holding.dividend_amount * 0.15
+            AnaliseEconomia.objects.create(
+                holding=holding,
+                ano_referencia=date.today().year,
+                economia_tributaria_estimada=economia_tributaria,
+                patrimonio_liquido_projetado=holding.rental_property_count * 1000000 if holding.rental_property_count else 0
             )
             return redirect('dashboard')
         else:
