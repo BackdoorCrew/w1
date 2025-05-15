@@ -24,9 +24,5 @@
     <button type="submit">Entrar</button>
 </form>
 <p>Não tem uma conta? <a href="{% url 'signup' %}">Cadastrar</a></p>
-<!-- Google login disabled to avoid MultipleObjectsReturned -->
-<!-- <a href="{% provider_login_url 'google' %}" class="google-login-btn">
-    <img src="{% static 'images/google.webp' %}" alt="Google Logo" class="google-icon">
-    <span>Entrar com Google</span>
-</a> -->
+
 {% endblock %}
