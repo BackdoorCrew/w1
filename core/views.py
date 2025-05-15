@@ -30,7 +30,7 @@ def signup(request):
         form = SignupForm(request.POST)
         if form.is_valid():
             user = form.save(request)
-            user.user_type = 'cliente'  # Set default user_type for new users
+            user.user_type = 'cliente'
             user.save()
             auth_login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
             return redirect('create_holding')
@@ -49,6 +49,8 @@ def create_holding(request):
         form = HoldingForm(request.POST)
         if form.is_valid():
             holding = form.save(commit=False)
+            holding.asset_types = ','.join(form.cleaned_data['asset_types'])
+            holding.important_info = ','.join(form.cleaned_data['important_info'])
             holding.save()
             holding.clientes.add(request.user)
             ProcessoHolding.objects.create(
@@ -60,5 +62,5 @@ def create_holding(request):
         else:
             print("Form errors:", form.errors)
     else:
-        form = HoldingForm()
+        form = HoldingForm(initial={'nome_holding': f"{request.user.first_name} Legacy Holdings"})
     return render(request, 'core/create_holding.html', {'form': form})

@@ -31,38 +31,41 @@ class ClienteProfile(models.Model):
 # Holding
 class Holding(models.Model):
     nome_holding = models.CharField(max_length=255)
-    descricao = models.TextField(blank=True, help_text="Descrição do propósito da holding")
     clientes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='holdings_participadas', limit_choices_to={'user_type': 'cliente'})
     consultor_responsavel = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='holdings_assessoradas', limit_choices_to={'user_type': 'consultor'})
     data_criacao_registro = models.DateField(null=True, blank=True)
     valor_patrimonio_integralizado = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    primary_goal = models.CharField(max_length=100, choices=[
-        ('asset_protection', 'Asset Protection'),
-        ('tax_optimization', 'Tax Optimization'),
-        ('succession', 'Succession Planning'),
-        ('investment', 'Investment Management'),
+    has_successors = models.BooleanField(default=False)
+    successor_names = models.TextField(blank=True, help_text="Nomes dos sucessores, se aplicável")
+    partner_count = models.PositiveIntegerField(default=1)
+    partner_names = models.TextField(blank=True, help_text="Nomes dos sócios ou familiares")
+    asset_types = models.CharField(max_length=255, blank=True, help_text="Tipos de bens selecionados")
+    main_goal = models.CharField(max_length=100, choices=[
+        ('asset_protection', 'Proteger meus bens'),
+        ('tax_optimization', 'Reduzir impostos'),
+        ('succession', 'Planejar herança'),
+        ('investment', 'Investir melhor'),
     ], blank=True)
-    asset_types = models.TextField(blank=True, help_text="e.g., Real estate, businesses")
-    industry_focus = models.CharField(max_length=255, blank=True)
-    jurisdiction = models.CharField(max_length=100, blank=True, help_text="e.g., Brazil, Cayman Islands")
-    legal_structure = models.CharField(max_length=50, choices=[
-        ('llc', 'LLC'),
-        ('corporation', 'Corporation'),
-        ('trust', 'Trust'),
-        ('undecided', 'Undecided'),
-    ], default='undecided')
-    subsidiaries = models.TextField(blank=True, help_text="List subsidiaries, if any")
+    has_subsidiaries = models.BooleanField(default=False)
+    subsidiary_names = models.TextField(blank=True, help_text="Nomes das empresas/filiais")
+    timeline = models.CharField(max_length=50, choices=[
+        ('<3m', 'Menos de 3 meses'),
+        ('3-6m', '3 a 6 meses'),
+        ('>6m', 'Sem pressa'),
+    ], default='>6m')
+    has_advisors = models.BooleanField(default=False)
+    advisor_info = models.TextField(blank=True, help_text="Nomes e contatos dos advogados/contadores")
     update_frequency = models.CharField(max_length=50, choices=[
-        ('daily', 'Daily'),
-        ('weekly', 'Weekly'),
-        ('monthly', 'Monthly'),
+        ('daily', 'Diária'),
+        ('weekly', 'Semanal'),
+        ('monthly', 'Mensal'),
     ], default='weekly')
-    milestones = models.TextField(blank=True, help_text="e.g., Legal registration, asset transfer")
+    important_info = models.CharField(max_length=255, blank=True, help_text="Informações prioritárias selecionadas")
 
     def __str__(self):
         return self.nome_holding
 
-# ProcessoHolding
+# ProcessoHolding (unchanged)
 class ProcessoHolding(models.Model):
     STATUS_CHOICES = (
         ('aguardando_documentos', 'Aguardando Documentos'),
@@ -84,7 +87,7 @@ class ProcessoHolding(models.Model):
     def __str__(self):
         return f"Processo de {self.cliente_principal.email} - Status: {self.get_status_atual_display()}"
 
-# Documento
+# Documento (unchanged)
 class Documento(models.Model):
     CATEGORIA_CHOICES = (
         ('pessoais_socios', 'Documentos pessoais dos sócios'),
@@ -104,7 +107,7 @@ class Documento(models.Model):
     def __str__(self):
         return f"{self.nome_documento} ({self.processo_holding.cliente_principal.email})"
 
-# AnaliseEconomia
+# AnaliseEconomia (unchanged)
 class AnaliseEconomia(models.Model):
     holding = models.OneToOneField(Holding, on_delete=models.CASCADE, related_name='analise_economia')
     ano_referencia = models.PositiveIntegerField()

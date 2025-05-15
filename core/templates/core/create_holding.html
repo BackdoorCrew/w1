@@ -2,7 +2,8 @@
 {% load static %}
 
 {% block content %}
-<h2>Criar Holding</h2>
+<h2>Criar Sua Holding</h2>
+<p>Preencha as informações abaixo para começarmos a criar sua holding.</p>
 {% if form.errors or form.non_field_errors %}
     <div class="error-messages">
         <p>Por favor, corrija os erros abaixo:</p>
@@ -20,7 +21,66 @@
 {% endif %}
 <form method="post" action="{% url 'create_holding' %}">
     {% csrf_token %}
-    {{ form.as_p }}
+    <div>
+        <label for="{{ form.nome_holding.id_for_label }}">Nome da sua holding:</label>
+        {{ form.nome_holding }}
+    </div>
+    <div>
+        <label for="{{ form.has_successors.id_for_label }}">Você tem sucessores (filhos, netos, ou outros herdeiros)?</label>
+        {{ form.has_successors }}
+    </div>
+    <div>
+        <label for="{{ form.successor_names.id_for_label }}">Se sim, quais são os nomes?</label>
+        {{ form.successor_names }}
+    </div>
+    <div>
+        <label for="{{ form.partner_count.id_for_label }}">Quantas pessoas (sócios ou familiares) estarão envolvidas?</label>
+        {{ form.partner_count }}
+    </div>
+    <div>
+        <label for="{{ form.partner_names.id_for_label }}">Quais são os nomes?</label>
+        {{ form.partner_names }}
+    </div>
+    <div>
+        <label for="{{ form.asset_types.id_for_label }}">Quais tipos de bens você possui?</label>
+        {{ form.asset_types }}
+    </div>
+    <div>
+        <label for="{{ form.valor_patrimonio_integralizado.id_for_label }}">Valor aproximado do seu patrimônio (em R$):</label>
+        {{ form.valor_patrimonio_integralizado }}
+    </div>
+    <div>
+        <label for="{{ form.main_goal.id_for_label }}">Por que você quer criar uma holding?</label>
+        {{ form.main_goal }}
+    </div>
+    <div>
+        <label for="{{ form.has_subsidiaries.id_for_label }}">Você tem empresas ou filiais para incluir?</label>
+        {{ form.has_subsidiaries }}
+    </div>
+    <div>
+        <label for="{{ form.subsidiary_names.id_for_label }}">Se sim, quais são os nomes?</label>
+        {{ form.subsidiary_names }}
+    </div>
+    <div>
+        <label for="{{ form.timeline.id_for_label }}">Você tem pressa para criar a holding?</label>
+        {{ form.timeline }}
+    </div>
+    <div>
+        <label for="{{ form.has_advisors.id_for_label }}">Você trabalha com advogados ou contadores?</label>
+        {{ form.has_advisors }}
+    </div>
+    <div>
+        <label for="{{ form.advisor_info.id_for_label }}">Se sim, quais são os nomes e contatos?</label>
+        {{ form.advisor_info }}
+    </div>
+    <div>
+        <label for="{{ form.update_frequency.id_for_label }}">Com que frequência quer receber atualizações?</label>
+        {{ form.update_frequency }}
+    </div>
+    <div>
+        <label for="{{ form.important_info.id_for_label }}">Quais informações são mais importantes para você?</label>
+        {{ form.important_info }}
+    </div>
     <button type="submit">Enviar</button>
 </form>
 <p><a href="{% url 'dashboard' %}">Voltar ao Dashboard</a></p>
