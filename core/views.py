@@ -17,8 +17,10 @@ def login(request):
                 if request.user.is_authenticated:
                     if request.user.is_superuser:
                         return redirect('/admin/')
-                    return response
-        print("Form errors:", form.errors)
+                    if request.user.user_type == 'cliente':
+                        return redirect('create_holding')
+                    return redirect('dashboard')
+            print("Form errors:", form.errors)
     else:
         form = LoginForm(request=request)
     return render(request, 'core/login.html', {'form': form})
@@ -28,8 +30,10 @@ def signup(request):
         form = SignupForm(request.POST)
         if form.is_valid():
             user = form.save(request)
+            user.user_type = 'cliente'  # Set default user_type for new users
+            user.save()
             auth_login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
-            return redirect('/dashboard/')
+            return redirect('create_holding')
         else:
             print("Form errors:", form.errors)
     else:
@@ -46,9 +50,8 @@ def create_holding(request):
         if form.is_valid():
             holding = form.save(commit=False)
             holding.save()
-            holding.clientes.add(request.user)  # Add current user as a client
-            # Create ProcessoHolding
-            processo = ProcessoHolding.objects.create(
+            holding.clientes.add(request.user)
+            ProcessoHolding.objects.create(
                 cliente_principal=request.user,
                 holding_associada=holding,
                 status_atual='aguardando_documentos'
