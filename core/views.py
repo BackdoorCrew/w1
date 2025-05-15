@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login as auth_login  # Alias to avoid conflict
+from django.contrib.auth import login as auth_login
 from allauth.account.forms import LoginForm, SignupForm
 
 def index(request):
@@ -9,8 +9,8 @@ def login(request):
     if request.method == 'POST':
         form = LoginForm(data=request.POST, request=request)
         if form.is_valid():
-            user = form.get_user()  # Get the authenticated user
-            auth_login(request, user)  # Use django.contrib.auth.login
+            user = form.get_user()
+            auth_login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
             if user.is_superuser:
                 return redirect('/admin/')
             return redirect('/dashboard/')
@@ -22,9 +22,12 @@ def signup(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
-            user = form.save(request)  # Save the user
-            auth_login(request, user)  # Use django.contrib.auth.login
+            user = form.save(request)
+            auth_login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
             return redirect('/dashboard/')
+        else:
+            # Log form errors for debugging
+            print("Form errors:", form.errors)
     else:
         form = SignupForm()
     return render(request, 'core/signup.html', {'form': form})
