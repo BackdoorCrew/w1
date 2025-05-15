@@ -9,13 +9,12 @@ def login(request):
     if request.method == 'POST':
         form = LoginForm(data=request.POST, request=request)
         if form.is_valid():
-            user = form.login(request)  # Authenticate and get user
-            if user:
-                auth_login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
-                if user.is_superuser:
-                    return redirect('/admin/')
-                return redirect('/dashboard/')
-        else:
+            response = form.login(request)  # Authenticate and get response
+            if response:  # Check if response is a redirect
+                if request.user.is_authenticated:
+                    if request.user.is_superuser:
+                        return redirect('/admin/')
+                    return response  # Follow allauth's redirect (e.g., /dashboard/)
             print("Form errors:", form.errors)  # Debug form errors
     else:
         form = LoginForm(request=request)
