@@ -47,11 +47,6 @@
                     <a href="{% url 'account_reset_password' %}" class="forgot-password">Esqueceu sua senha?</a>
                     <button type="submit" class="auth-btn">Entrar</button>
                 </form>
-                <p>Ou entre com:</p>
-                <a href="{% provider_login_url 'google' %}" class="google-login-btn">
-    <img src="{% static 'images/google.webp' %}" alt="Google Logo" class="google-icon">
-    <span>Entrar com Google</span>
-</a>
 
                 <p class="auth-switch">Novo na W1? <a href="{% url 'signup' %}">Crie uma conta</a></p>
             </div>
