@@ -9,11 +9,14 @@ def login(request):
     if request.method == 'POST':
         form = LoginForm(data=request.POST, request=request)
         if form.is_valid():
-            user = form.get_user()
-            auth_login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
-            if user.is_superuser:
-                return redirect('/admin/')
-            return redirect('/dashboard/')
+            user = form.login(request)  # Authenticate and get user
+            if user:
+                auth_login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
+                if user.is_superuser:
+                    return redirect('/admin/')
+                return redirect('/dashboard/')
+        else:
+            print("Form errors:", form.errors)  # Debug form errors
     else:
         form = LoginForm(request=request)
     return render(request, 'core/login.html', {'form': form})
@@ -26,7 +29,6 @@ def signup(request):
             auth_login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
             return redirect('/dashboard/')
         else:
-            # Log form errors for debugging
             print("Form errors:", form.errors)
     else:
         form = SignupForm()
