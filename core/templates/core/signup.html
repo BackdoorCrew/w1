@@ -1,65 +1,27 @@
+{% extends 'core/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - W1 Holding</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-</head>
-<body class="auth-page">
-    <main>
-        <section class="auth-section">
-            <div class="auth-form-container">
-                <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="auth-logo">
-                <h1>Crie sua conta</h1>
-                {% if form.errors %}
-                    <p class="error">Por favor, corrija os erros abaixo:</p>
-                {% endif %}
-                <form method="POST" action="{% url 'signup' %}">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="id_email">E-mail</label>
-                        {{ form.email }}
-                        {% if form.email.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.email.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="id_password1">Senha</label>
-                        {{ form.password1 }}
-                        {% if form.email.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.password1.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        <label for="id_password2">Confirmar Senha</label>
-                        {{ form.password2 }}
-                        {% if form.password2.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.password2.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-                    <button type="submit" class="auth-btn">Cadastrar</button>
-                </form>
-                <p class="auth-switch">Já tem uma conta? <a href="{% url 'login' %}">Faça login</a></p>
-            </div>
-        </section>
-    </main>
-    <script src="{% static 'js/scripts.js' %}"></script>
-</body>
-</html>
+
+{% block content %}
+<h2>Cadastro</h2>
+{% if form.errors or form.non_field_errors %}
+    <div class="error-messages">
+        <p>Por favor, corrija os erros abaixo:</p>
+        <ul>
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li>{{ field.label }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+<form method="post" action="{% url 'signup' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Cadastrar</button>
+</form>
+<p>Já tem uma conta? <a href="{% url 'login' %}">Entrar</a></p>
+{% endblock %}
