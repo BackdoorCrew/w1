@@ -1,0 +1,293 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Simulação - W1 Holding Platform{% endblock %}
+{% block header %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+    .auth-page {
+        width: 100%;
+        padding: 20px;
+        color: #fff;
+        background: #022028;
+    }
+    .auth-section {
+        max-width: 3xl;
+        margin: 0 auto;
+        text-align: center;
+    }
+    .auth-form-container {
+        background: #033038;
+        padding: 24px;
+        border-radius: 8px;
+        text-align: left;
+        box-sizing: border-box;
+    }
+    .auth-logo {
+        max-width: 120px;
+        margin-bottom: 16px;
+    }
+    .auth-form-container h1 {
+        font-size: 1.75rem;
+        font-family: "Cal Sans", sans-serif;
+        color: #fff;
+    }
+    .form-group {
+        margin-bottom: 16px;
+        text-align: left;
+    }
+    label {
+        color: #d1d5db;
+        font-family: "Montserrat", sans-serif;
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    input[type="number"] {
+        background: #044048;
+        color: #fff;
+        padding: 8px;
+        border-radius: 4px;
+        max-width: 200px;
+        width: 100%;
+        border: none;
+        font-family: "Montserrat", sans-serif;
+    }
+    .radio-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .radio-label {
+        padding: 6px 12px;
+        border: 1px solid #5fded4;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #d1d5db;
+        font-size: 0.875rem;
+        transition: background-color 0.2s;
+    }
+    .radio-label:hover {
+        background-color: #5fded433;
+    }
+    input[type="radio"]:checked + .radio-label {
+        background-color: #5fded4;
+        color: #022028;
+    }
+    input[type="radio"] {
+        display: none;
+    }
+    .auth-btn {
+        background-color: #5fded4;
+        color: #022028;
+        padding: 8px 24px;
+        border-radius: 4px;
+        font-weight: bold;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .auth-btn:hover {
+        background-color: #4acbc1;
+    }
+    .errorlist {
+        color: #ff6666;
+        margin-bottom: 8px;
+        list-style: none;
+        padding: 0;
+        font-size: 0.875rem;
+    }
+    .errorlist li {
+        margin-bottom: 4px;
+    }
+    .section-title {
+        font-size: 1.25rem;
+        color: #5fded4;
+        font-family: "Cal Sans", sans-serif;
+        margin: 16px 0 8px;
+    }
+    @media (max-width: 640px) {
+        .auth-form-container {
+            padding: 16px;
+        }
+        input[type="number"] {
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <section class="auth-section">
+        <div class="auth-form-container">
+            <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="auth-logo">
+            <h1>Simulação de Benefícios</h1>
+            <p class="text-gray-300 mb-4 text-sm">Responda às perguntas abaixo para descobrir quanto você pode economizar com uma holding, {{ user.first_name.split.0 }}!</p>
+            
+            {% if form.errors or form.non_field_errors %}
+                <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
+                    <p class="text-sm">Por favor, corrija os erros abaixo:</p>
+                    <ul class="errorlist">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'simulation' %}" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="section-title">Seus Imóveis</div>
+                <!-- Q1: Number of Properties -->
+                <div class="form-group">
+                    <label for="{{ form.number_of_properties.id_for_label }}">{{ form.number_of_properties.label }}</label>
+                    {{ form.number_of_properties }}
+                    {{ form.number_of_properties.errors }}
+                </div>
+
+                <!-- Q2: Total Property Value -->
+                <div id="property-value-field" class="form-group" style="display: none;">
+                    <label for="{{ form.total_property_value.id_for_label }}">{{ form.total_property_value.label }}</label>
+                    {{ form.total_property_value }}
+                    {{ form.total_property_value.errors }}
+                </div>
+
+                <div class="section-title">Suas Empresas</div>
+                <!-- Q3: Has Companies -->
+                <div class="form-group">
+                    <label>{{ form.has_companies.label }}</label>
+                    <div class="radio-group">
+                        {% for choice in form.has_companies %}
+                            <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.has_companies.name }}" value="{{ choice.data.value }}" class="radio-input" {% if choice.data.selected %}checked{% endif %} required>
+                            <label for="{{ choice.id_for_label }}" class="radio-label">{{ choice.data.label }}</label>
+                        {% endfor %}
+                    </div>
+                    {{ form.has_companies.errors }}
+                </div>
+
+                <!-- Q3.1: Number of Companies, Q4: Tax Regime, Q5: Monthly Profit -->
+                <div id="company-fields" class="space-y-2 md:grid md:grid-cols-2 md:gap-4 md:space-y-0" style="display: none;">
+                    <div class="form-group">
+                        <label for="{{ form.number_of_companies.id_for_label }}">{{ form.number_of_companies.label }}</label>
+                        {{ form.number_of_companies }}
+                        {{ form.number_of_companies.errors }}
+                    </div>
+                    <div class="form-group">
+                        <label>{{ form.company_tax_regime.label }}</label>
+                        <div class="radio-group">
+                            {% for choice in form.company_tax_regime %}
+                                <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.company_tax_regime.name }}" value="{{ choice.data.value }}" class="radio-input" {% if choice.data.selected %}checked{% endif %}>
+                                <label for="{{ choice.id_for_label }}" class="radio-label">{{ choice.data.label }}</label>
+                            {% endfor %}
+                        </div>
+                        {{ form.company_tax_regime.errors }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.monthly_profit.id_for_label }}">{{ form.monthly_profit.label }}</label>
+                        {{ form.monthly_profit }}
+                        {{ form.monthly_profit.errors }}
+                    </div>
+                </div>
+
+                <div class="section-title">Seus Aluguéis</div>
+                <!-- Q6: Receives Rent -->
+                <div class="form-group">
+                    <label>{{ form.receives_rent.label }}</label>
+                    <div class="radio-group">
+                        {% for choice in form.receives_rent %}
+                            <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.receives_rent.name }}" value="{{ choice.data.value }}" class="radio-input" {% if choice.data.selected %}checked{% endif %} required>
+                            <label for="{{ choice.id_for_label }}" class="radio-label">{{ choice.data.label }}</label>
+                        {% endfor %}
+                    </div>
+                    {{ form.receives_rent.errors }}
+                </div>
+
+                <!-- Q6.1: Monthly Rent -->
+                <div id="rent-field" class="form-group" style="display: none;">
+                    <label for="{{ form.monthly_rent.id_for_label }}">{{ form.monthly_rent.label }}</label>
+                    {{ form.monthly_rent }}
+                    {{ form.monthly_rent.errors }}
+                </div>
+
+                <div class="section-title">Planejamento Sucessório</div>
+                <!-- Q7: Number of Heirs -->
+                <div class="form-group">
+                    <label for="{{ form.number_of_heirs.id_for_label }}">{{ form.number_of_heirs.label }}</label>
+                    {{ form.number_of_heirs }}
+                    {{ form.number_of_heirs.errors }}
+                </div>
+
+                <!-- Q8: Avoid Conflicts -->
+                <div class="form-group">
+                    <label>{{ form.avoid_conflicts.label }}</label>
+                    <div class="radio-group">
+                        {% for choice in form.avoid_conflicts %}
+                            <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.avoid_conflicts.name }}" value="{{ choice.data.value }}" class="radio-input" {% if choice.data.selected %}checked{% endif %} required>
+                            <label for="{{ choice.id_for_label }}" class="radio-label">{{ choice.data.label }}</label>
+                        {% endfor %}
+                    </div>
+                    {{ form.avoid_conflicts.errors }}
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="auth-btn mt-4">Calcular Benefícios</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const numberOfProperties = document.querySelector('#{{ form.number_of_properties.id_for_label }}');
+        const propertyValueField = document.querySelector('#property-value-field');
+        const hasCompaniesRadios = document.querySelectorAll('input[name="{{ form.has_companies.name }}"]');
+        const companyFields = document.querySelector('#company-fields');
+        const receivesRentRadios = document.querySelectorAll('input[name="{{ form.receives_rent.name }}"]');
+        const rentField = document.querySelector('#rent-field');
+
+        function toggleFields() {
+            // Q2: Show total_property_value if number_of_properties > 0
+            propertyValueField.style.display = numberOfProperties.value > 0 ? 'block' : 'none';
+            const propertyValueInput = propertyValueField.querySelector('input');
+            if (propertyValueInput) {
+                propertyValueInput.required = numberOfProperties.value > 0;
+            }
+
+            // Q3.1, Q4, Q5: Show company fields if has_companies is 'yes'
+            const hasCompanies = document.querySelector('input[name="{{ form.has_companies.name }}"]:checked')?.value === 'yes';
+            companyFields.style.display = hasCompanies ? 'block' : 'none';
+            const companyInputs = companyFields.querySelectorAll('input:not([type="radio"])');
+            companyInputs.forEach(input => {
+                input.required = hasCompanies;
+            });
+            const companyRadioInputs = companyFields.querySelectorAll('input[type="radio"]');
+            companyRadioInputs.forEach(input => {
+                input.required = hasCompanies;
+            });
+
+            // Q6.1: Show monthly_rent if receives_rent is 'yes'
+            const receivesRent = document.querySelector('input[name="{{ form.receives_rent.name }}"]:checked')?.value === 'yes';
+            rentField.style.display = receivesRent ? 'block' : 'none';
+            const rentInput = rentField.querySelector('input');
+            if (rentInput) {
+                rentInput.required = receivesRent;
+            }
+        }
+
+        numberOfProperties.addEventListener('input', toggleFields);
+        hasCompaniesRadios.forEach(radio => radio.addEventListener('change', toggleFields));
+        receivesRentRadios.forEach(radio => radio.addEventListener('change', toggleFields));
+        toggleFields(); // Initial state
+    });
+</script>
+{% endblock %}

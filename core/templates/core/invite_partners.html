@@ -1,0 +1,27 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Convidar Sócios - W1 Holding Platform{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <section class="auth-section">
+        <div class="auth-form-container">
+            <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="auth-logo">
+            <h1>Convidar Sócios/Herdeiros</h1>
+            <p>Você pode criar essa holding sozinho ou convidar seus sócios/herdeiros para colaborar no processo.</p>
+            <form method="post" action="{% url 'invite_partners' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="emails">E-mails dos Sócios/Herdeiros (separados por vírgula)</label>
+                    <textarea id="emails" name="emails" rows="3" class="form-control"></textarea>
+                </div>
+                <button type="submit" class="auth-btn">Enviar Convites</button>
+            </form>
+            <a href="{% url 'dashboard' %}" class="back-link">Voltar ao Dashboard</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

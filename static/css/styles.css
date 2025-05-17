@@ -12,6 +12,7 @@ body {
     font-family: 'Roboto', Arial, sans-serif;
     margin: 0;
     padding: 0;
+    color: #fff;
     background-color: #022028;
 }
 
@@ -710,6 +711,40 @@ footer {
 
 .forgot-password:hover {
     color: #4ac7b7;
+}
+
+.radio-group {
+    display: flex;
+    gap: 1rem;
+}
+.radio-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border: 1px solid #5fded4;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+.radio-label:hover {
+    background-color: #5fded433;
+}
+.radio-input:checked + .radio-label {
+    background-color: #5fded4;
+    color: #022028;
+}
+.radio-input {
+    display: none;
+}
+.form-group input[type="number"],
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #5fded4;
+    border-radius: 0.25rem;
+    background-color: #022028;
+    color: #fff;
+    font-family: Montserrat, sans-serif;
 }
 
 .auth-btn {

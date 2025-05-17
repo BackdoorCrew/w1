@@ -1,197 +1,172 @@
+{% extends 'core/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>W1 Holding Platform</title>
-    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-</head>
-<body>
-    <header>
-        <nav class="navbar">
-            <div class="logo">
-                <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="logo-img">
-            </div>
-           <ul class="plans">
-    
-</ul>
 
-            <ul class="nav-links">
-    <li><a href="#hero">Início</a></li>
-    <li><a href="#holding-info">Holding</a></li>
-    <li><a href="#comparison">Benefícios</a></li>
-    <li><a href="#steps">Etapas</a></li>
-</ul>
-<a href="{% url 'login' %}" class="login-button">Entrar</a>
-        </nav>
-    </header>
+{% block title %}W1 Holding Platform{% endblock %}
 
-    <main>
-        <section class="hero" id="hero">
-            <video class="hero-video" autoplay loop muted playsinline poster="{% static 'images/hero-poster.jpg' %}">
-                <source src="{% static 'videos/profit.mp4' %}" type="video/mp4">
-                Seu navegador não suporta o elemento de vídeo.
-            </video>
-            <div class="hero-content">
-                <h1>Maximize Sua Segurança Financeira</h1>
-                <p class="subtitle">Proteja seu patrimônio e planeje o futuro com uma holding estruturada pela W1.</p>
-                <div class="buttons">
-                    <a href="{% url 'signup' %}" class="btn">Crie sua Conta</a>
-                    <button onclick="comparePrices()">Compare Nossos Preços</button>
-                </div>
-            </div>
-        </section>
-        <section class="holding-info" id="holding-info">
-            <div class="holding-container">
-                <div class="holding-text">
-                    <h2>O Que é uma Holding e Por Que Criar Uma?</h2>
-                    <p class="holding-subtitle">Uma holding é uma empresa criada para gerenciar e proteger bens, otimizando a gestão financeira e sucessória. Com a W1, você estrutura seu patrimônio de forma eficiente e segura.</p>
-                </div>
-                <div class="benefits-grid">
-                    <div class="benefit-card">
-                        <div class="benefit-card-up">
-                            <i class="fas fa-shield-alt benefit-icon"></i>
-                            <h3>Proteção Patrimonial</h3>
-                        </div> 
-                        <p>Separe seus bens pessoais dos empresariais, reduzindo riscos financeiros e jurídicos.</p>
-                    </div>
-                    <div class="benefit-card">
-                        <div class="benefit-card-up">
-                           <i class="fas fa-users benefit-icon"></i>
-                        <h3>Planejamento Sucessório</h3>
-                        </div> 
-                        <p>Facilite a transferência de bens aos herdeiros, com menos custos e burocracia.</p>
-                    </div>
-                    <div class="benefit-card">
-                        <div class="benefit-card-up">
-                           <i class="fas fa-percentage benefit-icon"></i>
-                        <h3>Benefícios Fiscais</h3>
-                        </div> 
-                        
-                        <p>Reduza a carga tributária com estratégias legais e personalizadas.</p>
-                    </div>
-                    <div class="benefit-card">
-                        <div class="benefit-card-up">
-                          <i class="fas fa-cogs benefit-icon"></i>
-                        <h3>Gestão Simplificada</h3>
-                        </div> 
-                        
-                        <p>Controle múltiplos ativos ou empresas em uma única estrutura centralizada.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <section class="comparison" id="comparison">
-        <h2>Economize Impostos com uma Holding</h2>
-        <p class="comparison-subtitle">Insira o valor dos seus bens (veículos, imóveis, dinheiro) e veja quanto você pode economizar ao longo dos anos.</p>
-        <div class="chart-container">
-            <canvas id="comparisonChart"></canvas>
+{% block content %}
+<section class="hero" id="hero">
+    <video class="hero-video" autoplay loop muted playsinline poster="{% static 'images/hero-poster.jpg' %}">
+        <source src="{% static 'videos/profit.mp4' %}" type="video/mp4">
+        Seu navegador não suporta o elemento de vídeo.
+    </video>
+    <div class="hero-content">
+        <h1>Maximize Sua Segurança Financeira</h1>
+        <p class="subtitle">Proteja seu patrimônio e planeje o futuro com uma holding estruturada pela W1.</p>
+        <div class="buttons">
+            <a href="{% url 'signup' %}" class="btn">Crie sua Conta</a>
+            <button onclick="comparePrices()">Compare Nossos Preços</button>
         </div>
-        <div class="items-container">
-            <div class="item-card">
-                <label for="valor-veiculos">Valor Total em Veículos (R$)</label>
-                <input type="number" id="valor-veiculos" placeholder="0" value="0" min="0" step="1000" oninput="updateChart()">
+    </div>
+</section>
+<section class="holding-info" id="holding-info">
+    <div class="holding-container">
+        <div class="holding-text">
+            <h2>O Que é uma Holding e Por Que Criar Uma?</h2>
+            <p class="holding-subtitle">Uma holding é uma empresa criada para gerenciar e proteger bens, otimizando a gestão financeira e sucessória. Com a W1, você estrutura seu patrimônio de forma eficiente e segura.</p>
+        </div>
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-card-up">
+                    <i class="fas fa-shield-alt benefit-icon"></i>
+                    <h3>Proteção Patrimonial</h3>
+                </div> 
+                <p>Separe seus bens pessoais dos empresariais, reduzindo riscos financeiros e jurídicos.</p>
             </div>
-            <div class="item-card">
-                <label for="valor-imoveis">Valor Total em Imóveis (R$)</label>
-                <input type="number" id="valor-imoveis" placeholder="0" value="0" min="0" step="10000" oninput="updateChart()">
+            <div class="benefit-card">
+                <div class="benefit-card-up">
+                    <i class="fas fa-users benefit-icon"></i>
+                    <h3>Planejamento Sucessório</h3>
+                </div> 
+                <p>Facilite a transferência de bens aos herdeiros, com menos custos e burocracia.</p>
             </div>
-            <div class="item-card">
-                <label for="valor-dinheiro">Valor Total em Dinheiro (R$)</label>
-                <input type="number" id="valor-dinheiro" placeholder="0" value="0" min="0" step="1000" oninput="updateChart()">
+            <div class="benefit-card">
+                <div class="benefit-card-up">
+                    <i class="fas fa-percentage benefit-icon"></i>
+                    <h3>Benefícios Fiscais</h3>
+                </div> 
+                <p>Reduza a carga tributária com estratégias legais e personalizadas.</p>
+            </div>
+            <div class="benefit-card">
+                <div class="benefit-card-up">
+                    <i class="fas fa-cogs benefit-icon"></i>
+                    <h3>Gestão Simplificada</h3>
+                </div> 
+                <p>Controle múltiplos ativos ou empresas em uma única estrutura centralizada.</p>
             </div>
         </div>
-    </section>
-        <section class="steps" id="steps">
-        <h2>Criar Sua Holding Nunca Foi Tão Simples</h2>
-        <p class="steps-subtitle">Estruture sua holding em poucos passos simples e rápidos. Proteja seu patrimônio em minutos!</p>
-        <div class="steps-row" data-row="1">
-            <div class="timeline-line"></div>
-            <div class="start-ball"></div>
-            <div class="end-ball"></div>
-            <div class="steps-container">
-                <div class="step" data-step="1">
-                    <div class="step-content">
-                        <i class="fas fa-user-plus step-icon"></i>
-                        <h3>Cadastro na Plataforma</h3>
-                        <p>Você cria sua conta na W1 e escolhe o tipo de holding ideal: Pura, Mista ou Familiar.</p>
-                    </div>
-                </div>
-                <div class="step" data-step="2">
-                    <div class="step-content">
-                        <i class="fas fa-file-upload step-icon"></i>
-                        <h3>Envio de Informações e Documentos</h3>
-                        <p>Você preenche um formulário simples com seus dados, lista de bens e informações sobre herdeiros ou sócios.</p>
-                    </div>
-                </div>
-                <div class="step" data-step="3">
-                    <div class="step-content">
-                        <i class="fas fa-chart-line step-icon"></i>
-                        <h3>Análise Estratégica</h3>
-                        <p>Nosso sistema analisa automaticamente: Qual o melhor modelo tributário e societário, Possibilidades de economia fiscal, Forma ideal de proteger seus bens.</p>
-                    </div>
-                </div>
-                <div class="step" data-step="4">
-                    <div class="step-content">
-                        <i class="fas fa-file-signature step-icon"></i>
-                        <h3>Criação do Estatuto e Contrato Social</h3>
-                        <p>Com as informações fornecidas, são gerados documentos jurídicos prontos para registro, como contrato social, estatuto e cláusulas de proteção e sucessão.</p>
-                    </div>
-                </div>
-            </div>
+    </div>
+</section>
+<section class="comparison" id="comparison">
+    <h2>Economize Impostos com uma Holding</h2>
+    <p class="comparison-subtitle">Insira o valor dos seus bens (veículos, imóveis, dinheiro) e veja quanto você pode economizar ao longo dos anos.</p>
+    <div class="chart-container">
+        <canvas id="comparisonChart"></canvas>
+    </div>
+    <div class="items-container">
+        <div class="item-card">
+            <label for="valor-veiculos">Valor Total em Veículos (R$)</label>
+            <input type="number" id="valor-veiculos" placeholder="0" value="0" min="0" step="1000" oninput="updateChart()">
         </div>
-        <div class="steps-row" data-row="2">
-            <div class="timeline-line"></div>
-            <div class="start-ball"></div>
-            <div class="end-ball"></div>
-            <div class="steps-container">
-                <div class="step" data-step="5">
-                    <div class="step-content">
-                        <i class="fas fa-pen-fancy step-icon"></i>
-                        <h3>Assinatura Digital</h3>
-                        <p>Você assina os documentos diretamente pela plataforma com segurança jurídica e validade legal.</p>
-                    </div>
-                </div>
-                <div class="step" data-step="6">
-                    <div class="step-content">
-                        <i class="fas fa-building step-icon"></i>
-                        <h3>Registro da Empresa</h3>
-                        <p>A W1 cuida do registro: Na Junta Comercial, Obtenção de CNPJ, Cadastro de atividades e capital social.</p>
-                    </div>
-                </div>
-                <div class="step" data-step="7">
-                    <div class="step-content">
-                        <i class="fas fa-exchange-alt step-icon"></i>
-                        <h3>Transferência dos Bens</h3>
-                        <p>Após o registro, você transfere os bens desejados para a holding com apoio do nosso sistema.</p>
-                    </div>
-                </div>
-                <div class="step" data-step="8">
-                    <div class="step-content">
-                        <i class="fas fa-headset step-icon"></i>
-                        <h3>Acompanhamento e Suporte</h3>
-                        <p>Após a criação, oferecemos suporte e acompanhamento contínuo.</p>
-                    </div>
-                </div>
-            </div>
+        <div class="item-card">
+            <label for="valor-imoveis">Valor Total em Imóveis (R$)</label>
+            <input type="number" id="valor-imoveis" placeholder="0" value="0" min="0" step="10000" oninput="updateChart()">
         </div>
-        <div class="steps-cta">
-            <a href="{% url 'signup' %}" class="btn">Comece Agora</a>
+        <div class="item-card">
+            <label for="valor-dinheiro">Valor Total em Dinheiro (R$)</label>
+            <input type="number" id="valor-dinheiro" placeholder="0" value="0" min="0" step="1000" oninput="updateChart()">
         </div>
-    </section>
-    </main>
+    </div>
+</section>
+<section class="steps" id="steps">
+  <h2>Criar Sua Holding Nunca Foi Tão Simples</h2>
+  <p class="steps-subtitle">Estruture sua holding de forma simples, segura e com o acompanhamento de especialistas.</p>
 
-    <footer>
-        <p class="copyright">© 2025 W1 Holding Platform. Todos os direitos reservados.</p>
-        <p class="production">Uma produção de  <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Diogo Coutinho</a> e <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Guilherme Stern</a></p>
-    </footer>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="{% static 'js/scripts.js' %}"></script>
-</body>
-</html>
+  
+  <div class="steps-row" data-row="1">
+    <div class="timeline-line"></div>
+    <div class="start-ball"></div>
+    <div class="end-ball"></div>
+    <div class="steps-container">
+      
+      <div class="step" data-step="1">
+        <div class="step-content">
+          <i class="fas fa-user-plus step-icon"></i>
+          <h3>Criação da Conta</h3>
+          <p>Cadastre-se na W1 e tenha acesso ao seu painel exclusivo para acompanhar todo o processo.</p>
+        </div>
+      </div>
+      
+      <div class="step" data-step="2">
+        <div class="step-content">
+          <i class="fas fa-clipboard-list step-icon"></i>
+          <h3>Preenchimento do Formulário</h3>
+          <p>Responda perguntas simples sobre sua situação patrimonial, empresas e imóveis.</p>
+        </div>
+      </div>
+      
+      <div class="step" data-step="3">
+        <div class="step-content">
+          <i class="fas fa-chart-pie step-icon"></i>
+          <h3>Simulação de Benefícios</h3>
+          <p>Veja quanto você pode economizar com uma holding, de forma clara e personalizada.</p>
+        </div>
+      </div>
+      
+      <div class="step" data-step="4">
+        <div class="step-content">
+          <i class="fas fa-comments step-icon"></i>
+          <h3>Reunião com Especialista</h3>
+          <p>Converse com nossos especialistas para tirar dúvidas e revisar sua simulação antes de seguir.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  
+  <div class="steps-row" data-row="2">
+    <div class="timeline-line"></div>
+    <div class="start-ball"></div>
+    <div class="end-ball"></div>
+    <div class="steps-container">
+      
+      <div class="step" data-step="5">
+        <div class="step-content">
+          <i class="fas fa-file-alt step-icon"></i>
+          <h3>Envio de Documentos</h3>
+          <p>Coletamos os documentos necessários para elaborar o contrato da holding e dar andamento ao processo.</p>
+        </div>
+      </div>
+      
+      <div class="step" data-step="6">
+        <div class="step-content">
+          <i class="fas fa-briefcase step-icon"></i>
+          <h3>Abertura da Empresa</h3>
+          <p>Realizamos todo o processo: Junta Comercial, CNPJ, objeto social e definição de capital.</p>
+        </div>
+      </div>
+      
+      <div class="step" data-step="7">
+        <div class="step-content">
+          <i class="fas fa-exchange-alt step-icon"></i>
+          <h3>Transferência de Bens</h3>
+          <p>Você escolhe quais bens deseja transferir. Fazemos a análise e orientamos em todo o processo.</p>
+        </div>
+      </div>
+      
+      <div class="step" data-step="8">
+        <div class="step-content">
+          <i class="fas fa-user-shield step-icon"></i>
+          <h3>Suporte e Monitoramento</h3>
+          <p>Após a criação da holding, seguimos com acompanhamento, atualizações e suporte contínuo.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="steps-cta">
+    <a href="{% url 'signup' %}" class="btn">Comece Agora</a>
+  </div>
+</section>
+
+{% endblock %}

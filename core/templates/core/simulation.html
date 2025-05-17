@@ -1,0 +1,621 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Resultados da Simulação - W1 Holding Platform{% endblock %}
+{% block header %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+    .auth-page {
+        max-width: none;
+        width: 100%;
+        padding: 20px;
+        color: #fff;
+        background: #022028;
+        display: block;
+    }
+    .auth-section {
+        width: 100%;
+        max-width: 90vw;
+        margin: 0 auto;
+        padding: 0;
+        text-align: center;
+    }
+    .auth-form-container {
+        background: #033038;
+        padding: 30px;
+        border-radius: 8px;
+        width: 90vw;
+        margin: 0 auto;
+        box-sizing: border-box;
+    }
+    .auth-logo {
+        max-width: 150px;
+        margin-bottom: 20px;
+    }
+    .auth-form-container h1 {
+        font-size: 2rem;
+        font-family: "Cal Sans", sans-serif;
+        color: #fff;
+    }
+    h2 {
+        font-size: 1.5rem;
+        color: #5fded4;
+        font-family: "Cal Sans", sans-serif;
+        margin-bottom: 10px;
+    }
+    p {
+        color: #d1d5db;
+        font-family: "Montserrat", sans-serif;
+        margin-bottom: 15px;
+    }
+    .card {
+        background: #044048;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px auto;
+    }
+    .auth-btn {
+        background-color: #5fded4;
+        color: #022028;
+        padding: 10px 20px;
+        width: 60%;
+        border-radius: 4px;
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .auth-btn:hover {
+        background-color: #4acbc1;
+    }
+    .benefit-card {
+        background: #044048;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .property-icon {
+        font-size: 24px;
+        margin: 5px;
+        display: inline-block;
+    }
+    .company-icon {
+        font-size: 24px;
+        margin: 5px;
+        display: inline-block;
+    }
+    .check-icon {
+        color: #5fded4;
+        font-size: 24px;
+        margin-right: 10px;
+    }
+    canvas {
+        max-width: 100%;
+        width: 100%;
+        display: block;
+        margin: 20px auto;
+        max-height: 300px;
+        min-height: 200px;
+    }
+    .benefit-card, .card {
+        animation: fadeIn 0.6s ease-in-out;
+    }
+    .succession-metrics, .benefits-metrics {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .metric-card {
+        background: #055058;
+        padding: 15px;
+        border-radius: 8px;
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+    }
+    .metric-icon {
+        font-size: 28px;
+        margin-bottom: 5px;
+    }
+    .metric-label {
+        font-size: 0.9rem;
+        color: #d1d5db;
+    }
+    .metric-value {
+        font-size: 1rem;
+        color: #5fded4;
+        font-weight: bold;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+{% block footer %}{% endblock %}
+{% block scripts %}
+<!-- Bloqueia scripts externos do base.html, como scripts.js -->
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <section class="auth-section">
+        <div class="auth-form-container">
+            <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="auth-logo">
+            <h1>Resultados da Simulação</h1>
+            <p>Veja como uma holding pode transformar sua gestão patrimonial, {{ user.first_name.split.0 }}!</p>
+
+            <!-- Grid para Benefícios -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Imóveis -->
+                {% if number_of_properties > 0 %}
+                    <div class="benefit-card">
+                        <h2>Seus Imóveis</h2>
+                        <div id="property-icons"></div>
+                        <p>{{ inventory_text|safe }}</p>
+                        <canvas id="inventoryChart"></canvas>
+                    </div>
+                {% endif %}
+
+                <!-- Empresas -->
+                {% if has_companies == 'yes' %}
+                    <div class="benefit-card">
+                        <h2>Suas Empresas</h2>
+                        <div id="company-icons"></div>
+                        <p>{{ profit_text|safe }}</p>
+                        {% if company_tax_regime != 'simples' and monthly_profit > 0 %}
+                            <table class="table-auto w-full text-left text-sm text-gray-300">
+                                <thead>
+                                    <tr>
+                                        <th>Regime</th>
+                                        <th>Lucro Distribuído</th>
+                                        <th>Imposto PF</th>
+                                        <th>Com Holding</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ company_tax_regime|capfirst }}</td>
+                                        <td>R${{ monthly_profit|floatformat:2 }} x 12</td>
+                                        <td>27,5%</td>
+                                        <td>0%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <canvas id="profitChart"></canvas>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <!-- Aluguéis -->
+                {% if receives_rent == 'yes' %}
+                    <div class="benefit-card">
+                        <h2>Seus Aluguéis</h2>
+                        <p>{{ rental_text|safe }}</p>
+                        <canvas id="rentalChart"></canvas>
+                    </div>
+                {% endif %}
+
+                <!-- Sucessão -->
+                {% if number_of_heirs > 0 or avoid_conflicts %}
+                    <div class="benefit-card">
+                        <h2>Planejamento Sucessório</h2>
+                        <p>{{ succession_text|safe }}</p>
+                        {% if number_of_heirs > 0 %}
+                            <div class="succession-metrics">
+                                <div class="metric-card">
+                                    <span class="metric-icon">🧾</span>
+                                    <div class="metric-label">Custo Inventário</div>
+                                    <div class="metric-value">R${{ inventory_cost_without|floatformat:2 }}</div>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-icon">⏳</span>
+                                    <div class="metric-label">Tempo Médio</div>
+                                    <div class="metric-value">{{ inventory_time_without }} meses</div>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-icon">⚖️</span>
+                                    <div class="metric-label">Risco de Conflito</div>
+                                    <div class="metric-value">{{ conflict_risk }}</div>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-icon">✅</span>
+                                    <div class="metric-label">Com Holding</div>
+                                    <div class="metric-value">Grátis e Imediato</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+           <!-- Resumo Total -->
+<div class="card">
+    <h2>Resumo dos Benefícios</h2>
+    <div class="grid grid-cols-1 md:grid-cols-7 gap-2">
+        <!-- Coluna da esquerda (1/5 da largura) -->
+        <div class="flex flex-col justify-center md:col-span-2">
+            {% if inventory_savings > 0 %}
+                <div class="metric-card mb-4">
+                    <span class="metric-icon">🧾</span>
+                    <div class="metric-label">Inventário Evitado</div>
+                    <div class="metric-value">R${{ inventory_savings|floatformat:2 }}</div>
+                </div>
+            {% endif %}
+            {% if profit_savings > 0 %}
+                <div class="metric-card">
+                    <span class="metric-icon">💰</span>
+                    <div class="metric-label">Economia com Lucros</div>
+                    <div class="metric-value">R${{ profit_savings|floatformat:2 }}</div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Coluna do meio com gráfico (3/5 da largura) -->
+        <div class="md:col-span-3">
+            {% if total_savings > 0 %}
+                <canvas id="totalSavingsChart" style="max-height: 300px;"></canvas>
+            {% endif %}
+        </div>
+        
+        <!-- Coluna da direita (1/5 da largura) -->
+        <div class="flex flex-col justify-center md:col-span-2">
+            {% if rental_savings > 0 %}
+                <div class="metric-card mb-4">
+                    <span class="metric-icon">🏢</span>
+                    <div class="metric-label">Economia com Aluguéis</div>
+                    <div class="metric-value">R${{ rental_savings|floatformat:2 }}</div>
+                </div>
+            {% endif %}
+            {% if number_of_heirs > 0 %}
+                <div class="metric-card">
+                    <span class="metric-icon">⏳</span>
+                    <div class="metric-label">Tempo Economizado</div>
+                    <div class="metric-value">{{ inventory_time_without }} meses</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <p class="mt-4">🟢 Economia total estimada: R${{ total_savings|floatformat:2 }}</p>
+    <a href="{% url 'create_holding' %}" class="auth-btn mt-4">Criar sua Holding</a>
+</div>
+        </div>
+    </section>
+</div>
+
+<!-- Chart.js e JavaScript para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Inject Django variables with defaults and debug
+    try {
+        const numberOfProperties = {{ number_of_properties|default:0|safe }};
+        const totalPropertyValue = {{ total_property_value|default:0|safe }};
+        const inventoryCostWithout = {{ inventory_cost_without|default:0|safe }};
+        const inventoryCostWith = {{ inventory_cost_with|default:0|safe }};
+        const numberOfCompanies = {{ number_of_companies|default:0|safe }};
+        const monthlyProfit = {{ monthly_profit|default:0|safe }};
+        const annualProfit = {{ annual_profit|default:0|safe }};
+        const profitSavings = {{ profit_savings|default:0|safe }};
+        const monthlyRent = {{ monthly_rent|default:0|safe }};
+        const annualRent = {{ annual_rent|default:0|safe }};
+        const rentalSavings = {{ rental_savings|default:0|safe }};
+        const inventoryTimeWithout = {{ inventory_time_without|default:0|safe }};
+        const inventoryTimeWith = {{ inventory_time_with|default:0|safe }};
+        const receivesRent = '{{ receives_rent|default:"no"|safe }}' === 'yes';
+        const hasCompanies = '{{ has_companies|default:"no"|safe }}' === 'yes';
+        const numberOfHeirs = {{ number_of_heirs|default:0|safe }};
+        const companyTaxRegime = '{{ company_tax_regime|default:"simples"|safe }}';
+        const inventorySavings = {{ inventory_savings|default:0|safe }};
+        const totalSavings = {{ total_savings|default:0|safe }};
+        const conflictRisk = '{{ conflict_risk|default:"Nenhum"|safe }}';
+
+        console.log("numberOfProperties:", numberOfProperties);
+        console.log("totalPropertyValue:", totalPropertyValue);
+        console.log("inventoryCostWithout:", inventoryCostWithout);
+        console.log("inventorySavings:", inventorySavings);
+        console.log("annualProfit:", annualProfit);
+        console.log("profitSavings:", profitSavings);
+        console.log("annualRent:", annualRent);
+        console.log("rentalSavings:", rentalSavings);
+        console.log("totalSavings:", totalSavings);
+        console.log("numberOfHeirs:", numberOfHeirs);
+        console.log("conflictRisk:", conflictRisk);
+    } catch (error) {
+        console.error("Erro ao injetar variáveis Django:", error);
+    }
+
+    // Chart.js global defaults
+    Chart.defaults.color = '#d1d5db';
+    Chart.defaults.font.family = "'Montserrat', sans-serif";
+
+    // Animated counter for properties
+    try {
+        let propertyCount = 0;
+        const propertyCounter = document.getElementById('property-count');
+        if (propertyCounter && numberOfProperties > 0) {
+            const propertyInterval = setInterval(() => {
+                if (propertyCount < numberOfProperties) {
+                    propertyCount++;
+                    propertyCounter.textContent = propertyCount;
+                } else {
+                    clearInterval(propertyInterval);
+                }
+            }, 200);
+            const propertyIcons = document.getElementById('property-icons');
+            if (propertyIcons) {
+                for (let i = 0; i < numberOfProperties; i++) {
+                    const icon = document.createElement('span');
+                    icon.className = 'property-icon';
+                    icon.textContent = '🏠';
+                    propertyIcons.appendChild(icon);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Erro no contador de propriedades:", error);
+    }
+
+    // Animated counter for companies
+    try {
+        let companyCount = 0;
+        const companyCounter = document.getElementById('company-count');
+        if (companyCounter && numberOfCompanies > 0) {
+            const companyInterval = setInterval(() => {
+                if (companyCount < numberOfCompanies) {
+                    companyCount++;
+                    companyCounter.textContent = companyCount;
+                } else {
+                    clearInterval(companyInterval);
+                }
+            }, 200);
+            const companyIcons = document.getElementById('company-icons');
+            if (companyIcons) {
+                for (let i = 0; i < numberOfCompanies; i++) {
+                    const icon = document.createElement('span');
+                    icon.className = 'company-icon';
+                    icon.textContent = '🏢';
+                    companyIcons.appendChild(icon);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Erro no contador de empresas:", error);
+    }
+
+    // Inventory Chart (Bar)
+    {% if number_of_properties > 0 %}
+        try {
+            const inventoryCtx = document.getElementById('inventoryChart').getContext('2d');
+            new Chart(inventoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Sem Holding (92%)', 'Com Holding (100%)'],
+                    datasets: [{
+                        label: 'Valor dos Imóveis (R$)',
+                        data: [{{ total_property_value|default:0|safe }} - {{ inventory_savings|default:0|safe }}, {{ total_property_value|default:0|safe }}],
+                        backgroundColor: ['#ff6666', '#5fded4']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { color: '#d1d5db' } },
+                        x: { ticks: { color: '#d1d5db' } }
+                    },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `R$ ${context.raw.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log("Gráfico de inventário renderizado!");
+        } catch (error) {
+            console.error("Erro no gráfico de inventário:", error);
+        }
+    {% endif %}
+
+    // Profit Chart (Line)
+    {% if has_companies == 'yes' and company_tax_regime != 'simples' and monthly_profit > 0 %}
+        try {
+            const profitCtx = document.getElementById('profitChart').getContext('2d');
+            const years = Array.from({length: 10}, (_, i) => `Ano ${i + 1}`);
+            const profitWithout = years.map((_, i) => {{ annual_profit|default:0|safe }} * (1 - 0.275) * (i + 1));
+            const profitWith = years.map((_, i) => {{ annual_profit|default:0|safe }} * (i + 1));
+            new Chart(profitCtx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'Sem Holding (72,5%)',
+                            data: profitWithout,
+                            borderColor: '#ff6666',
+                            backgroundColor: '#ff6666',
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Com Holding (100%)',
+                            data: profitWith,
+                            borderColor: '#5fded4',
+                            backgroundColor: '#5fded4',
+                            fill: false,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { 
+                                color: '#d1d5db',
+                                callback: function(value) {
+                                    return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                }
+                            } 
+                        },
+                        x: { ticks: { color: '#d1d5db' } }
+                    },
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            position: 'top',
+                            labels: { color: '#d1d5db' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: R$ ${context.raw.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log("Gráfico de lucros renderizado!");
+        } catch (error) {
+            console.error("Erro no gráfico de lucros:", error);
+        }
+    {% endif %}
+
+    // Rental Chart (Line)
+    {% if receives_rent == 'yes' and monthly_rent > 0 %}
+        try {
+            const rentalCtx = document.getElementById('rentalChart').getContext('2d');
+            const years = Array.from({length: 10}, (_, i) => `Ano ${i + 1}`);
+            const rentWithout = years.map((_, i) => {{ annual_rent|default:0|safe }} * (1 - 0.275) * (i + 1));
+            const rentWith = years.map((_, i) => {{ annual_rent|default:0|safe }} * (1 - 0.11) * (i + 1));
+            new Chart(rentalCtx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'Sem Holding (72,5%)',
+                            data: rentWithout,
+                            borderColor: '#ff6666',
+                            backgroundColor: '#ff6666',
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Com Holding (89%)',
+                            data: rentWith,
+                            borderColor: '#5fded4',
+                            backgroundColor: '#5fded4',
+                            fill: false,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { 
+                                color: '#d1d5db',
+                                callback: function(value) {
+                                    return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                }
+                            } 
+                        },
+                        x: { ticks: { color: '#d1d5db' } }
+                    },
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            position: 'top',
+                            labels: { color: '#d1d5db' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: R$ ${context.raw.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log("Gráfico de aluguéis renderizado!");
+        } catch (error) {
+            console.error("Erro no gráfico de aluguéis:", error);
+        }
+    {% endif %}
+
+    // Total Savings Chart (Pie)
+    {% if total_savings > 0 %}
+        try {
+            const totalSavingsCtx = document.getElementById('totalSavingsChart').getContext('2d');
+            const savingsData = [];
+            const savingsLabels = [];
+            const savingsColors = ['#ff6666', '#ffcc00', '#5fded4'];
+            {% if inventory_savings > 0 %}
+                savingsData.push({{ inventory_savings|default:0|safe }});
+                savingsLabels.push('Inventário');
+            {% endif %}
+            {% if profit_savings > 0 %}
+                savingsData.push({{ profit_savings|default:0|safe }});
+                savingsLabels.push('Lucros');
+            {% endif %}
+            {% if rental_savings > 0 %}
+                savingsData.push({{ rental_savings|default:0|safe }});
+                savingsLabels.push('Aluguéis');
+            {% endif %}
+            if (savingsData.length > 0) {
+                new Chart(totalSavingsCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: savingsLabels,
+                        datasets: [{
+                            data: savingsData,
+                            backgroundColor: savingsColors.slice(0, savingsData.length)
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                position: 'bottom',
+                                labels: { color: '#d1d5db' }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.raw;
+                                        return `${context.label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Economias Totais',
+                                color: '#5fded4',
+                                font: { size: 16 }
+                            }
+                        }
+                    }
+                });
+                console.log("Gráfico de economias totais renderizado!");
+            }
+        } catch (error) {
+            console.error("Erro no gráfico de economias totais:", error);
+        }
+    {% endif %}
+</script>
+{% endblock %}

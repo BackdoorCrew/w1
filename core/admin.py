@@ -14,8 +14,8 @@ class ClienteProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Holding)
 class HoldingAdmin(admin.ModelAdmin):
-    list_display = ['nome_holding', 'data_criacao_registro', 'has_successors', 'rental_property_count']
-    list_filter = ['has_successors', 'has_rental_income']
+    list_display = ['nome_holding', 'data_criacao_registro', 'has_heirs', 'rental_property_count']
+    list_filter = ['has_heirs', 'has_rental_properties']
     search_fields = ['nome_holding']
     filter_horizontal = ['clientes']
 

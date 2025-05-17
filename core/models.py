@@ -28,46 +28,31 @@ class ClienteProfile(models.Model):
 
 class Holding(models.Model):
     nome_holding = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
     clientes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='holdings_participadas', limit_choices_to={'user_type': 'cliente'})
     consultor_responsavel = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='holdings_assessoradas', limit_choices_to={'user_type': 'consultor'})
     data_criacao_registro = models.DateField(null=True, blank=True)
-    # Sucessão
-    has_successors = models.BooleanField(default=False)
-    successor_count = models.PositiveIntegerField(null=True, blank=True)
-    successor_age_range = models.CharField(max_length=50, choices=[
-        ('<18', 'Menores de 18 anos'),
-        ('18-40', '18 a 40 anos'),
-        ('>40', 'Acima de 40 anos'),
-    ], blank=True)
-    has_existing_plan = models.BooleanField(default=False)
-    # Renda de Aluguéis
-    has_rental_income = models.BooleanField(default=False)
+    has_bank_savings = models.BooleanField(default=False)
+    bank_savings_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    has_heirs = models.BooleanField(default=False)
+    heir_count = models.PositiveIntegerField(null=True, blank=True)
+    has_succession_plan = models.BooleanField(default=False)
+    has_paid_inventory = models.BooleanField(default=False)
+    has_rental_properties = models.BooleanField(default=False)
     rental_property_count = models.PositiveIntegerField(null=True, blank=True)
-    rental_details = models.TextField(blank=True, help_text="JSON com endereços, valores de aluguel e despesas")
-    # Empreendimentos/Empresas
+    rental_income_monthly = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    rental_expenses_monthly = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    has_litigation_concerns = models.BooleanField(default=False)
+    has_legal_issues = models.BooleanField(default=False)
+    wants_asset_protection = models.BooleanField(default=False)
+    protected_assets = models.TextField(blank=True, help_text="Descrição dos bens a proteger")
     has_companies = models.BooleanField(default=False)
     company_count = models.PositiveIntegerField(null=True, blank=True)
-    company_details = models.TextField(blank=True, help_text="JSON com receita/lucro e regime tributário")
-    # Proteção Patrimonial
-    has_protection_concerns = models.BooleanField(default=False)
-    has_litigation_risk = models.BooleanField(default=False)
-    protected_assets = models.TextField(blank=True, help_text="Descrição dos bens a proteger")
-    # Vantagens Fiscais
-    irpf_bracket = models.CharField(max_length=50, choices=[
-        ('isento', 'Até R$22.847,76 – Isento'),
-        ('7.5', 'R$22.847,77 a R$33.919,80 – 7,5%'),
-        ('15', 'R$33.919,81 a R$45.012,60 – 15%'),
-        ('22.5', 'R$45.012,61 a R$55.976,16 – 22,5%'),
-        ('27.5', 'Acima de R$55.976,16 – 27,5%'),
-    ], blank=True)
-    has_dividends = models.BooleanField(default=False)
-    dividend_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    # Platform
-    update_frequency = models.CharField(max_length=50, choices=[
-        ('daily', 'Diária'),
-        ('weekly', 'Semanal'),
-        ('monthly', 'Mensal'),
-    ], default='weekly')
+    company_profit_annual = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    distributes_profits = models.BooleanField(default=False)
+    has_multiple_assets = models.BooleanField(default=False)
+    wants_efficient_management = models.BooleanField(default=False)
+    has_management_difficulties = models.BooleanField(default=False)
 
     def __str__(self):
         return self.nome_holding

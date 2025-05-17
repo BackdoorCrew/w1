@@ -1,71 +1,126 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
+{% block title %}Criar Holding - W1 Holding Platform{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
 {% block content %}
-<h2>Criar Sua Holding</h2>
-<p>Responda às perguntas abaixo para personalizar sua holding.</p>
-{% if form.errors or form.non_field_errors %}
-    <div class="error-messages">
-        <p>Por favor, corrija os erros abaixo:</p>
-        <ul>
-            {% for field in form %}
-                {% for error in field.errors %}
-                    <li>{{ field.label }}: {{ error }}</li>
+<section class="questionnaire-section">
+    <h2>Criar Sua Holding</h2>
+    <p>Responda às perguntas abaixo para personalizar sua holding e ver as vantagens.</p>
+    {% if form.errors or form.non_field_errors %}
+        <div class="error-messages">
+            <p>Por favor, corrija os erros abaixo:</p>
+            <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
                 {% endfor %}
-            {% endfor %}
-            {% for error in form.non_field_errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-{% endif %}
-<form method="post" action="{% url 'create_holding' %}" id="holding-form">
-    {% csrf_token %}
-    {{ form.nome_holding.label_tag }} {{ form.nome_holding }}
-    <h3>Sucessão</h3>
-    {{ form.has_successors.label_tag }} {{ form.has_successors }}
-    <div id="succession-details" style="display: none;">
-        {{ form.successor_count.label_tag }} {{ form.successor_count }}
-        {{ form.successor_age_range.label_tag }} {{ form.successor_age_range }}
-        {{ form.has_existing_plan.label_tag }} {{ form.has_existing_plan }}
-    </div>
-    <h3>Renda de Aluguéis</h3>
-    {{ form.has_rental_income.label_tag }} {{ form.has_rental_income }}
-    <div id="rental-details" style="display: none;">
-        {{ form.rental_property_count.label_tag }} {{ form.rental_property_count }}
-        <div id="rental-properties">
-            <!-- Dynamic fields added by JS -->
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
         </div>
-        <button type="button" onclick="addRentalProperty()">Adicionar Imóvel</button>
-        {{ form.rental_properties }}
-    </div>
-    <h3>Empreendimentos e Outras Rendas</h3>
-    {{ form.has_companies.label_tag }} {{ form.has_companies }}
-    <div id="company-details" style="display: none;">
-        {{ form.company_count.label_tag }} {{ form.company_count }}
-        <div id="companies">
-            <!-- Dynamic fields added by JS -->
+    {% endif %}
+    <form method="post" action="{% url 'create_holding' %}" class="questionnaire-form" id="holding-form">
+        {% csrf_token %}
+        <h3>Dados Iniciais</h3>
+        <div class="form-group">
+            {{ form.nome_holding.label_tag }} {{ form.nome_holding }}
         </div>
-        <button type="button" onclick="addCompany()">Adicionar Empresa</button>
-        {{ form.companies }}
-    </div>
-    <h3>Proteção Patrimonial</h3>
-    {{ form.has_protection_concerns.label_tag }} {{ form.has_protection_concerns }}
-    <div id="protection-details" style="display: none;">
-        {{ form.has_litigation_risk.label_tag }} {{ form.has_litigation_risk }}
-        {{ form.protected_assets.label_tag }} {{ form.protected_assets }}
-    </div>
-    <h3>Vantagens Fiscais</h3>
-    {{ form.irpf_bracket.label_tag }} {{ form.irpf_bracket }}
-    {{ form.has_dividends.label_tag }} {{ form.has_dividends }}
-    <div id="dividend-details" style="display: none;">
-        {{ form.dividend_amount.label_tag }} {{ form.dividend_amount }}
-    </div>
-    <h3>Preferências</h3>
-    {{ form.update_frequency.label_tag }} {{ form.update_frequency }}
-    <button type="submit">Enviar</button>
-</form>
-<p><a href="{% url 'dashboard' %}">Voltar ao Dashboard</a></p>
+        <h3>💰 Dinheiro em Banco</h3>
+        <p>Saber quanto você tem armazenado em banco ajuda a planejar investimentos e proteção patrimonial.</p>
+        <div class="form-group">
+            {{ form.has_bank_savings.label_tag }} Você tem dinheiro armazenado em banco? {{ form.has_bank_savings }}
+        </div>
+        <div id="bank-savings-details" class="details" style="display: none;">
+            <div class="form-group">
+                {{ form.bank_savings_amount.label_tag }} Qual o valor aproximado (R$)? {{ form.bank_savings_amount }}
+            </div>
+        </div>
+        <h3>🧠 Sucessão Familiar sem Inventário</h3>
+        <p>Evite custos de até 20% e anos de espera transferindo cotas da holding aos herdeiros em vida.</p>
+        <div class="form-group">
+            {{ form.has_heirs.label_tag }} Você tem herdeiros? {{ form.has_heirs }}
+        </div>
+        <div id="heirs-details" class="details" style="display: none;">
+            <div class="form-group">
+                {{ form.heir_count.label_tag }} Quantos herdeiros? {{ form.heir_count }}
+            </div>
+            <div class="form-group">
+                {{ form.has_succession_plan.label_tag }} Você já pensou em como deixará seus bens para eles? {{ form.has_succession_plan }}
+            </div>
+            <div class="form-group">
+                {{ form.has_paid_inventory.label_tag }} Já fez ou pagou por inventário de algum parente? {{ form.has_paid_inventory }}
+            </div>
+        </div>
+        <h3>🧠 Economia no Imposto sobre Aluguel</h3>
+        <p>Reduza o imposto sobre aluguéis de até 27,5% (pessoa física) para cerca de 11,33% (holding).</p>
+        <div class="form-group">
+            {{ form.has_rental_properties.label_tag }} Você tem imóveis alugados? {{ form.has_rental_properties }}
+        </div>
+        <div id="rental-details" class="details" style="display: none;">
+            <div class="form-group">
+                {{ form.rental_property_count.label_tag }} Quantos imóveis? {{ form.rental_property_count }}
+            </div>
+            <div class="form-group">
+                {{ form.rental_income_monthly.label_tag }} Qual valor você recebe de aluguel por mês (R$)? {{ form.rental_income_monthly }}
+            </div>
+            <div class="form-group">
+                {{ form.rental_expenses_monthly.label_tag }} Quais despesas você tem com esses imóveis por mês (R$)? {{ form.rental_expenses_monthly }}
+            </div>
+        </div>
+        <h3>🧠 Proteção Patrimonial</h3>
+        <p>Proteja seus bens contra ações judiciais, dívidas ou divórcios, mantendo-os em nome da holding.</p>
+        <div class="form-group">
+            {{ form.has_litigation_concerns.label_tag }} Você tem receio de ações judiciais contra você ou sua empresa? {{ form.has_litigation_concerns }}
+        </div>
+        <div id="protection-details" class="details" style="display: none;">
+            <div class="form-group">
+                {{ form.has_legal_issues.label_tag }} Já teve problemas legais ou está em um setor de risco? {{ form.has_legal_issues }}
+            </div>
+            <div class="form-group">
+                {{ form.wants_asset_protection.label_tag }} Você quer proteger imóveis e patrimônios da sua família? {{ form.wants_asset_protection }}
+            </div>
+            <div class="form-group">
+                {{ form.protected_assets.label_tag }} Descreva os bens que deseja proteger: {{ form.protected_assets }}
+            </div>
+        </div>
+        <h3>🧠 Economia sobre Lucros Empresariais</h3>
+        <p>Centralize lucros de empresas na holding para otimizar impostos e planejar distribuições.</p>
+        <div class="form-group">
+            {{ form.has_companies.label_tag }} Você é sócio de empresas? {{ form.has_companies }}
+        </div>
+        <div id="company-details" class="details" style="display: none;">
+            <div class="form-group">
+                {{ form.company_count.label_tag }} Quantas empresas? {{ form.company_count }}
+            </div>
+            <div class="form-group">
+                {{ form.company_profit_annual.label_tag }} Qual o lucro anual aproximado delas (R$)? {{ form.company_profit_annual }}
+            </div>
+            <div class="form-group">
+                {{ form.distributes_profits.label_tag }} Você costuma distribuir lucros ou reinvestir? {{ form.distributes_profits }}
+            </div>
+        </div>
+        <h3>🧠 Gestão Eficiente de Patrimônio</h3>
+        <p>Gerencie todos os seus bens em um único CNPJ, facilitando vendas e controle financeiro.</p>
+        <div class="form-group">
+            {{ form.has_multiple_assets.label_tag }} Você tem muitos bens em seu nome? {{ form.has_multiple_assets }}
+        </div>
+        <div id="management-details" class="details" style="display: none;">
+            <div class="form-group">
+                {{ form.wants_efficient_management.label_tag }} Gostaria de facilitar a gestão e venda desses bens? {{ form.wants_efficient_management }}
+            </div>
+            <div class="form-group">
+                {{ form.has_management_difficulties.label_tag }} Já teve dificuldades com controle patrimonial ou burocracias? {{ form.has_management_difficulties }}
+            </div>
+        COMMA
+        </div>
+        <button type="submit" class="submit-btn">Enviar</button>
+    </form>
+    <a href="{% url 'dashboard' %}" class="back-link">Voltar ao Dashboard</a>
+</section>
 
 <script>
     function toggleDetails(checkboxId, detailsId) {
@@ -74,84 +129,23 @@
         details.style.display = checkbox.checked ? 'block' : 'none';
     }
 
-    document.getElementById('id_has_successors').addEventListener('change', () => {
-        toggleDetails('id_has_successors', 'succession-details');
+    document.getElementById('id_has_bank_savings').addEventListener('change', () => {
+        toggleDetails('id_has_bank_savings', 'bank-savings-details');
     });
-    document.getElementById('id_has_rental_income').addEventListener('change', () => {
-        toggleDetails('id_has_rental_income', 'rental-details');
+    document.getElementById('id_has_heirs').addEventListener('change', () => {
+        toggleDetails('id_has_heirs', 'heirs-details');
+    });
+    document.getElementById('id_has_rental_properties').addEventListener('change', () => {
+        toggleDetails('id_has_rental_properties', 'rental-details');
+    });
+    document.getElementById('id_has_litigation_concerns').addEventListener('change', () => {
+        toggleDetails('id_has_litigation_concerns', 'protection-details');
     });
     document.getElementById('id_has_companies').addEventListener('change', () => {
         toggleDetails('id_has_companies', 'company-details');
     });
-    document.getElementById('id_has_protection_concerns').addEventListener('change', () => {
-        toggleDetails('id_has_protection_concerns', 'protection-details');
-    });
-    document.getElementById('id_has_dividends').addEventListener('change', () => {
-        toggleDetails('id_has_dividends', 'dividend-details');
-    });
-
-    let rentalCount = 0;
-    function addRentalProperty() {
-        rentalCount++;
-        const container = document.getElementById('rental-properties');
-        const div = document.createElement('div');
-        div.innerHTML = `
-            <h4>Imóvel ${rentalCount}</h4>
-            <label>Endereço (opcional):</label>
-            <input type="text" name="rental_address_${rentalCount}">
-            <label>Valor mensal de aluguel (R$):</label>
-            <input type="number" step="0.01" name="rental_value_${rentalCount}" required>
-            <label>Despesas mensais (IPTU, condomínio, etc.) (R$):</label>
-            <input type="number" step="0.01" name="rental_expenses_${rentalCount}">
-        `;
-        container.appendChild(div);
-        updateRentalProperties();
-    }
-
-    let companyCount = 0;
-    function addCompany() {
-        companyCount++;
-        const container = document.getElementById('companies');
-        const div = document.createElement('div');
-        div.innerHTML = `
-            <h4>Empresa ${companyCount}</h4>
-            <label>Receita ou lucro anual (R$):</label>
-            <input type="number" step="0.01" name="company_profit_${companyCount}" required>
-            <label>Regime tributário:</label>
-            <select name="company_regime_${companyCount}">
-                <option value="simples">Simples</option>
-                <option value="presumido">Lucro Presumido</option>
-                <option value="real">Lucro Real</option>
-            </select>
-        `;
-        container.appendChild(div);
-        updateCompanies();
-    }
-
-    function updateRentalProperties() {
-        const properties = [];
-        for (let i = 1; i <= rentalCount; i++) {
-            const address = document.querySelector(`input[name="rental_address_${i}"]`)?.value || '';
-            const value = document.querySelector(`input[name="rental_value_${i}"]`)?.value || 0;
-            const expenses = document.querySelector(`input[name="rental_expenses_${i}"]`)?.value || 0;
-            properties.push({ address, value: parseFloat(value), expenses: parseFloat(expenses) });
-        }
-        document.getElementById('id_rental_properties').value = JSON.stringify(properties);
-    }
-
-    function updateCompanies() {
-        const companies = [];
-        for (let i = 1; i <= companyCount; i++) {
-            const profit = document.querySelector(`input[name="company_profit_${i}"]`)?.value || 0;
-            const regime = document.querySelector(`select[name="company_regime_${i}"]`)?.value || '';
-            companies.push({ profit: parseFloat(profit), regime });
-        }
-        document.getElementById('id_companies').value = JSON.stringify(companies);
-    }
-
-    document.getElementById('holding-form').addEventListener('input', () => {
-        updateRentalProperties();
-        updateCompanies();
+    document.getElementById('id_has_multiple_assets').addEventListener('change', () => {
+        toggleDetails('id_has_multiple_assets', 'management-details');
     });
 </script>
 {% endblock %}

@@ -1,6 +1,6 @@
 Python/Django
 
-venv/ pycache/ *.pyc *.pyo *.pyd *.sqlite3 .env .env.local .env. # Covers .env.development, .env.production, etc. staticfiles/ *.log *.pid *.seed *.bak migrations/ # Optional: Ignore auto-generated migration files (if not version-controlled)
+venv/ pycache/ *.pyc *.pyo *.pyd *.sqlite3 .env .env.local .env.staticfiles/ *.log *.pid *.seed *.bak #migrations/ # Uncomment if you don’t version-control migrations
 
 Docker
 
@@ -8,11 +8,11 @@ Docker
 
 Database
 
-*.sql *.dump pgdata/ # PostgreSQL data directory (if used locally)
+*.sql *.dump pgdata/
 
 System Files
 
-.DS_Store Thumbs.db .idea/ # JetBrains IDE (PyCharm) .vscode/ # Visual Studio Code *.swp *.swo
+.DS_Store Thumbs.db .idea/ .vscode/ *.swp *.swo
 
 Build/Deployment
 

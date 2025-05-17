@@ -1,55 +1,47 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>W1 Holding Platform</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h2 {
-            text-align: center;
-        }
-        .error-messages {
-            color: red;
-            margin-bottom: 10px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        a {
-            color: #0066cc;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <title>{% block title %}W1 Holding Platform{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@100;400;700;900&family=Cal+Sans&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
-    <div class="container">
+    {% block header %}
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="logo-img">
+            </div>
+            <ul class="nav-links">
+                <li><a href="{% url 'index' %}#hero">Início</a></li>
+                <li><a href="{% url 'index' %}#holding-info">Holding</a></li>
+                <li><a href="{% url 'index' %}#comparison">Benefícios</a></li>
+                <li><a href="{% url 'index' %}#steps">Etapas</a></li>
+            </ul>
+            {% if user.is_authenticated %}
+                <a href="{% url 'account_logout' %}" class="login-button">Sair</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="login-button">Entrar</a>
+            {% endif %}
+        </nav>
+    </header>
+    {% endblock %}
+    <main>
         {% block content %}
         {% endblock %}
-    </div>
+    </main>
+    {% block footer %}
+    <footer>
+        <p class="copyright">© 2025 W1 Holding Platform. Todos os direitos reservados.</p>
+        <p class="production">Uma produção de <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Diogo Coutinho</a> e <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Guilherme Stern</a></p>
+    </footer>
+    {% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="{% static 'js/scripts.js' %}"></script>
 </body>
 </html>

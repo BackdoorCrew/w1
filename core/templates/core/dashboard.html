@@ -1,13 +1,19 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - W1 Holding</title>
-</head>
-<body>
-    <h1>Bem-vindo ao Dashboard!</h1>
-    <p>Usuário logado: {{ user.username }}</p>
-    <a href="{% url 'account_logout' %}">Sair</a>
-</body>
-</html>
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - W1 Holding Platform{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <section class="auth-section">
+        <div class="auth-form-container">
+            <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="auth-logo">
+            <h1>Bem-vindo ao Dashboard, {{ user.first_name }}!</h1>
+            <p>Sua holding foi criada com sucesso. Aqui você poderá gerenciá-la em breve.</p>
+            <a href="{% url 'invite_partners' %}" class="auth-btn">Convidar Sócios</a>
+        </div>
+    </section>
+</div>
+{% endblock %}
