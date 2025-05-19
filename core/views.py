@@ -2,11 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
 from allauth.account.forms import LoginForm, SignupForm
-from .forms import HoldingForm, SimulationForm
-from .models import Holding, ProcessoHolding, AnaliseEconomia, User
-from datetime import date
-from django.core.mail import send_mail
-from django.conf import settings
+from .forms import SimulationForm
+from .models import User, SimulationResult
 from decimal import Decimal
 
 # Tax rates for calculations
@@ -26,7 +23,7 @@ def login(request):
             auth_login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
             if user.is_superuser:
                 return redirect('/admin/')
-            return redirect('dashboard')
+            return redirect('forms')
         print("Form errors:", form.errors)
     else:
         form = LoginForm(request=request)
@@ -40,7 +37,7 @@ def signup(request):
             user.user_type = 'cliente'
             user.save()
             auth_login(request, user, backend='allauth.account.auth_backends.AuthenticationBackend')
-            return redirect('dashboard')
+            return redirect('forms')
         else:
             print("Form errors:", form.errors)
     else:
@@ -48,9 +45,9 @@ def signup(request):
     return render(request, 'core/signup.html', {'form': form})
 
 @login_required
-def dashboard(request):
+def forms(request):
     form = SimulationForm()
-    return render(request, 'core/simulation_input.html', {'form': form, 'user': request.user})
+    return render(request, 'core/forms.html', {'form': form, 'user': request.user})
 
 @login_required
 def simulation(request):
@@ -64,6 +61,7 @@ def simulation(request):
             inventory_text = ""
             number_of_properties = cleaned_data.get('number_of_properties', 0)
             total_property_value = cleaned_data.get('total_property_value', Decimal('0'))
+            inventory_cost_without = Decimal('0')
             if number_of_properties > 0 and total_property_value > 0:
                 inventory_cost_without = total_property_value * INVENTORY_COST_RATE
                 inventory_cost_with = Decimal('0')
@@ -81,10 +79,11 @@ def simulation(request):
             profit_text = ""
             annual_profit = Decimal('0')
             tax_regime_label = {'simples': 'Simples', 'presumido': 'Presumido', 'real': 'Real'}
-            if cleaned_data.get('has_companies') == 'yes':
-                number_of_companies = cleaned_data.get('number_of_companies', 0)
-                monthly_profit = cleaned_data.get('monthly_profit', Decimal('0'))
-                company_tax_regime = cleaned_data.get('company_tax_regime')
+            has_companies = cleaned_data.get('has_companies') == 'yes'
+            number_of_companies = cleaned_data.get('number_of_companies', 0)
+            monthly_profit = cleaned_data.get('monthly_profit', Decimal('0'))
+            company_tax_regime = cleaned_data.get('company_tax_regime', 'simples')
+            if has_companies:
                 annual_profit = monthly_profit * Decimal('12')
                 if company_tax_regime in ['presumido', 'real']:
                     profit_savings = annual_profit * PROFIT_TAX_PF
@@ -107,8 +106,9 @@ def simulation(request):
             rental_savings = Decimal('0')
             rental_text = ""
             annual_rent = Decimal('0')
-            if cleaned_data.get('receives_rent') == 'yes':
-                monthly_rent = cleaned_data.get('monthly_rent', Decimal('0'))
+            receives_rent = cleaned_data.get('receives_rent') == 'yes'
+            monthly_rent = cleaned_data.get('monthly_rent', Decimal('0'))
+            if receives_rent:
                 annual_rent = monthly_rent * Decimal('12')
                 tax_without_holding = annual_rent * RENTAL_TAX_PF
                 tax_with_holding = annual_rent * RENTAL_TAX_PJ
@@ -125,7 +125,6 @@ def simulation(request):
             # Succession Planning (Questions 7 & 8)
             succession_text = ""
             inventory_time_without = 0
-            inventory_cost_without = Decimal('0')
             inventory_time_with = 0
             conflict_risk = "Nenhum"
             number_of_heirs = cleaned_data.get('number_of_heirs', 0)
@@ -162,8 +161,35 @@ def simulation(request):
             # Total Savings
             total_savings = inventory_savings + profit_savings + rental_savings
 
+            # Save simulation results
+            simulation_result = SimulationResult(
+                user=request.user,
+                number_of_properties=number_of_properties,
+                total_property_value=total_property_value,
+                inventory_cost_without=inventory_cost_without,
+                inventory_cost_with=Decimal('0'),
+                number_of_companies=number_of_companies,
+                monthly_profit=monthly_profit,
+                annual_profit=annual_profit,
+                profit_savings=profit_savings,
+                monthly_rent=monthly_rent,
+                annual_rent=annual_rent,
+                rental_savings=rental_savings,
+                inventory_time_without=inventory_time_without,
+                inventory_time_with=inventory_time_with,
+                receives_rent=receives_rent,
+                has_companies=has_companies,
+                number_of_heirs=number_of_heirs,
+                company_tax_regime=company_tax_regime,
+                inventory_savings=inventory_savings,
+                total_savings=total_savings,
+                conflict_risk=conflict_risk,
+            )
+            simulation_result.save()
+
             # Context for template
             context = {
+                'user': request.user,
                 'number_of_properties': number_of_properties,
                 'total_property_value': float(total_property_value),
                 'inventory_savings': float(inventory_savings),
@@ -171,14 +197,14 @@ def simulation(request):
                 'inventory_cost_without': float(inventory_cost_without),
                 'inventory_cost_with': 0.0,
                 'has_companies': cleaned_data.get('has_companies'),
-                'number_of_companies': cleaned_data.get('number_of_companies', 0),
-                'company_tax_regime': cleaned_data.get('company_tax_regime'),
-                'monthly_profit': float(cleaned_data.get('monthly_profit', 0)),
+                'number_of_companies': number_of_companies,
+                'company_tax_regime': company_tax_regime,
+                'monthly_profit': float(monthly_profit),
                 'annual_profit': float(annual_profit),
                 'profit_savings': float(profit_savings),
                 'profit_text': profit_text,
                 'receives_rent': cleaned_data.get('receives_rent'),
-                'monthly_rent': float(cleaned_data.get('monthly_rent', 0)),
+                'monthly_rent': float(monthly_rent),
                 'annual_rent': float(annual_rent),
                 'rental_savings': float(rental_savings),
                 'rental_text': rental_text,
@@ -194,55 +220,18 @@ def simulation(request):
             return render(request, 'core/simulation.html', context)
         else:
             print("Form errors:", form.errors)
-            return render(request, 'core/simulation_input.html', {'form': form, 'user': request.user})
-    return redirect('dashboard')
+            return render(request, 'core/forms.html', {'form': form, 'user': request.user})
+    return redirect('forms')
 
 @login_required
-def create_holding(request):
-    if request.method == 'POST':
-        form = HoldingForm(request.POST)
-        if form.is_valid():
-            holding = form.save()
-            holding.clientes.add(request.user)
-            ProcessoHolding.objects.create(
-                cliente_principal=request.user,
-                holding_associada=holding,
-                status_atual='aguardando_documentos'
-            )
-            return redirect('dashboard_final')
-        else:
-            print("Form errors:", form.errors)
-    else:
-        form = HoldingForm(initial={'nome_holding': f"{request.user.first_name} Legacy Holdings"})
-    return render(request, 'core/create_holding.html', {'form': form})
+def dashboard(request):
+    try:
+        latest_simulation = SimulationResult.objects.filter(user=request.user).latest('created_at')
+    except SimulationResult.DoesNotExist:
+        latest_simulation = None
 
-@login_required
-def dashboard_final(request):
-    return render(request, 'core/dashboard.html', {'user': request.user})
-
-@login_required
-def invite_partners(request):
-    holding = Holding.objects.filter(clientes=request.user).first()
-    if not holding:
-        return redirect('create_holding')
-    if request.method == 'POST':
-        emails = request.POST.get('emails', '').split(',')
-        for email in emails:
-            email = email.strip()
-            if email:
-                try:
-                    user, created = User.objects.get_or_create(
-                        email=email,
-                        defaults={'user_type': 'cliente', 'first_name': email.split('@')[0]}
-                    )
-                    holding.clientes.add(user)
-                    send_mail(
-                        subject='Convite para Colaborar na Holding',
-                        message=f'Você foi convidado por {request.user.first_name} para colaborar na holding {holding.nome_holding}. Acesse: http://127.0.0.1:8000/simulation/',
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[email],
-                    )
-                except Exception as e:
-                    print(f"Error inviting {email}: {e}")
-        return redirect('dashboard_final')
-    return render(request, 'core/invite_partners.html')
+    context = {
+        'user': request.user,
+        'simulation_result': latest_simulation,
+    }
+    return render(request, 'core/dashboard.html', context)

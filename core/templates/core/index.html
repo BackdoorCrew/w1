@@ -56,29 +56,50 @@
         </div>
     </div>
 </section>
+{% load static %}
 <section class="comparison" id="comparison">
-    <h2>Economize Impostos com uma Holding</h2>
-    <p class="comparison-subtitle">Insira o valor dos seus bens (veículos, imóveis, dinheiro) e veja quanto você pode economizar ao longo dos anos.</p>
-    <div class="chart-container">
-        <canvas id="comparisonChart"></canvas>
+    <h2>A Gestão Inteligente para seu Patrimônio</h2>
+    <p class="comparison-subtitle">Descubra como a W1 Holding otimiza seus impostos, protege seu patrimônio e simplifica a sucessão, com benefícios financeiros imediatos.</p>
+    <div class="comparison-content">
+        <div class="left-column">
+            <div class="savings-block" id="block1"></div>
+            <div class="savings-block" id="block2"></div>
+        </div>
+        <div class="right-column">
+            <div class="image-container" id="image-container">
+                <img id="model-image" src="" alt="Modelo">
+                <div class="image-overlay"></div>
+                <div class="image-text" id="model-text"></div>
+                <a href="{% url 'signup' %}" class="image-btn" id="model-btn">Faça Sua Simulação</a>
+            </div>
+        </div>
     </div>
-    <div class="items-container">
-        <div class="item-card">
-            <label for="valor-veiculos">Valor Total em Veículos (R$)</label>
-            <input type="number" id="valor-veiculos" placeholder="0" value="0" min="0" step="1000" oninput="updateChart()">
+    <div class="model-buttons">
+        <div class="model-btn-wrapper">
+            <span class="model-btn active" data-model="aluguel"><i class="fas fa-home"></i> ALUGUEL</span>
+            <div class="timer-line" data-model="aluguel"></div>
         </div>
-        <div class="item-card">
-            <label for="valor-imoveis">Valor Total em Imóveis (R$)</label>
-            <input type="number" id="valor-imoveis" placeholder="0" value="0" min="0" step="10000" oninput="updateChart()">
+        <div class="model-btn-wrapper">
+            <span class="model-btn" data-model="empresas"><i class="fas fa-briefcase"></i> EMPRESAS</span>
+            <div class="timer-line" data-model="empresas"></div>
         </div>
-        <div class="item-card">
-            <label for="valor-dinheiro">Valor Total em Dinheiro (R$)</label>
-            <input type="number" id="valor-dinheiro" placeholder="0" value="0" min="0" step="1000" oninput="updateChart()">
+        <div class="model-btn-wrapper">
+            <span class="model-btn" data-model="sucessorio"><i class="fas fa-users"></i> PLANEJAMENTO SUCESSÓRIO</span>
+            <div class="timer-line" data-model="sucessorio"></div>
         </div>
     </div>
 </section>
+
+<script>
+    // Pass static image paths to JavaScript
+    window.modelImages = {
+        aluguel: "{% static 'images/aluguel.png' %}",
+        empresas: "{% static 'images/empresa.jpg' %}",
+        sucessorio: "{% static 'images/sucessorio.jpg' %}"
+    };
+</script>
 <section class="steps" id="steps">
-  <h2>Criar Sua Holding Nunca Foi Tão Simples</h2>
+  <h2>As Etapas para sua Liberdade Financeira</h2>
   <p class="steps-subtitle">Estruture sua holding de forma simples, segura e com o acompanhamento de especialistas.</p>
 
   

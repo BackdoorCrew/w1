@@ -10,7 +10,10 @@ function selectPlan(plan) {
 }
 
 function comparePrices() {
-    document.querySelector('#comparison').scrollIntoView({ behavior: 'smooth' });
+    const comparisonSection = document.querySelector('#comparison');
+    if (comparisonSection) {
+        comparisonSection.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 function handleCredentialResponse(response) {
@@ -93,9 +96,9 @@ function initializeChart() {
 }
 
 function getAssetsValue() {
-    const vVeiculos = Number(document.getElementById('valor-veiculos').value) || 0;
-    const vImoveis = Number(document.getElementById('valor-imoveis').value) || 0;
-    const vDinheiro = Number(document.getElementById('valor-dinheiro').value) || 0;
+    const vVeiculos = Number(document.getElementById('valor-veiculos')?.value) || 0;
+    const vImoveis = Number(document.getElementById('valor-imoveis')?.value) || 0;
+    const vDinheiro = Number(document.getElementById('valor-dinheiro')?.value) || 0;
     return { veiculos: vVeiculos, imoveis: vImoveis, dinheiro: vDinheiro };
 }
 
@@ -105,23 +108,16 @@ function calculateSavings(assets) {
 
     for (let y = 0; y <= years; y++) {
         let totalSavings = 0;
-
-        // Veículos: 2.5% IPVA + 15% capital gains every 10y (without); 1% effective (with)
         const veiculosWithout = assets.veiculos * (0.025 * y + (y >= 10 ? 0.15 : 0) + (y == 20 ? 0.15 : 0));
         const veiculosWith = assets.veiculos * (0.01 * y);
         totalSavings += veiculosWithout - veiculosWith;
-
-        // Imóveis: 1% IPTU + 15% gains + 8% ITCMD every 10y (without); 0.5% effective (with)
         const imoveisWithout = assets.imoveis * (0.01 * y + (y >= 10 ? 0.15 + 0.08 : 0) + (y == 20 ? 0.15 + 0.08 : 0));
         const imoveisWith = assets.imoveis * (0.005 * y);
         totalSavings += imoveisWithout - imoveisWith;
-
-        // Dinheiro: 20% on 5% annual return (without); 10% effective (with)
         const returnRate = 0.05;
         const dinheiroWithout = assets.dinheiro * returnRate * y * 0.20;
         const dinheiroWith = assets.dinheiro * returnRate * y * 0.10;
         totalSavings += dinheiroWithout - dinheiroWith;
-
         savings.push(totalSavings);
     }
 
@@ -131,25 +127,142 @@ function calculateSavings(assets) {
 function updateChart() {
     const assets = getAssetsValue();
     const savings = calculateSavings(assets);
-    comparisonChart.data.datasets[0].data = savings;
-    comparisonChart.update();
+    if (comparisonChart) {
+        comparisonChart.data.datasets[0].data = savings;
+        comparisonChart.update();
+    }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initializeChart();
-    updateChart();
+// Comparison Section Logic
+const models = {
+    aluguel: {
+        blocks: [
+            { highlight: 'Mais de 8% de Economia', text: 'nos impostos sobre aluguéis, otimizando seus ganhos com a W1 Holding.' },
+            { highlight: 'Até R$2.400 Anuais', text: 'de redução tributária para aluguéis de R$30.000, aumentando sua rentabilidade.' }
+        ],
+        image: window.modelImages?.aluguel || '',
+        text: 'A W1 Holding reduz a tributação de aluguéis de 27,5% para até 11%, economizando até R$2.400 por ano em um aluguel de R$30.000, com segurança e eficiência.'
+    },
+    empresas: {
+        blocks: [
+            { highlight: 'Até 27,5% de Isenção', text: 'em impostos na distribuição de lucros, maximizando seus retornos.' },
+            { highlight: 'Mais de R$27.500', text: 'de economia anual em lucros de R$100.000 com a W1 Holding.' }
+        ],
+        image: window.modelImages?.empresas || '',
+        text: 'Com a W1 Holding, distribua lucros com isenção de até 27,5% de impostos, economizando até R$27.500 anuais em lucros de R$100.000, com total conformidade fiscal.'
+    },
+    sucessorio: {
+        blocks: [
+            { highlight: 'Até 36 Meses a Menos', text: 'em processos de inventário, garantindo agilidade e proteção.' },
+            { highlight: 'Mais de R$150.000', text: 'de economia em custos sucessórios com a W1 Holding.' }
+        ],
+        image: window.modelImages?.sucessorio || '',
+        text: 'A W1 Holding simplifica a sucessão patrimonial, reduzindo o tempo de inventário em até 36 meses e eliminando custos de até R$150.000, assegurando tranquilidade para sua família.'
+    }
+};
 
-    document.querySelectorAll('.nav-links a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
-            const targetElement = document.getElementById(targetId);
-            if (targetElement) {
-                targetElement.scrollIntoView({ behavior: 'smooth' });
-            }
+let currentModel = 'aluguel';
+let timerInterval;
+const timerDuration = 5000;
+
+function updateModel(model) {
+    const data = models[model];
+    const block1 = document.getElementById('block1');
+    const block2 = document.getElementById('block2');
+    const modelImage = document.getElementById('model-image');
+    const modelText = document.getElementById('model-text');
+
+    if (!block1 || !block2 || !modelImage || !modelText) {
+        console.error('Comparison section elements missing');
+        return;
+    }
+
+    // Reset animations
+    const textElements = document.querySelectorAll('.savings-number, .savings-text, .image-text');
+    textElements.forEach(el => {
+        el.classList.remove('slide-in');
+    });
+
+    // Update content
+    block1.innerHTML = `<div class="savings-number">${data.blocks[0].highlight}</div><p class="savings-text">${data.blocks[0].text}</p>`;
+    block2.innerHTML = `<div class="savings-number">${data.blocks[1].highlight}</div><p class="savings-text">${data.blocks[1].text}</p>`;
+    modelImage.src = data.image;
+    modelText.textContent = data.text;
+
+    // Apply slide-in animation
+    setTimeout(() => {
+        textElements.forEach(el => {
+            el.classList.add('slide-in');
+        });
+    }, 0);
+
+    document.querySelectorAll('.model-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.model === model) btn.classList.add('active');
+    });
+    document.querySelectorAll('.timer-line').forEach(line => {
+        line.classList.remove('active');
+        line.style.width = '0';
+        if (line.dataset.model === model) line.classList.add('active');
+    });
+    currentModel = model;
+    resetTimer();
+}
+
+function startTimer() {
+    const activeTimerLine = document.querySelector('.timer-line.active');
+    if (activeTimerLine) activeTimerLine.style.width = '100%';
+    timerInterval = setTimeout(() => {
+        const modelsList = Object.keys(models);
+        const currentIndex = modelsList.indexOf(currentModel);
+        const nextModel = modelsList[(currentIndex + 1) % modelsList.length];
+        updateModel(nextModel);
+    }, timerDuration);
+}
+
+function resetTimer() {
+    clearTimeout(timerInterval);
+    document.querySelectorAll('.timer-line').forEach(line => {
+        line.style.width = '0';
+        if (line.classList.contains('active')) line.style.width = '100%';
+    });
+    startTimer();
+}
+
+function stopTimer() {
+    clearTimeout(timerInterval);
+    const activeTimerLine = document.querySelector('.timer-line.active');
+    if (activeTimerLine) activeTimerLine.style.width = activeTimerLine.style.width;
+}
+
+function initializeComparison() {
+    const imageContainer = document.getElementById('image-container');
+    if (!imageContainer) {
+        console.error('Image container not found');
+        return;
+    }
+
+    document.querySelectorAll('.model-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            updateModel(btn.dataset.model);
         });
     });
 
+    imageContainer.addEventListener('mouseenter', stopTimer);
+    imageContainer.addEventListener('mouseleave', resetTimer);
+
+    updateModel('aluguel');
+}
+
+// Steps Animations
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('scripts.js loaded');
+
+    // Chart
+    initializeChart();
+    updateChart();
+
+    // Steps Animations
     const stepsRows = document.querySelectorAll('.steps-row');
     if (stepsRows.length === 0) {
         console.error('Steps rows not found');
@@ -195,4 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('scroll', updateTimelineLines);
     window.addEventListener('load', updateTimelineLines);
+
+    // Comparison
+    initializeComparison();
 });
