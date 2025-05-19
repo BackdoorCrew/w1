@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 
     'core.apps.CoreConfig',
 ]
+SITE_ID = 1
 
 # Add SITE_ID for django-allauth
 SITE_ID = 1 # <<< ADD THIS LINE

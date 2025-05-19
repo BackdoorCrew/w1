@@ -112,3 +112,30 @@ class AnaliseEconomia(models.Model):
 
     def __str__(self):
         return f"Análise Holding {self.holding.nome_holding} - Ano {self.ano_referencia}"
+
+class SimulationResult(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='simulation_results')
+    number_of_properties = models.IntegerField(default=0)
+    total_property_value = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    inventory_cost_without = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    inventory_cost_with = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    number_of_companies = models.IntegerField(default=0)
+    monthly_profit = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    annual_profit = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    profit_savings = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    monthly_rent = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    annual_rent = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    rental_savings = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    inventory_time_without = models.IntegerField(default=0)
+    inventory_time_with = models.IntegerField(default=0)
+    receives_rent = models.BooleanField(default=False)
+    has_companies = models.BooleanField(default=False)
+    number_of_heirs = models.IntegerField(default=0)
+    company_tax_regime = models.CharField(max_length=50, default='simples')
+    inventory_savings = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    total_savings = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    conflict_risk = models.CharField(max_length=50, default='Nenhum')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Simulação de {self.user.email} em {self.created_at}"
