@@ -20,4 +20,4 @@ Build/Deployment
 
 Miscellaneous
 
-*.tmp *.temp *.bak *.backup *~
+*.tmp *.temp *.bak *.backup *~.env

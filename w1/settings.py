@@ -1,3 +1,5 @@
+# w1/settings.py
+
 from pathlib import Path
 import os
 from decouple import config, Csv  # Import Csv for ALLOWED_HOSTS
@@ -24,13 +26,20 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
+
+    # Django Allauth required app
+    'django.contrib.sites', # <<< MAKE SURE THIS IS PRESENT
+
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.google', # <<< Google provider
+
     'core.apps.CoreConfig',
 ]
+
+# Add SITE_ID for django-allauth
+SITE_ID = 1 # <<< ADD THIS LINE
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -42,9 +51,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # Or your provider
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-email@gmail.com'
-EMAIL_HOST_PASSWORD = 'your-app-password'
-DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='your-email@gmail.com') # Load from .env
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='your-app-password') # Load from .env
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='your-email@gmail.com') # Load from .env
+
 
 # Configurações do Allauth
 AUTH_USER_MODEL = 'core.User'
@@ -52,22 +62,30 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
-LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL = '/'
-SOCIALACCOUNT_LOGIN_ON_GET = True
+ACCOUNT_EMAIL_VERIFICATION = 'none' # For development; consider 'mandatory' for production
+# ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*'] # This is handled by allauth's default form or custom forms
+LOGIN_REDIRECT_URL = '/dashboard/' # Redirect after login
+LOGOUT_REDIRECT_URL = '/' # Redirect after logout
+SOCIALACCOUNT_LOGIN_ON_GET = True # This can be convenient for direct login links
+
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
             'client_id': config('GOOGLE_CLIENT_ID'),
             'secret': config('GOOGLE_CLIENT_SECRET'),
-            'key': '',
-            # Mantenha configurações adicionais do 0f9b1e4, se houver
-            'FIELD_X': 'value',  # Exemplo
+            'key': '' # 'key' is usually empty for Google
+            # 'FIELD_X': 'value',  # <<< REMOVE THIS EXAMPLE/PLACEHOLDER LINE
         },
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'online'}
+        'SCOPE': [ # Information you want to request from Google
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': { # Additional parameters for the auth request
+            'access_type': 'online', # 'offline' if you need refresh tokens
+        }
+        # You can add more provider-specific settings here if needed
+        # For example, to prompt for account selection every time:
+        # 'AUTH_PARAMS': {'prompt': 'select_account'},
     }
 }
 MIDDLEWARE = [
@@ -79,7 +97,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
+    'allauth.account.middleware.AccountMiddleware', # <<< Allauth middleware
 ]
 
 ROOT_URLCONF = 'w1.urls'
@@ -92,7 +110,7 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',
+                'django.template.context_processors.request', # <<< `allauth` needs this
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -159,3 +177,11 @@ MEDIA_ROOT = BASE_DIR / 'mediafiles'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Recommended: If you are using your custom User model from the start and `allauth`
+# and want `allauth` to handle signups exclusively via social or its own forms,
+# you might not need ACCOUNT_SIGNUP_FIELDS if you customize `allauth` forms.
+# However, ACCOUNT_EMAIL_REQUIRED = True and ACCOUNT_AUTHENTICATION_METHOD = 'email' are key.
+
+# For `allauth` to work correctly, ensure your `core.User` model's email field
+# is set as unique (`unique=True`). (Which it is in your provided models.py)

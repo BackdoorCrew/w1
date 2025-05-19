@@ -30,7 +30,14 @@ class Holding(models.Model):
     nome_holding = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     clientes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='holdings_participadas', limit_choices_to={'user_type': 'cliente'})
-    consultor_responsavel = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='holdings_assessoradas', limit_choices_to={'user_type': 'consultor'})
+    consultor_responsavel = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='holdings_assessoradas',
+        limit_choices_to={'user_type': 'consultor'}
+    )
     data_criacao_registro = models.DateField(null=True, blank=True)
     has_bank_savings = models.BooleanField(default=False)
     bank_savings_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
@@ -70,7 +77,6 @@ class ProcessoHolding(models.Model):
     cliente_principal = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='processos_holding', limit_choices_to={'user_type': 'cliente'})
     holding_associada = models.OneToOneField(Holding, on_delete=models.SET_NULL, null=True, blank=True, related_name='processo_criacao')
     status_atual = models.CharField(max_length=30, choices=STATUS_CHOICES, default='aguardando_documentos')
-    consultor_designado = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='processos_designados', limit_choices_to={'user_type': 'consultor'})
     data_inicio_processo = models.DateTimeField(auto_now_add=True)
     data_ultima_atualizacao = models.DateTimeField(auto_now=True)
     observacoes = models.TextField(blank=True, null=True)
