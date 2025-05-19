@@ -11,4 +11,15 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('simulation/', views.simulation, name='simulation'),
     path('accounts/', include('allauth.urls')),  # Allauth URLs for login/logout
+
+    # Novas URLs para o Painel de Gestão do Superuser
+    path('management/', views.management_dashboard, name='management_dashboard'),
+    path('management/users/', views.management_list_users, name='management_list_users'),
+    path('management/user/<int:user_id>/', views.management_user_detail, name='management_user_detail'),
+    path('management/consultants/create/', views.management_create_consultant, name='management_create_consultant'),
+    path('management/holding/<int:holding_id>/assign-consultant/', views.management_assign_consultant_to_holding, name='management_assign_consultant_to_holding'),
+    path('management/holding/<int:holding_id>/documents/', views.management_holding_documents, name='management_holding_documents'),
+    path('management/holdings/', views.management_list_holdings, name='management_list_holdings'), # <<< NOVA URL
+
+
 ]

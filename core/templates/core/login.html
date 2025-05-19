@@ -1,7 +1,6 @@
 {% extends 'core/base.html' %}
 {% load static %}
-
-{% block title %}Entrar - W1 Holding Platform{% endblock %}
+{% load i18n %} {% load socialaccount %} {% block title %}Entrar - W1 Holding Platform{% endblock %}
 {% block header %}{% endblock %}
 {% block footer %}{% endblock %}
 
@@ -12,6 +11,7 @@
             <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="auth-logo">
             <h1>Entrar</h1>
             <p>Entre na sua conta para começar a criar sua holding.</p>
+
             {% if form.errors or form.non_field_errors %}
                 <div class="error-messages">
                     <p>Por favor, corrija os erros abaixo:</p>
@@ -27,6 +27,7 @@
                     </ul>
                 </div>
             {% endif %}
+
             <form method="post" action="{% url 'login' %}">
                 {% csrf_token %}
                 <div class="form-group">
@@ -39,7 +40,15 @@
                 </div>
                 <button type="submit" class="auth-btn">Entrar</button>
             </form>
-            <p class="auth-switch">Não tem uma conta? <a href="{% url 'signup' %}">Cadastre-se</a></p>
+
+            {% comment %} Simplified Social Login Section {% endcomment %}
+            <div class="social-login-section" style="margin-top: 20px;">
+                 <a title="Google" class="socialaccount_provider google auth-btn" style="background-color: #DB4437; color:white; text-decoration:none; display:block; margin-bottom:10px;" href="{% provider_login_url 'google' process='login' %}">
+                     <i class="fab fa-google"></i> Entrar com Google
+                 </a>
+            </div>
+
+            <p class="auth-switch" style="margin-top: 20px;">Não tem uma conta? <a href="{% url 'signup' %}">Cadastre-se</a></p>
         </div>
     </section>
 </div>

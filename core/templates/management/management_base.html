@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block page_title %}Painel de Gestão{% endblock %} - W1 Holding</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@100;400;700;900&family=Cal+Sans&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {# <link rel="stylesheet" href="{% static 'css/management_styles.css' %}"> #}
+    <style>
+        body { background-color: #f4f7f6; color: #333; }
+        .management-nav { background-color: #022028; padding: 1rem; margin-bottom: 2rem; }
+        .management-nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
+        .management-nav a:hover { color: #5fded4; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        th, td { border: 1px solid #ddd; padding: 0.75rem; text-align: left; }
+        th { background-color: #e9ecef; }
+        .btn { display: inline-block; padding: 0.5rem 1rem; background-color: #5fded4; color: #022028; text-decoration: none; border-radius: 5px; border: none; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="password"], .form-group select {
+            width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        .page-header { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+        .page-header h1 { margin: 0; font-family: "Cal Sans", sans-serif; color: #022028;}
+        .action-links a { margin-right: 10px; }
+        .filter-form { margin-bottom: 1rem; padding:1rem; background-color:#f8f9fa; border-radius:5px;}
+    </style>
+</head>
+<body>
+    <nav class="management-nav">
+        <a href="{% url 'management_dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="{% url 'management_list_users' %}"><i class="fas fa-users"></i> Usuários</a>
+        {# <a href="{% url 'management_list_holdings' %}"><i class="fas fa-building"></i> Holdings</a> #}
+        <a href="{% url 'management_create_consultant' %}"><i class="fas fa-user-plus"></i> Criar Consultor</a>
+        <span style="float: right; color: #fff;">Olá, {{ request.user.get_full_name|default:request.user.email }} (<a href="{% url 'account_logout' %}" style="color: #5fded4;">Sair</a>)</span>
+    </nav>
+    <div class="container">
+        <div class="page-header">
+             <h1>{% block page_title_content %}{{ page_title|default:"Gestão"}}{% endblock %}</h1>
+        </div>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}
+        {% endblock %}
+    </div>
+    <script src="{% static 'js/scripts.js' %}"></script> {# Seus scripts globais, se necessário #}
+</body>
+</html>
