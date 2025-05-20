@@ -9,36 +9,47 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@100;400;700;900&family=Cal+Sans&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    {% block head_extra_styles %}{% endblock %} {# Bloco para CSS extra no head, se necessário por páginas filhas #}
+    {% block head_extra_styles %}{% endblock %}
 </head>
 <body>
-    {% block header %} {# Mantendo o nome original do bloco para compatibilidade com seus templates existentes #}
+    {% block header %}
     <header>
         <nav class="navbar">
             <div class="logo">
-                <a href="{% url 'index' %}"> {# Link para a página inicial no logo #}
-                    <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="logo-img">
-                </a>
-            </div>
+    <a href="{% url 'index' %}">
+        <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="logo-img">
+    </a>
+    <span class="logo-text">Holding</span>
+</div>
             <ul class="nav-links">
                 <li><a href="{% url 'index' %}#hero">Início</a></li>
-                <li><a href="{% url 'index' %}#holding-info">Holding</a></li>
+                <li><a href="{% url 'index' %}#holding-info">Explicação</a></li>
                 <li><a href="{% url 'index' %}#comparison">Benefícios</a></li>
                 <li><a href="{% url 'index' %}#steps">Etapas</a></li>
-                {# Links condicionais para dashboard #}
                 {% if user.is_authenticated %}
                     {% if user.is_superuser %}
                         <li><a href="{% url 'management_dashboard' %}">Gestão</a></li>
-                    {% else %}
-                        <li><a href="{% url 'dashboard_final' %}">Meu Painel</a></li> 
-                        {# dashboard_final é o que tem a sidebar #}
                     {% endif %}
                 {% endif %}
             </ul>
+
+            <div class="ecosystem-dropdown">
+                <a href="#" class="ecosystem-trigger">
+                    Nosso Ecossistema <i class="fas fa-chevron-down fa-xs"></i>
+                </a>
+                <ul class="ecosystem-dropdown-content">
+                    <li><a href="https://www.w1.com.br/w1-consultoria"><img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="dropdown-logo-img"> Consultoria</a></li>
+                    <li><a href="https://www.w1.com.br/w1-capital"><img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="dropdown-logo-img"> Capital</a></li>
+                    <li><a href="https://www.w1.com.br/w1-consultoria-patrimonial"><img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="dropdown-logo-img"> Consultoria Patrimonial</a></li>
+                    <li><a href="https://www.w1.com.br/w1-technology"><img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="dropdown-logo-img"> Technology</a></li>
+                    <li><a href="https://www.w1.com.br/w1-business"><img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="dropdown-logo-img"> Business</a></li>
+                </ul>
+            </div>
+            {# Presumindo que você queira o botão de Entrar/Sair condicional como antes: #}
             {% if user.is_authenticated %}
-                <a href="{% url 'account_logout' %}" class="login-button">Sair</a> {# URL de logout do allauth #}
+                <a href="{% url 'account_logout' %}" class="login-button">Sair</a>
             {% else %}
-                <a href="{% url 'login' %}" class="login-button">Entrar</a> {# Sua view de login customizada #}
+                <a href="{% url 'login' %}" class="login-button">Entrar</a>
             {% endif %}
         </nav>
     </header>
@@ -50,16 +61,14 @@
         {% endblock content %}
     </main>
 
-    {% block footer %} {# Mantendo o nome original do bloco #}
+    {% block footer %}
     <footer>
         <p class="copyright">© {% now "Y" %} W1 Holding Platform. Todos os direitos reservados.</p>
         <p class="production">Uma produção de <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Diogo Coutinho</a> e <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Guilherme Stern</a></p>
     </footer>
     {% endblock footer %}
 
-    {% block scripts %} {# Mantendo o nome original do bloco #}
-    {# Chart.js e scripts.js são carregados aqui por padrão. #}
-    {# Se uma página específica não precisar deles, ela pode sobrescrever este bloco para ser vazio. #}
+    {% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'js/scripts.js' %}"></script>
     {% endblock scripts %}

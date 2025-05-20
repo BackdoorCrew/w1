@@ -35,8 +35,22 @@ header {
 }
 
 .logo-img {
-    height: 50px;
+    height: 35px;
     width: auto;
+}
+
+.logo {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px; /* Espaço entre o logo e o texto */
+}
+
+.logo-text {
+    font-family: "Montserrat", sans-serif;
+    font-size: 1.5rem; /* Ajuste o tamanho conforme necessário */
+    
+    color: #fff; /* Cor branca para combinar com o tema */
+    
 }
 
 .plans, .nav-links {
@@ -120,12 +134,96 @@ header {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* Estilos ATUALIZADOS para o Dropdown Nosso Ecossistema */
+.ecosystem-dropdown {
+    position: relative; /* Necessário para o posicionamento absoluto do conteúdo do dropdown */
+    display: inline-block;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-left: 100px;  /* AUMENTADO: Ajuste este valor para empurrar mais para a direita, conforme necessário */
+    
+}
+
+.ecosystem-trigger {
+    /* position: relative; /* Não é mais necessário pois ::after foi removido */
+    color: white;
+    text-decoration: none;
+    font-family: "Montserrat", sans-serif;
+    font-weight: bold;
+    font-size: 1.5vw; /* Mantendo consistência com .nav-links li a */
+    transition: color 0.3s;
+    cursor: pointer;
+    display: inline-block; /* Para comportamento adequado de bloco/linha */
+    /* padding-bottom: 6px; /* REMOVIDO - Era para o ::after */
+}
+
+/* Efeito de sublinhado ::after FOI REMOVIDO conforme solicitado */
+
+.ecosystem-trigger:hover {
+    color: #5fded4;
+}
+
+.ecosystem-trigger .fa-chevron-down {
+    margin-left: 5px;
+    font-size: 0.8em; /* Torna o ícone um pouco menor */
+    transition: transform 0.3s ease;
+}
+
+.ecosystem-dropdown:hover .ecosystem-trigger .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.ecosystem-dropdown-content {
+    display: none; /* Escondido por padrão */
+    position: absolute;
+    background-color: #033540; /* Cor de fundo do dropdown */
+    min-width: 280px; /* Largura mínima, ajuste conforme o conteúdo */
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.3);
+    z-index: 101; /* Acima de outros elementos, se necessário */
+    list-style: none;
+    padding: 10px 0; /* Padding vertical interno */
+    margin: 0; /* Remove margens padrão da ul */
+    /* margin-top: 8px; /* REMOVIDO para eliminar o gap */
+    top: 100%; /* ATUALIZADO: Posiciona o menu dropdown diretamente abaixo do .ecosystem-trigger (considerando a altura do trigger e o padding-bottom do .ecosystem-dropdown) */
+    left: 50%; /* Para centralizar o dropdown */
+    transform: translateX(-50%); /* Centraliza o dropdown em relação ao gatilho */
+    border-radius: 5px;
+}
+
+/* Mostra o dropdown ao passar o mouse sobre .ecosystem-dropdown */
+.ecosystem-dropdown:hover .ecosystem-dropdown-content {
+    display: block;
+}
+
+.ecosystem-dropdown-content li a {
+    color: white;
+    padding: 10px 20px; /* Padding dos itens do dropdown */
+    text-decoration: none;
+    display: flex; /* Para alinhar o logo e o texto */
+    align-items: center; /* Alinhamento vertical */
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem; /* Tamanho da fonte dos itens */
+    white-space: nowrap; /* Evita quebra de linha nos itens */
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.ecosystem-dropdown-content li a:hover {
+    background-color: #022028; /* Cor de fundo no hover */
+    
+}
+
+.dropdown-logo-img {
+    height: 18px; /* Tamanho do logo dentro do dropdown */
+    width: auto;
+    margin-right: 10px; /* Espaço entre o logo e o texto */
+}
+
 
 .hero {
     position: relative;
     text-align: center;
     padding: 0px 20px;
-    min-height: 90vh;
+    height: 90vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -158,7 +256,6 @@ header {
     z-index: 3;
     max-width: 1200px;
     display: flex;
-    margin-top: 15vh;
     flex-direction: column;
     align-items: center; /* Center children horizontally */
     justify-content: center; /* Center children vertically within hero-content */
@@ -743,7 +840,7 @@ footer {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 15px;
-    padding: 30px;
+    padding: 50px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     text-align: center;
 }
@@ -954,12 +1051,12 @@ body.auth-active-page {
 
 .auth-section {
     width: 100%;
-    max-width: 450px;
+    max-width: 550px;
 }
 
 .auth-form-container {
     background-color: #033038;
-    padding: 2rem;
+    padding: 4rem;
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
