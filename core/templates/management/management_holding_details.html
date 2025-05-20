@@ -1,0 +1,321 @@
+{% extends 'management/management_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block page_title_content %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <div class="holding-details-header mb-4 pb-3 border-bottom">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 style="font-family: 'Cal Sans', sans-serif; color: #022028;">{{ holding.nome_holding }}</h2>
+            <div>
+                {% if holding.is_legally_official %}
+                    <span class="badge bg-success"><i class="fas fa-check-circle"></i> Oficializada em {{ holding.data_oficializacao|date:"d/m/Y"|default:"Data não informada" }}</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> Pendente de Oficialização</span>
+                {% endif %}
+            </div>
+        </div>
+        <p class="text-muted"><strong>Descrição:</strong> {{ holding.description|default:"Sem descrição."|linebreaksbr }}</p>
+        <p><strong>Consultor Responsável:</strong>
+            {% if holding.consultor_responsavel %}
+                <a href="{% if request.user.is_superuser %}{% url 'management_user_detail' holding.consultor_responsavel.id %}{% else %}#{% endif %}">
+                    {{ holding.consultor_responsavel.get_full_name|default:holding.consultor_responsavel.email }}
+                </a>
+            {% else %}
+                <span class="text-danger">Nenhum consultor atribuído.</span>
+            {% endif %}
+            {% if request.user.is_superuser %}
+                <a href="{% url 'management_assign_consultant_to_holding' holding.id %}" class="btn btn-sm btn-outline-primary ms-2"><i class="fas fa-edit"></i> Editar Nome/Descrição/Consultor</a>
+            {% endif %}
+        </p>
+        <p><strong>Data de Criação (Registro na Plataforma):</strong> {{ holding.processo_criacao.data_inicio_processo|date:"d/m/Y H:i"|default_if_none:"Não disponível" }}</p>
+        <p><strong>Data de Registro (Junta/Cartório):</strong> {{ holding.data_criacao_registro|date:"d/m/Y"|default_if_none:"Não informado" }}</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Características da Holding (Informadas pelo Cliente)</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <strong>Poupança/Dinheiro em Banco:</strong>
+                            {% if holding.has_bank_savings %}
+                                Sim (R$ {{ holding.bank_savings_amount|default_if_none:"0.00"|intcomma }})
+                            {% else %}
+                                Não
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Possui Herdeiros:</strong>
+                            {% if holding.has_heirs %}
+                                Sim ({{ holding.heir_count|default_if_none:"N/A" }} herdeiro(s))
+                            {% else %}
+                                Não
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Plano Sucessório Pensado:</strong> {{ holding.has_succession_plan|yesno:"Sim,Não,Não informado" }}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Já Pagou Inventário:</strong> {{ holding.has_paid_inventory|yesno:"Sim,Não,Não informado" }}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Imóveis Alugados:</strong>
+                            {% if holding.has_rental_properties %}
+                                Sim ({{ holding.rental_property_count|default_if_none:"N/A" }} imóvel/is)
+                                {% if holding.rental_income_monthly is not None %}<br><small>Renda Mensal: R$ {{ holding.rental_income_monthly|intcomma }}</small>{% endif %}
+                                {% if holding.rental_expenses_monthly is not None %}<br><small>Despesas Mensais: R$ {{ holding.rental_expenses_monthly|intcomma }}</small>{% endif %}
+                            {% else %}
+                                Não
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Receio de Ações Judiciais:</strong> {{ holding.has_litigation_concerns|yesno:"Sim,Não,Não informado" }}
+                        </div>
+                         <div class="col-md-6 mb-2">
+                            <strong>Problemas Legais/Setor de Risco:</strong> {{ holding.has_legal_issues|yesno:"Sim,Não,Não informado" }}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Quer Proteger Patrimônio:</strong> {{ holding.wants_asset_protection|yesno:"Sim,Não,Não informado" }}
+                        </div>
+                        {% if holding.protected_assets %}
+                        <div class="col-md-12 mb-2">
+                            <strong>Bens a Proteger:</strong> {{ holding.protected_assets|linebreaksbr }}
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6 mb-2">
+                            <strong>Sócio de Empresas:</strong>
+                            {% if holding.has_companies %}
+                                Sim ({{ holding.company_count|default_if_none:"N/A" }} empresa(s))
+                                {% if holding.company_profit_annual is not None %}<br><small>Lucro Anual: R$ {{ holding.company_profit_annual|intcomma }}</small>{% endif %}
+                            {% else %}
+                                Não
+                            {% endif %}
+                        </div>
+                         <div class="col-md-6 mb-2">
+                            <strong>Distribui Lucros/Reinveste:</strong> {{ holding.distributes_profits|yesno:"Distribui,Reinveste,Não informado" }}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Muitos Bens em Nome Próprio:</strong> {{ holding.has_multiple_assets|yesno:"Sim,Não,Não informado" }}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Facilitar Gestão/Venda de Bens:</strong> {{ holding.wants_efficient_management|yesno:"Sim,Não,Não informado" }}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <strong>Dificuldades com Controle Patrimonial:</strong> {{ holding.has_management_difficulties|yesno:"Sim,Não,Não informado" }}
+                        </div>
+                    </div>
+                    {% if request.user.is_superuser %}
+                        <hr class="my-3">
+                        <a href="{% url 'management_assign_consultant_to_holding' holding.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-pencil-alt"></i> Editar Dados Básicos (Nome, Descrição, Consultor)
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if processo_criacao %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h4 class="mb-0">Status do Processo de Criação</h4></div>
+                <div class="card-body">
+                    <p><strong>Status Atual:</strong> <span class="badge status-{{ processo_criacao.status_atual }}">{{ processo_criacao.get_status_atual_display }}</span></p>
+                    <p><strong>Início do Processo:</strong> {{ processo_criacao.data_inicio_processo|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Última Atualização:</strong> {{ processo_criacao.data_ultima_atualizacao|date:"d/m/Y H:i" }}</p>
+                    {% if processo_criacao.observacoes %}
+                        <p class="mb-1"><strong>Observações Internas:</strong></p>
+                        <pre class="bg-light p-2 rounded text-muted" style="white-space: pre-wrap; font-size: 0.9em;">{{ processo_criacao.observacoes }}</pre>
+                    {% endif %}
+                    {% if process_status_form and not holding.is_legally_official %}
+                    <hr class="my-3">
+                    <h5 class="mb-3">Atualizar Status do Processo</h5>
+                    <form method="post" novalidate class="needs-validation">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            <label for="{{ process_status_form.status_atual.id_for_label }}" class="form-label fw-bold">{{ process_status_form.status_atual.label }}</label>
+                            {{ process_status_form.status_atual }}
+                            {% if process_status_form.status_atual.errors %}<div class="invalid-feedback d-block">{{ process_status_form.status_atual.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="{{ process_status_form.observacoes.id_for_label }}" class="form-label fw-bold">{{ process_status_form.observacoes.label }}</label>
+                            {{ process_status_form.observacoes }}
+                            {% if process_status_form.observacoes.errors %}<div class="invalid-feedback d-block">{{ process_status_form.observacoes.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <button type="submit" name="update_status" class="btn btn-primary mt-2"><i class="fas fa-sync-alt"></i> Atualizar Status</button>
+                    </form>
+                    {% elif holding.is_legally_official %}
+                    <p class="mt-3 text-success"><i class="fas fa-info-circle"></i> O processo é considerado finalizado pois a holding foi oficializada.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">Nenhum processo de criação formalmente iniciado para esta holding. O cliente principal precisa registrar o interesse inicial.</div>
+            {% endif %}
+
+            {% if not holding.is_legally_official and officialize_form %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h4 class="mb-0">Oficializar Holding Legalmente</h4></div>
+                <div class="card-body">
+                    <p>Ao marcar como oficializada, você confirma que a holding foi constituída conforme as leis brasileiras e está pronta para operar.</p>
+                    <form method="post" novalidate class="needs-validation">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            <label for="{{ officialize_form.data_oficializacao.id_for_label }}" class="form-label fw-bold">{{ officialize_form.data_oficializacao.label }}</label>
+                            {{ officialize_form.data_oficializacao }}
+                            {% if officialize_form.data_oficializacao.errors %}<div class="invalid-feedback d-block">{{ officialize_form.data_oficializacao.errors|join:", " }}</div>{% endif %}
+                        </div>
+                        <button type="submit" name="officialize_holding" class="btn btn-success mt-2"><i class="fas fa-gavel"></i> Marcar como Oficializada</button>
+                    </form>
+                </div>
+            </div>
+            {% elif holding.is_legally_official %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white"><h4 class="mb-0"><i class="fas fa-check-circle"></i> Holding Oficializada</h4></div>
+                <div class="card-body">
+                    <p class="lead">Esta holding foi oficialmente constituída em <strong>{{ holding.data_oficializacao|date:"d \d\e F \d\e Y" }}</strong>.</p>
+                    {% if request.user.is_superuser %}
+                    <form method="post" onsubmit="return confirm('Tem certeza que deseja REVERTER a oficialização desta holding? Esta ação deve ser usada com cautela.');">
+                        {% csrf_token %}
+                        <button type="submit" name="un_officialize_holding" class="btn btn-sm btn-outline-danger mt-2"><i class="fas fa-undo"></i> Reverter Oficialização (Superuser)</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Clientes/Sócios ({{ socios.count }})</h4>
+                    <a href="{% url 'management_holding_manage_clients' holding.id %}" class="btn btn-secondary btn-sm"><i class="fas fa-users-cog"></i> Gerenciar Clientes</a>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for socio in socios %}
+                    <li class="list-group-item">
+                        <a href="{% if request.user.is_superuser or request.user.id == holding.consultor_responsavel_id %}{% url 'management_user_detail' socio.id %}{% else %}#{% endif %}">{{ socio.get_full_name|default:socio.email }}</a>
+                        {% if holding.processo_criacao and holding.processo_criacao.cliente_principal_id == socio.id %}<span class="badge bg-info ms-1">Cliente Principal</span>{% endif %}
+                    </li>
+                    {% empty %}<li class="list-group-item text-muted">Nenhum cliente/sócio associado.</li>{% endfor %}
+                </ul>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Documentos da Holding ({{ documentos_holding_count }})</h4>
+                </div>
+                <div class="card-body">
+                    {% if processo_criacao %}
+                        <form method="post" enctype="multipart/form-data" class="mb-4 p-3 border rounded bg-light">
+                            {% csrf_token %}
+                            <h5 class="mb-3">Adicionar Novo Documento (Gestão)</h5>
+                            {% if management_document_form.non_field_errors %}
+                                <div class="alert alert-danger py-1 px-2 mb-2" style="font-size:0.9em;">
+                                    {% for error in management_document_form.non_field_errors %}<p class="mb-0">{{ error }}</p>{% endfor %}
+                                </div>
+                            {% endif %}
+                            {% for field in management_document_form %}
+                                <div class="form-group mb-2">
+                                    <label for="{{ field.id_for_label }}" class="form-label small fw-bold">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.help_text %}<small class="form-text text-muted d-block mt-1" style="font-size:0.8em;">{{ field.help_text|safe }}</small>{% endif %}
+                                    {% for error in field.errors %}
+                                        <div class="invalid-feedback d-block" style="font-size:0.85em;">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                            <button type="submit" name="upload_document_management" class="btn btn-sm btn-success mt-2">
+                                <i class="fas fa-upload"></i> Enviar Documento
+                            </button>
+                        </form>
+                        <hr>
+                        <h5 class="mb-3">Documentos Existentes</h5>
+                    {% else %}
+                         <div class="alert alert-warning" role="alert" style="font-size:0.9em;">
+                            O processo de criação desta holding ainda não foi formalmente iniciado pelo cliente principal. Documentos não podem ser adicionados ou listados ainda.
+                         </div>
+                    {% endif %}
+        
+                    {% if grouped_documents_management %}
+                        {% for group_key, group_data in grouped_documents_management.items %}
+                            <div class="document-group-card mb-3 p-2 border rounded" style="background-color: #f8f9fa;">
+                                <h6 class="mb-1 text-dark">
+                                    {{ group_data.nome_logico }}
+                                    <span class="text-muted small">({{ group_data.categoria_display }})</span>
+                                </h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for doc in group_data.versoes %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center ps-1 pe-1 py-2 {% if forloop.first %}border-top-0{% endif %}" style="background-color: transparent;">
+                                        <div style="flex-grow: 1;">
+                                            <a href="{{ doc.arquivo.url }}" target="_blank" title="Ver {{ doc.nome_original_arquivo|default:doc.arquivo.name|truncatechars:35 }} (v{{ doc.versao }})">
+                                                <i class="fas fa-file-alt me-1 text-secondary"></i>{{ doc.nome_original_arquivo|default:doc.arquivo.name|truncatechars:35 }}
+                                                <strong class="ms-1">(v{{ doc.versao }})</strong>
+                                            </a>
+                                            {% if forloop.first %}<span class="badge bg-primary ms-1">Mais Recente</span>{% endif %}
+                                            <small class="text-muted d-block" style="font-size: 0.75em; line-height: 1.2;">
+                                                Enviado por: {{ doc.enviado_por.get_full_name|default:doc.enviado_por.email|truncatechars:20 }}
+                                                <br>Data: {{ doc.data_upload|date:"d/m/y H:i" }}
+                                                {% if doc.descricao_adicional %}<br><em class="text-dark">Obs: {{ doc.descricao_adicional|truncatechars:40 }}</em>{% endif %}
+                                            </small>
+                                        </div>
+                                        <a href="{{ doc.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-secondary ms-2" title="Baixar/Ver v{{doc.versao}}">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endfor %}
+                    {% elif processo_criacao %}
+                        <p class="text-muted mb-0">Nenhum documento associado a esta holding ainda.</p>
+                    {% endif %}
+                </div>
+                {% if processo_criacao %}
+                <div class="card-footer text-center">
+                    <small class="text-muted">Gerencie os documentos do processo de criação da holding.</small>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if analise %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h4 class="mb-0">Análise Econômica</h4></div>
+                <div class="card-body">
+                    <p><strong>Ano de Referência:</strong> {{ analise.ano_referencia }}</p>
+                    <p><strong>Economia Estimada:</strong> R$ {{ analise.economia_tributaria_estimada|default_if_none:"N/A"|intcomma }}</p>
+                    <p><strong>Patrimônio Projetado:</strong> R$ {{ analise.patrimonio_liquido_projetado|default_if_none:"N/A"|intcomma }}</p>
+                    <small class="text-muted">Cálculo de {{ analise.data_calculo|date:"d/m/Y" }}</small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <style>
+        .ms-1 { margin-left: .25rem !important; }
+        .ms-2 { margin-left: .5rem !important; }
+        .me-1 { margin-right: .25rem !important; }
+        .badge.bg-info { background-color: #0dcaf0 !important; color: #000;}
+        .badge.bg-primary { background-color: #007bff !important;} /* Estilo para o badge Mais Recente */
+        .bg-light { background-color: #f8f9fa !important; }
+        .p-2 { padding: .5rem !important; }
+        .rounded { border-radius: .25rem !important; }
+        .text-muted { color: #6c757d !important; }
+        .fw-bold { font-weight: 700 !important; }
+        .form-label { margin-bottom: .5rem; }
+        .invalid-feedback.d-block { display: block !important; font-size: .875em; color: #dc3545; }
+        .list-group-item small.d-block { line-height: 1.2; margin-top: 0.2rem;}
+        .status-aguardando_documentos { background-color: #ffc107; color: #333; }
+        .status-documentacao_em_analise { background-color: #0dcaf0; color: #000; }
+        .status-elaboracao_contrato { background-color: #6f42c1; color: #fff; }
+        .status-registro_junta { background-color: #fd7e14; color: #fff; }
+        .status-providencias_pos_registro { background-color: #d63384; color: #fff; }
+        .status-concluido { background-color: #198754; color: #fff; }
+        .status-concluido_oficializado { background-color: #0a58ca; color: #fff; }
+        .status-cancelado { background-color: #dc3545; color: #fff; }
+        .badge { display: inline-block; padding: .35em .65em; font-size: .75em; font-weight: 700; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25rem; }
+    </style>
+{% endblock %}

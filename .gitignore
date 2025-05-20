@@ -21,3 +21,10 @@ Build/Deployment
 Miscellaneous
 
 *.tmp *.temp *.bak *.backup *~.env
+.env
+mediafiles/
+staticfiles/
+db.sqlite3
+__pycache__/
+*.pyc
+*.log

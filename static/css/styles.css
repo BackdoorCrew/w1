@@ -935,3 +935,217 @@ footer {
 .form-group ul.errorlist li {
     margin-bottom: 5px;
 }
+body.auth-active-page {
+    background-color: #022028 !important;
+}
+
+.auth-page {
+    background-color: #022028;
+    color: #e5e7eb;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: 'Montserrat', sans-serif;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.auth-section {
+    width: 100%;
+    max-width: 450px;
+}
+
+.auth-form-container {
+    background-color: #033038;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.auth-logo {
+    display: block;
+    max-width: 80px;
+    margin: 0 auto 1.5rem auto;
+}
+
+.auth-form-container h1 {
+    font-size: 1.75rem;
+    font-family: "Cal Sans", sans-serif;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.auth-form-container > p.form-description {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: #9ca3af;
+}
+
+.auth-form-container .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.auth-form-container .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #cbd5e1;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+/* === Base para consistência de altura de inputs e botões === */
+.auth-form-container input[type="text"],
+.auth-form-container input[type="email"],
+.auth-form-container input[type="password"],
+.auth-form-container .auth-btn { /* Aplicando estilos base de altura */
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 0.95rem; /* Tamanho de fonte padronizado */
+    line-height: 1.5;   /* Altura de linha padronizada */
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: "Montserrat", sans-serif;
+    text-decoration: none;
+    border: 1px solid transparent; /* Borda base para cálculo de altura, cor será sobrescrita */
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Estilos específicos para inputs de texto */
+.auth-form-container input[type="text"],
+.auth-form-container input[type="email"],
+.auth-form-container input[type="password"] {
+    background-color: #044048;
+    color: #e5e7eb;
+    border-color: #055058; /* Sobrescreve a borda base */
+}
+
+.auth-form-container input[type="text"]::placeholder,
+.auth-form-container input[type="email"]::placeholder,
+.auth-form-container input[type="password"]::placeholder {
+    color: #6b7280;
+}
+
+.auth-form-container input[type="text"]:focus,
+.auth-form-container input[type="email"]:focus,
+.auth-form-container input[type="password"]:focus {
+    border-color: #5fded4;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(95, 222, 212, 0.15);
+}
+
+/* Estilos para Checkbox */
+.auth-form-container .form-group-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 5px 0; /* Adiciona um pouco de padding vertical se necessário */
+}
+.auth-form-container .form-group-checkbox input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    accent-color: #5fded4;
+    height: 1.2em; /* Ajuste para melhor alinhamento visual */
+    width: 1.2em;
+    flex-shrink: 0; /* Evita que o checkbox encolha */
+}
+.auth-form-container .form-group-checkbox label {
+    margin-bottom: 0;
+    font-weight: normal;
+    color: #cbd5e1;
+    cursor: pointer;
+    line-height: 1.2em; /* Alinha com a altura do checkbox */
+}
+
+
+/* Estilos para Erros e Mensagens */
+.auth-form-container .errorlist {
+    list-style-type: none;
+    padding: 0;
+    margin: 0.5rem 0 0 0;
+    color: #f87171;
+    font-size: 0.8rem;
+}
+.auth-form-container .errorlist li { margin-bottom: 0.25rem; }
+
+.auth-form-container .error-messages-nonfield p,
+.auth-form-container ul.errorlist.nonfield li {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #f87171;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    text-align: left;
+    font-size: 0.875rem;
+    list-style: none;
+}
+.auth-form-container .django-messages .alert {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    text-align: left;
+}
+.auth-form-container .django-messages .alert-success { background-color: #d1fae5; border: 1px solid #6ee7b7; color: #065f46; }
+.auth-form-container .django-messages .alert-error { background-color: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; }
+.auth-form-container .django-messages .alert-warning { background-color: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+.auth-form-container .django-messages .alert-info { background-color: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; }
+
+
+/* Estilos para Botões de Autenticação */
+.auth-btn { /* Herda padding, font-size, line-height, border-radius, width, box-sizing, font-family, text-decoration da regra base comum */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Aumentei um pouco o gap para o ícone do Google */
+    background-color: #5fded4;
+    color: #022028;
+    border-color: #5fded4; /* Borda correspondente ao fundo para manter a altura */
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 1.5rem;
+}
+.auth-btn:hover {
+    background-color: #4acbc1;
+    border-color: #4acbc1;
+}
+
+.auth-btn.socialaccount_provider.google {
+    background-color: #DB4437 !important;
+    color: white !important;
+    border-color: #DB4437 !important;
+    margin-top: 0.5rem;
+}
+.auth-btn.socialaccount_provider.google:hover {
+    background-color: #c53929 !important;
+    border-color: #c53929 !important;
+}
+.auth-btn .fab.fa-google {
+    font-size: 1.2em; /* Mantido, relativo ao 0.95rem do botão */
+    /* line-height e vertical-align são menos críticos com flexbox align-items: center */
+}
+
+.auth-switch {
+    text-align: center;
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin-top: 1.5rem;
+}
+.auth-switch a {
+    color: #5fded4;
+    text-decoration: none;
+    font-weight: 500;
+}
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+/* esconde QUALQUER bloco gerado pelo Django-messages em todo o site */
+.django-messages, .django-messages-container,
+.alert, .messages, [role="alert"] { display:none!important; }

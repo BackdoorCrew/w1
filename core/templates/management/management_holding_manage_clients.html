@@ -1,0 +1,76 @@
+{% extends 'management/management_base.html' %}
+{% load static %}
+
+{% block page_title_content %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <div class="mb-4">
+        <a href="{% url 'management_holding_detail' holding.id %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar para Detalhes da Holding: {{ holding.nome_holding }}
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">Adicionar Cliente Existente à Holding "{{ holding.nome_holding }}"</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" novalidate class="needs-validation">
+                {% csrf_token %}
+                {% for field in add_client_form %}
+                    <div class="form-group mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                        {% for error in field.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                 {% for error in add_client_form.non_field_errors %}
+                    <div class="alert alert-danger p-2 mt-2">{{ error }}</div>
+                {% endfor %}
+                <button type="submit" name="add_client" class="btn btn-primary"><i class="fas fa-user-plus"></i> Adicionar Cliente</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h4 class="mb-0">Clientes Atualmente Associados ({{ current_clients.count }})</h4>
+        </div>
+        {% if current_clients %}
+            <ul class="list-group list-group-flush">
+                {% for client in current_clients %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{% if request.user.is_superuser or request.user.id == holding.consultor_responsavel_id %}{% url 'management_user_detail' client.id %}{% else %}#{% endif %}">{{ client.get_full_name|default:client.email }}</a>
+                            {% if holding.processo_criacao and holding.processo_criacao.cliente_principal_id == client.id %}
+                                <span class="badge bg-info ms-2">Cliente Principal do Processo</span>
+                            {% endif %}
+                        </div>
+                        <form method="post" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja remover este cliente da holding?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="client_id" value="{{ client.id }}">
+                            <button type="submit" name="remove_client" class="btn btn-danger btn-sm"
+                                {% if holding.processo_criacao and holding.processo_criacao.cliente_principal_id == client.id %}disabled title="Não é possível remover o cliente principal do processo."{% endif %}>
+                                <i class="fas fa-user-minus"></i> Remover
+                            </button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="card-body">
+                <p class="text-muted">Nenhum cliente associado a esta holding no momento.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <style>
+        .ms-2 { margin-left: .5rem !important; }
+        .badge.bg-info { background-color: #0dcaf0 !important; color: #000;}
+        .invalid-feedback.d-block { display: block !important; font-size: .875em; color: #dc3545; }
+        .alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+    </style>
+{% endblock %}

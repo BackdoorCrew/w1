@@ -1,151 +1,166 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Criar Holding - W1 Holding Platform{% endblock %}
-{% block header %}{% endblock %}
-{% block footer %}{% endblock %}
+{% block title %}Iniciar Criação de Holding - W1 Holding Platform{% endblock %}
+
+{% block head_extra_styles %}
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #022028;
+            color: #e5e7eb;
+        }
+        .content-card {
+            background-color: #033038;
+            border: 1px solid #044048;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .content-card h2 {
+            font-family: 'Cal Sans', sans-serif;
+            color: #5fded4;
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+        .content-card p, .content-card li {
+            color: #adb5bd;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+        .content-card ul {
+            list-style-position: inside;
+            padding-left: 0.5rem;
+        }
+        .form-group-custom {
+            margin-bottom: 1.5rem;
+        }
+        .form-group-custom label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+        .form-control-custom {
+            background-color: #044048;
+            color: #fff;
+            border: 1px solid #055058;
+            border-radius: 0.375rem;
+            padding: 0.75rem 1rem; /* Aumentei um pouco o padding */
+            width: 100%;
+            font-size: 1rem; /* Para consistência */
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-control-custom:focus {
+            border-color: #5fded4;
+            box-shadow: 0 0 0 0.2rem rgba(95, 222, 212, 0.25);
+            outline: none;
+        }
+        .form-control-custom::placeholder {
+            color: #6b7280;
+        }
+        .submit-btn-custom {
+            background-color: #5fded4;
+            color: #022028;
+            padding: 0.75rem 2rem;
+            border-radius: 0.375rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .submit-btn-custom:hover {
+            background-color: #4acbc1;
+            transform: translateY(-1px);
+        }
+        .back-link-custom {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #5fded4;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link-custom:hover {
+            text-decoration: underline;
+            color: #7aded5;
+        }
+        .error-messages-custom {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #f87171;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
-<section class="questionnaire-section">
-    <h2>Criar Sua Holding</h2>
-    <p>Responda às perguntas abaixo para personalizar sua holding e ver as vantagens.</p>
-    {% if form.errors or form.non_field_errors %}
-        <div class="error-messages">
-            <p>Por favor, corrija os erros abaixo:</p>
-            <ul>
-                {% for field in form %}
-                    {% for error in field.errors %}
-                        <li>{{ field.label }}: {{ error }}</li>
+<div class="min-h-screen py-8 md:py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold cal-sans-regular text-white">Manifestar Interesse em Criar Sua Holding</h1>
+            <p class="mt-3 text-lg text-gray-300">Dê o primeiro passo para proteger e otimizar seu patrimônio.</p>
+        </div>
+
+        {% if form.errors or form.non_field_errors %}
+            <div class="error-messages-custom">
+                <p>Por favor, corrija o erro abaixo:</p>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
                     {% endfor %}
-                {% endfor %}
-                {% for error in form.non_field_errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <div class="content-card">
+            <form method="post" action="{% url 'create_holding' %}" id="holding-form">
+                {% csrf_token %}
+                <h2 class="!text-2xl">Sugira um Nome para Sua Holding</h2>
+                <p class="mb-6">Este será o nome inicial para sua holding. Nossos consultores ajudarão a refinar todos os detalhes.</p>
+                <div class="form-group-custom">
+                    <label for="{{ form.nome_holding.id_for_label }}">{{ form.nome_holding.label }}</label>
+                    {{ form.nome_holding }}
+                    {% if form.nome_holding.errors %}<div class="text-red-400 text-sm mt-1">{{ form.nome_holding.errors }}</div>{% endif %}
+                </div>
+                <div class="mt-8 text-center">
+                    <button type="submit" class="submit-btn-custom">Registrar interesse e iniciar processo</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="content-card mt-10">
+            <h2>Como Funciona o Processo?</h2>
+            <p>Ao registrar seu interesse, você dará início ao processo de criação da sua holding conosco. Veja as próximas etapas:</p>
+            <ul class="list-disc">
+                <li><strong>Contato Inicial:</strong> Um de nossos consultores especializados entrará em contato para entender suas necessidades específicas e objetivos.</li>
+                <li><strong>Coleta de Informações:</strong> Nesta conversa, detalharemos as informações necessárias sobre seu patrimônio, herdeiros, empresas e outras particularidades.</li>
+                <li><strong>Estruturação Personalizada:</strong> Com base no seu perfil, elaboraremos a melhor estrutura para sua holding, visando proteção patrimonial, economia tributária e planejamento sucessório.</li>
+                <li><strong>Documentação e Registro:</strong> Cuidaremos de toda a parte burocrática, desde a elaboração dos contratos até o registro da sua holding.</li>
+                <li><strong>Acompanhamento Contínuo:</strong> Mesmo após a criação, oferecemos suporte para garantir que sua holding continue atendendo aos seus objetivos.</li>
             </ul>
+            <p class="mt-6 font-semibold text-gray-100">Nossa equipe está pronta para guiá-lo em cada passo, tornando o processo simples e seguro.</p>
         </div>
-    {% endif %}
-    <form method="post" action="{% url 'create_holding' %}" class="questionnaire-form" id="holding-form">
-        {% csrf_token %}
-        <h3>Dados Iniciais</h3>
-        <div class="form-group">
-            {{ form.nome_holding.label_tag }} {{ form.nome_holding }}
-        </div>
-        <h3>💰 Dinheiro em Banco</h3>
-        <p>Saber quanto você tem armazenado em banco ajuda a planejar investimentos e proteção patrimonial.</p>
-        <div class="form-group">
-            {{ form.has_bank_savings.label_tag }} Você tem dinheiro armazenado em banco? {{ form.has_bank_savings }}
-        </div>
-        <div id="bank-savings-details" class="details" style="display: none;">
-            <div class="form-group">
-                {{ form.bank_savings_amount.label_tag }} Qual o valor aproximado (R$)? {{ form.bank_savings_amount }}
-            </div>
-        </div>
-        <h3>🧠 Sucessão Familiar sem Inventário</h3>
-        <p>Evite custos de até 20% e anos de espera transferindo cotas da holding aos herdeiros em vida.</p>
-        <div class="form-group">
-            {{ form.has_heirs.label_tag }} Você tem herdeiros? {{ form.has_heirs }}
-        </div>
-        <div id="heirs-details" class="details" style="display: none;">
-            <div class="form-group">
-                {{ form.heir_count.label_tag }} Quantos herdeiros? {{ form.heir_count }}
-            </div>
-            <div class="form-group">
-                {{ form.has_succession_plan.label_tag }} Você já pensou em como deixará seus bens para eles? {{ form.has_succession_plan }}
-            </div>
-            <div class="form-group">
-                {{ form.has_paid_inventory.label_tag }} Já fez ou pagou por inventário de algum parente? {{ form.has_paid_inventory }}
-            </div>
-        </div>
-        <h3>🧠 Economia no Imposto sobre Aluguel</h3>
-        <p>Reduza o imposto sobre aluguéis de até 27,5% (pessoa física) para cerca de 11,33% (holding).</p>
-        <div class="form-group">
-            {{ form.has_rental_properties.label_tag }} Você tem imóveis alugados? {{ form.has_rental_properties }}
-        </div>
-        <div id="rental-details" class="details" style="display: none;">
-            <div class="form-group">
-                {{ form.rental_property_count.label_tag }} Quantos imóveis? {{ form.rental_property_count }}
-            </div>
-            <div class="form-group">
-                {{ form.rental_income_monthly.label_tag }} Qual valor você recebe de aluguel por mês (R$)? {{ form.rental_income_monthly }}
-            </div>
-            <div class="form-group">
-                {{ form.rental_expenses_monthly.label_tag }} Quais despesas você tem com esses imóveis por mês (R$)? {{ form.rental_expenses_monthly }}
-            </div>
-        </div>
-        <h3>🧠 Proteção Patrimonial</h3>
-        <p>Proteja seus bens contra ações judiciais, dívidas ou divórcios, mantendo-os em nome da holding.</p>
-        <div class="form-group">
-            {{ form.has_litigation_concerns.label_tag }} Você tem receio de ações judiciais contra você ou sua empresa? {{ form.has_litigation_concerns }}
-        </div>
-        <div id="protection-details" class="details" style="display: none;">
-            <div class="form-group">
-                {{ form.has_legal_issues.label_tag }} Já teve problemas legais ou está em um setor de risco? {{ form.has_legal_issues }}
-            </div>
-            <div class="form-group">
-                {{ form.wants_asset_protection.label_tag }} Você quer proteger imóveis e patrimônios da sua família? {{ form.wants_asset_protection }}
-            </div>
-            <div class="form-group">
-                {{ form.protected_assets.label_tag }} Descreva os bens que deseja proteger: {{ form.protected_assets }}
-            </div>
-        </div>
-        <h3>🧠 Economia sobre Lucros Empresariais</h3>
-        <p>Centralize lucros de empresas na holding para otimizar impostos e planejar distribuições.</p>
-        <div class="form-group">
-            {{ form.has_companies.label_tag }} Você é sócio de empresas? {{ form.has_companies }}
-        </div>
-        <div id="company-details" class="details" style="display: none;">
-            <div class="form-group">
-                {{ form.company_count.label_tag }} Quantas empresas? {{ form.company_count }}
-            </div>
-            <div class="form-group">
-                {{ form.company_profit_annual.label_tag }} Qual o lucro anual aproximado delas (R$)? {{ form.company_profit_annual }}
-            </div>
-            <div class="form-group">
-                {{ form.distributes_profits.label_tag }} Você costuma distribuir lucros ou reinvestir? {{ form.distributes_profits }}
-            </div>
-        </div>
-        <h3>🧠 Gestão Eficiente de Patrimônio</h3>
-        <p>Gerencie todos os seus bens em um único CNPJ, facilitando vendas e controle financeiro.</p>
-        <div class="form-group">
-            {{ form.has_multiple_assets.label_tag }} Você tem muitos bens em seu nome? {{ form.has_multiple_assets }}
-        </div>
-        <div id="management-details" class="details" style="display: none;">
-            <div class="form-group">
-                {{ form.wants_efficient_management.label_tag }} Gostaria de facilitar a gestão e venda desses bens? {{ form.wants_efficient_management }}
-            </div>
-            <div class="form-group">
-                {{ form.has_management_difficulties.label_tag }} Já teve dificuldades com controle patrimonial ou burocracias? {{ form.has_management_difficulties }}
-            </div>
-        
-        </div>
-        <button type="submit" class="submit-btn">Enviar</button>
-    </form>
-    <a href="{% url 'dashboard' %}" class="back-link">Voltar ao Dashboard</a>
-</section>
 
+        <div class="text-center mt-8">
+            <a href="{% url 'dashboard_final' %}" class="back-link-custom"><i class="fas fa-arrow-left mr-2"></i>Voltar ao Painel</a>
+        </div>
+    </div>
+</div>
+
+{% comment %} O script de toggleDetails não é mais necessário, pois não há campos condicionais. {% endcomment %}
 <script>
-    function toggleDetails(checkboxId, detailsId) {
-        const checkbox = document.getElementById(checkboxId);
-        const details = document.getElementById(detailsId);
-        details.style.display = checkbox.checked ? 'block' : 'none';
-    }
-
-    document.getElementById('id_has_bank_savings').addEventListener('change', () => {
-        toggleDetails('id_has_bank_savings', 'bank-savings-details');
-    });
-    document.getElementById('id_has_heirs').addEventListener('change', () => {
-        toggleDetails('id_has_heirs', 'heirs-details');
-    });
-    document.getElementById('id_has_rental_properties').addEventListener('change', () => {
-        toggleDetails('id_has_rental_properties', 'rental-details');
-    });
-    document.getElementById('id_has_litigation_concerns').addEventListener('change', () => {
-        toggleDetails('id_has_litigation_concerns', 'protection-details');
-    });
-    document.getElementById('id_has_companies').addEventListener('change', () => {
-        toggleDetails('id_has_companies', 'company-details');
-    });
-    document.getElementById('id_has_multiple_assets').addEventListener('change', () => {
-        toggleDetails('id_has_multiple_assets', 'management-details');
-    });
+    // Script JavaScript não é mais necessário para esta página simplificada.
+    // Poderia ser usado para validações front-end adicionais, se desejado.
 </script>
 {% endblock %}

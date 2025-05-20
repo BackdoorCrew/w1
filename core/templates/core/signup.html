@@ -1,8 +1,19 @@
 {% extends 'core/base.html' %}
 {% load static %}
-{% load i18n %} {% load socialaccount %} {% block title %}Cadastrar - W1 Holding Platform{% endblock %}
-{% block header %}{% endblock %}
-{% block footer %}{% endblock %}
+{% load i18n %}
+{% load socialaccount %}
+
+{% block title %}Cadastrar - W1 Holding Platform{% endblock %}
+
+{% block head_extra_styles %}
+    {{ block.super }}
+    {# Os estilos de autenticação foram movidos para o seu styles.css global #}
+    {# Se você criou um auth_styles.css separado, descomente a linha abaixo: #}
+    {# <link rel="stylesheet" href="{% static 'css/auth_styles.css' %}"> #}
+{% endblock head_extra_styles %}
+
+{% block header_content %}{% endblock %}
+{% block footer_content %}{% endblock %}
 
 {% block content %}
 <div class="auth-page">
@@ -10,54 +21,51 @@
         <div class="auth-form-container">
             <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="auth-logo">
             <h1>Cadastrar</h1>
-            <p>Crie sua conta para começar a planejar sua holding.</p>
+            <p class="form-description">Crie sua conta para começar a planejar sua holding.</p>
 
-            {% if form.errors or form.non_field_errors %}
-                <div class="error-messages">
-                    <p>Por favor, corrija os erros abaixo:</p>
-                    <ul>
-                        {% for field in form %}
-                            {% for error in field.errors %}
-                                <li>{{ field.label }}: {{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                        {% for error in form.non_field_errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                    </ul>
+            {% if form.non_field_errors %}
+                <div class="error-messages-nonfield">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if messages %}
+                <div class="django-messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
                 </div>
             {% endif %}
 
             <form method="post" action="{% url 'signup' %}">
                 {% csrf_token %}
-                <div class="form-group">
-                    <label for="{{ form.full_name.id_for_label }}">Nome Completo</label>
-                    {{ form.full_name }}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.email.id_for_label }}">E-mail</label>
-                    {{ form.email }}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.password1.id_for_label }}">Senha</label>
-                    {{ form.password1 }}
-                </div>
-                <div class="form-group">
-                    <label for="{{ form.password2.id_for_label }}">Confirmar Senha</label>
-                    {{ form.password2 }}
-                </div>
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="errorlist">
+                                {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
                 <button type="submit" class="auth-btn">Cadastrar</button>
             </form>
 
-            {% comment %} Simplified Social Signup Section {% endcomment %}
-            <div class="social-signup-section" style="margin-top: 20px;">
-                 <a title="Google" class="socialaccount_provider google auth-btn" style="background-color: #DB4437; color:white; text-decoration:none; display:block; margin-bottom:10px;" href="{% provider_login_url 'google' process='login' %}">
-                     <i class="fab fa-google"></i> Cadastrar com Google
+            <div class="social-login-section" style="margin-top: 20px;">
+                <p>Ou cadastre-se com:</p>
+                 <a title="Google" href="{% provider_login_url 'google' process='login' %}"
+                    class="auth-btn socialaccount_provider google">
+                     <i class="fab fa-google"></i>Cadastrar com Google
                  </a>
             </div>
 
-            <p class="auth-switch" style="margin-top: 20px;">Já tem uma conta? <a href="{% url 'login' %}">Entrar</a></p>
+            <p class="auth-switch">Já tem uma conta? <a href="{% url 'login' %}">Entrar</a></p>
         </div>
     </section>
 </div>
-{% endblock %}
+{% endblock content %}
+
+{% block page_scripts %}{% endblock %}

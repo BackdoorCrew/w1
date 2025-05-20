@@ -9,37 +9,59 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@100;400;700;900&family=Cal+Sans&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block head_extra_styles %}{% endblock %} {# Bloco para CSS extra no head, se necessário por páginas filhas #}
 </head>
 <body>
-    {% block header %}
+    {% block header %} {# Mantendo o nome original do bloco para compatibilidade com seus templates existentes #}
     <header>
         <nav class="navbar">
             <div class="logo">
-                <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="logo-img">
+                <a href="{% url 'index' %}"> {# Link para a página inicial no logo #}
+                    <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="logo-img">
+                </a>
             </div>
             <ul class="nav-links">
                 <li><a href="{% url 'index' %}#hero">Início</a></li>
                 <li><a href="{% url 'index' %}#holding-info">Holding</a></li>
                 <li><a href="{% url 'index' %}#comparison">Benefícios</a></li>
                 <li><a href="{% url 'index' %}#steps">Etapas</a></li>
+                {# Links condicionais para dashboard #}
+                {% if user.is_authenticated %}
+                    {% if user.is_superuser %}
+                        <li><a href="{% url 'management_dashboard' %}">Gestão</a></li>
+                    {% else %}
+                        <li><a href="{% url 'dashboard_final' %}">Meu Painel</a></li> 
+                        {# dashboard_final é o que tem a sidebar #}
+                    {% endif %}
+                {% endif %}
             </ul>
-            <a href="{% url 'login' %}" class="login-button">Entrar</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'account_logout' %}" class="login-button">Sair</a> {# URL de logout do allauth #}
+            {% else %}
+                <a href="{% url 'login' %}" class="login-button">Entrar</a> {# Sua view de login customizada #}
+            {% endif %}
         </nav>
     </header>
-    {% endblock %}
+    {% endblock header %}
+
     <main>
         {% block content %}
-        {% endblock %}
+        {# O conteúdo principal da página será inserido aqui pelos templates filhos #}
+        {% endblock content %}
     </main>
-    {% block footer %}
+
+    {% block footer %} {# Mantendo o nome original do bloco #}
     <footer>
-        <p class="copyright">© 2025 W1 Holding Platform. Todos os direitos reservados.</p>
+        <p class="copyright">© {% now "Y" %} W1 Holding Platform. Todos os direitos reservados.</p>
         <p class="production">Uma produção de <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Diogo Coutinho</a> e <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Guilherme Stern</a></p>
     </footer>
-    {% endblock %}
-    {% block scripts %}
+    {% endblock footer %}
+
+    {% block scripts %} {# Mantendo o nome original do bloco #}
+    {# Chart.js e scripts.js são carregados aqui por padrão. #}
+    {# Se uma página específica não precisar deles, ela pode sobrescrever este bloco para ser vazio. #}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="{% static 'js/scripts.js' %}"></script>
-    {% endblock %}
+    {% endblock scripts %}
 </body>
 </html>

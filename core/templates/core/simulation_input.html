@@ -1,141 +1,133 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Simulação - W1 Holding Platform{% endblock %}
-{% block header %}
+{% block title %}Simulação de Benefícios - W1 Holding Platform{% endblock %}
+
+{% comment %}
+Esta página usa um layout focado, sem o header/footer padrão do base.html,
+para uma melhor experiência no preenchimento do formulário de simulação.
+Os estilos são inline ou via CDN (Tailwind).
+{% endcomment %}
+{% block header_content %}{% endblock %}
+{% block footer_content %}{% endblock %}
+
+{% block head_extra_styles %}
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <style>
-    .auth-page {
-        width: 100%;
-        padding: 20px;
-        color: #fff;
-        background: #022028;
+    body { background-color: #022028; color: #e5e7eb; font-family: 'Montserrat', sans-serif; }
+    .auth-page-simulation { /* Renomeado para evitar conflito com .auth-page de login/signup se os estilos fossem globais */
+        width: 100%; 
+        min-height: 100vh; 
+        padding: 40px 20px; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center;
     }
-    .auth-section {
-        max-width: 3xl;
-        margin: 0 auto;
-        text-align: center;
+    .auth-section-simulation { width: 100%; max-width: 768px; margin: 0 auto; }
+    .auth-form-container-simulation { 
+        background: #033038; 
+        padding: 2rem; 
+        border-radius: 0.75rem; 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
+        text-align: left; 
     }
-    .auth-form-container {
-        background: #033038;
-        padding: 24px;
-        border-radius: 8px;
-        text-align: left;
-        box-sizing: border-box;
+    .auth-logo-simulation { display: block; max-width: 100px; margin: 0 auto 1.5rem auto; }
+    .auth-form-container-simulation h1 { 
+        font-size: 2rem; 
+        font-family: "Cal Sans", sans-serif; 
+        color: #fff; 
+        text-align: center; 
+        margin-bottom: 0.5rem; 
     }
-    .auth-logo {
-        max-width: 120px;
-        margin-bottom: 16px;
+    .auth-form-container-simulation > p.intro-text { 
+        text-align: center; 
+        margin-bottom: 2rem; 
+        font-size: 0.95rem; 
+        color: #9ca3af; 
     }
-    .auth-form-container h1 {
-        font-size: 1.75rem;
-        font-family: "Cal Sans", sans-serif;
-        color: #fff;
+    .section-title { 
+        font-size: 1.375rem; 
+        color: #5fded4; 
+        font-family: "Cal Sans", sans-serif; 
+        margin-top: 2rem; 
+        margin-bottom: 1rem; 
+        padding-bottom: 0.5rem; 
+        border-bottom: 1px solid #044048; 
     }
-    .form-group {
-        margin-bottom: 16px;
-        text-align: left;
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { 
+        color: #cbd5e1; 
+        font-weight: 500; 
+        font-size: 0.9rem; 
+        margin-bottom: 0.375rem; 
+        display: block; 
     }
-    label {
-        color: #d1d5db;
-        font-family: "Montserrat", sans-serif;
-        display: block;
-        margin-bottom: 4px;
-        font-weight: 600;
-        font-size: 0.875rem;
+    input[type="number"].form-control-simulacao,
+    select.form-control-simulacao {
+        background: #044048; color: #fff; padding: 0.625rem 0.75rem;
+        border-radius: 0.375rem; border: 1px solid #055058;
+        width: 100%; font-family: "Montserrat", sans-serif;
+        transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
-    input[type="number"] {
-        background: #044048;
-        color: #fff;
-        padding: 8px;
-        border-radius: 4px;
-        max-width: 200px;
-        width: 100%;
-        border: none;
-        font-family: "Montserrat", sans-serif;
+    input[type="number"].form-control-simulacao:focus {
+        border-color: #5fded4; box-shadow: 0 0 0 0.2rem rgba(95, 222, 212, 0.25); outline: none;
     }
-    .radio-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
+    input[type="number"].form-control-simulacao::placeholder { color: #6b7280; }
+    
+    .radio-group { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
     .radio-label {
-        padding: 6px 12px;
-        border: 1px solid #5fded4;
-        border-radius: 4px;
-        cursor: pointer;
-        color: #d1d5db;
-        font-size: 0.875rem;
-        transition: background-color 0.2s;
+        padding: 0.5rem 1rem; border: 1px solid #5fded4; border-radius: 0.375rem;
+        cursor: pointer; color: #cbd5e1; font-size: 0.875rem;
+        transition: background-color 0.2s, color 0.2s; background-color: transparent;
     }
-    .radio-label:hover {
-        background-color: #5fded433;
+    .radio-label:hover { background-color: rgba(95, 222, 212, 0.1); border-color: #7aded5; }
+    input[type="radio"].radio-input:checked + .radio-label { /* Alterado seletor para o input real */
+        background-color: #5fded4; color: #022028; font-weight: 600; 
     }
-    input[type="radio"]:checked + .radio-label {
-        background-color: #5fded4;
-        color: #022028;
+    input[type="radio"].radio-input { position: absolute; opacity: 0; width: 0; height: 0; } /* Esconde o input de rádio real */
+    
+    .submit-btn-simulation { /* Renomeado para evitar conflito com .auth-btn de login/signup */
+        background-color: #5fded4; color: #022028; padding: 0.75rem 1.5rem;
+        border-radius: 0.375rem; font-weight: bold; border: none; cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s; display: inline-block;
+        font-family: "Montserrat", sans-serif;
     }
-    input[type="radio"] {
-        display: none;
+    .submit-btn-simulation:hover { background-color: #4acbc1; transform: translateY(-1px); }
+    .submit-btn-simulation:active { transform: translateY(0px); }
+    
+    .error-messages-container {
+        background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.5);
+        color: #f87171; padding: 1rem; border-radius: 0.375rem; margin-bottom: 1.5rem;
     }
-    .auth-btn {
-        background-color: #5fded4;
-        color: #022028;
-        padding: 8px 24px;
-        border-radius: 4px;
-        font-weight: bold;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    .auth-btn:hover {
-        background-color: #4acbc1;
-    }
-    .errorlist {
-        color: #ff6666;
-        margin-bottom: 8px;
-        list-style: none;
-        padding: 0;
-        font-size: 0.875rem;
-    }
-    .errorlist li {
-        margin-bottom: 4px;
-    }
-    .section-title {
-        font-size: 1.25rem;
-        color: #5fded4;
-        font-family: "Cal Sans", sans-serif;
-        margin: 16px 0 8px;
-    }
+    .error-messages-container .error-title { font-weight: 500; margin-bottom: 0.5rem; color: #ef4444; }
+    .errorlist { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0; }
+    .errorlist li { font-size: 0.875rem; margin-bottom: 0.25rem; }
+    .form-group .errorlist { margin-top: 0.25rem; padding-left: 0; list-style: none;}
+    
     @media (max-width: 640px) {
-        .auth-form-container {
-            padding: 16px;
-        }
-        input[type="number"] {
-            max-width: 100%;
-        }
+        .auth-form-container-simulation { padding: 1.5rem; }
+        .auth-form-container-simulation h1 { font-size: 1.75rem; }
+        .section-title { font-size: 1.25rem; }
     }
 </style>
-{% endblock %}
-{% block footer %}{% endblock %}
+{% endblock head_extra_styles %}
 
 {% block content %}
-<div class="auth-page">
-    <section class="auth-section">
-        <div class="auth-form-container">
-            <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="auth-logo">
+<div class="auth-page-simulation">
+    <section class="auth-section-simulation">
+        <div class="auth-form-container-simulation">
+            <img src="{% static 'images/logo.png' %}" alt="W1 Logo" class="auth-logo-simulation">
             <h1>Simulação de Benefícios</h1>
-            <p class="text-gray-300 mb-4 text-sm">Responda às perguntas abaixo para descobrir quanto você pode economizar com uma holding, {{ user.first_name.split.0 }}!</p>
+            <p class="intro-text">
+                Responda às perguntas abaixo para descobrir quanto você pode economizar com uma holding,
+                {% if user.first_name %}{{ user.first_name.split.0|capfirst }}{% else %}{{ user.email.split.0|capfirst }}{% endif %}!
+            </p>
             
-            {% if form.errors or form.non_field_errors %}
-                <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
-                    <p class="text-sm">Por favor, corrija os erros abaixo:</p>
+            {% if form.non_field_errors %}
+                <div class="error-messages-container">
+                    <p class="error-title">Por favor, corrija os erros abaixo:</p>
                     <ul class="errorlist">
-                        {% for field in form %}
-                            {% for error in field.errors %}
-                                <li>{{ field.label }}: {{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
                         {% for error in form.non_field_errors %}
                             <li>{{ error }}</li>
                         {% endfor %}
@@ -143,103 +135,101 @@
                 </div>
             {% endif %}
 
-            <form method="post" action="{% url 'simulation' %}" class="space-y-4">
+            <form method="post" action="{% url 'simulation' %}" class="space-y-6">
                 {% csrf_token %}
                 
                 <div class="section-title">Seus Imóveis</div>
-                <!-- Q1: Number of Properties -->
                 <div class="form-group">
                     <label for="{{ form.number_of_properties.id_for_label }}">{{ form.number_of_properties.label }}</label>
                     {{ form.number_of_properties }}
-                    {{ form.number_of_properties.errors }}
+                    {% if form.number_of_properties.errors %}<div class="errorlist mt-1">{{ form.number_of_properties.errors }}</div>{% endif %}
                 </div>
 
-                <!-- Q2: Total Property Value -->
                 <div id="property-value-field" class="form-group" style="display: none;">
                     <label for="{{ form.total_property_value.id_for_label }}">{{ form.total_property_value.label }}</label>
                     {{ form.total_property_value }}
-                    {{ form.total_property_value.errors }}
+                    {% if form.total_property_value.errors %}<div class="errorlist mt-1">{{ form.total_property_value.errors }}</div>{% endif %}
                 </div>
 
                 <div class="section-title">Suas Empresas</div>
-                <!-- Q3: Has Companies -->
                 <div class="form-group">
                     <label>{{ form.has_companies.label }}</label>
                     <div class="radio-group">
                         {% for choice in form.has_companies %}
-                            <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.has_companies.name }}" value="{{ choice.data.value }}" class="radio-input" {% if choice.data.selected %}checked{% endif %} required>
+                            <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.has_companies.html_name }}" value="{{ choice.data.value }}" class="radio-input"
+                                   {% comment %} CORREÇÃO APLICADA AQUI: Removidos parênteses internos {% endcomment %}
+                                   {% if form.has_companies.value|stringformat:"s" == choice.data.value|stringformat:"s" or form.has_companies.value is None and choice.data.value == 'no' %}checked{% endif %} required>
                             <label for="{{ choice.id_for_label }}" class="radio-label">{{ choice.data.label }}</label>
                         {% endfor %}
                     </div>
-                    {{ form.has_companies.errors }}
+                    {% if form.has_companies.errors %}<div class="errorlist mt-1">{{ form.has_companies.errors }}</div>{% endif %}
                 </div>
 
-                <!-- Q3.1: Number of Companies, Q4: Tax Regime, Q5: Monthly Profit -->
-                <div id="company-fields" class="space-y-2 md:grid md:grid-cols-2 md:gap-4 md:space-y-0" style="display: none;">
+                <div id="company-fields" class="space-y-4" style="display: none;">
                     <div class="form-group">
                         <label for="{{ form.number_of_companies.id_for_label }}">{{ form.number_of_companies.label }}</label>
                         {{ form.number_of_companies }}
-                        {{ form.number_of_companies.errors }}
+                        {% if form.number_of_companies.errors %}<div class="errorlist mt-1">{{ form.number_of_companies.errors }}</div>{% endif %}
                     </div>
                     <div class="form-group">
                         <label>{{ form.company_tax_regime.label }}</label>
                         <div class="radio-group">
                             {% for choice in form.company_tax_regime %}
-                                <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.company_tax_regime.name }}" value="{{ choice.data.value }}" class="radio-input" {% if choice.data.selected %}checked{% endif %}>
+                                <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.company_tax_regime.html_name }}" value="{{ choice.data.value }}" class="radio-input" {% if form.company_tax_regime.value|stringformat:"s" == choice.data.value|stringformat:"s" %}checked{% endif %}>
                                 <label for="{{ choice.id_for_label }}" class="radio-label">{{ choice.data.label }}</label>
                             {% endfor %}
                         </div>
-                        {{ form.company_tax_regime.errors }}
+                        {% if form.company_tax_regime.errors %}<div class="errorlist mt-1">{{ form.company_tax_regime.errors }}</div>{% endif %}
                     </div>
                     <div class="form-group">
                         <label for="{{ form.monthly_profit.id_for_label }}">{{ form.monthly_profit.label }}</label>
                         {{ form.monthly_profit }}
-                        {{ form.monthly_profit.errors }}
+                        {% if form.monthly_profit.errors %}<div class="errorlist mt-1">{{ form.monthly_profit.errors }}</div>{% endif %}
                     </div>
                 </div>
 
                 <div class="section-title">Seus Aluguéis</div>
-                <!-- Q6: Receives Rent -->
                 <div class="form-group">
                     <label>{{ form.receives_rent.label }}</label>
                     <div class="radio-group">
                         {% for choice in form.receives_rent %}
-                            <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.receives_rent.name }}" value="{{ choice.data.value }}" class="radio-input" {% if choice.data.selected %}checked{% endif %} required>
+                            <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.receives_rent.html_name }}" value="{{ choice.data.value }}" class="radio-input" 
+                                   {% comment %} CORREÇÃO APLICADA AQUI: Removidos parênteses internos {% endcomment %}
+                                   {% if form.receives_rent.value|stringformat:"s" == choice.data.value|stringformat:"s" or form.receives_rent.value is None and choice.data.value == 'no' %}checked{% endif %} required>
                             <label for="{{ choice.id_for_label }}" class="radio-label">{{ choice.data.label }}</label>
                         {% endfor %}
                     </div>
-                    {{ form.receives_rent.errors }}
+                    {% if form.receives_rent.errors %}<div class="errorlist mt-1">{{ form.receives_rent.errors }}</div>{% endif %}
                 </div>
 
-                <!-- Q6.1: Monthly Rent -->
                 <div id="rent-field" class="form-group" style="display: none;">
                     <label for="{{ form.monthly_rent.id_for_label }}">{{ form.monthly_rent.label }}</label>
                     {{ form.monthly_rent }}
-                    {{ form.monthly_rent.errors }}
+                    {% if form.monthly_rent.errors %}<div class="errorlist mt-1">{{ form.monthly_rent.errors }}</div>{% endif %}
                 </div>
 
                 <div class="section-title">Planejamento Sucessório</div>
-                <!-- Q7: Number of Heirs -->
                 <div class="form-group">
                     <label for="{{ form.number_of_heirs.id_for_label }}">{{ form.number_of_heirs.label }}</label>
                     {{ form.number_of_heirs }}
-                    {{ form.number_of_heirs.errors }}
+                    {% if form.number_of_heirs.errors %}<div class="errorlist mt-1">{{ form.number_of_heirs.errors }}</div>{% endif %}
                 </div>
 
-                <!-- Q8: Avoid Conflicts -->
                 <div class="form-group">
                     <label>{{ form.avoid_conflicts.label }}</label>
                     <div class="radio-group">
                         {% for choice in form.avoid_conflicts %}
-                            <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.avoid_conflicts.name }}" value="{{ choice.data.value }}" class="radio-input" {% if choice.data.selected %}checked{% endif %} required>
+                            <input type="radio" id="{{ choice.id_for_label }}" name="{{ form.avoid_conflicts.html_name }}" value="{{ choice.data.value }}" class="radio-input" 
+                                   {% comment %} CORREÇÃO APLICADA AQUI: Removidos parênteses internos {% endcomment %}
+                                   {% if form.avoid_conflicts.value|stringformat:"s" == choice.data.value|stringformat:"s" or form.avoid_conflicts.value is None and choice.data.value == 'no' %}checked{% endif %} required>
                             <label for="{{ choice.id_for_label }}" class="radio-label">{{ choice.data.label }}</label>
                         {% endfor %}
                     </div>
-                    {{ form.avoid_conflicts.errors }}
+                    {% if form.avoid_conflicts.errors %}<div class="errorlist mt-1">{{ form.avoid_conflicts.errors }}</div>{% endif %}
                 </div>
 
-                <div class="text-center">
-                    <button type="submit" class="auth-btn mt-4">Calcular Benefícios</button>
+                <div class="text-center mt-8">
+                    <button type="submit" class="submit-btn-simulation">Calcular Benefícios</button>
                 </div>
             </form>
         </div>
@@ -247,47 +237,61 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const numberOfProperties = document.querySelector('#{{ form.number_of_properties.id_for_label }}');
-        const propertyValueField = document.querySelector('#property-value-field');
-        const hasCompaniesRadios = document.querySelectorAll('input[name="{{ form.has_companies.name }}"]');
-        const companyFields = document.querySelector('#company-fields');
-        const receivesRentRadios = document.querySelectorAll('input[name="{{ form.receives_rent.name }}"]');
-        const rentField = document.querySelector('#rent-field');
+document.addEventListener('DOMContentLoaded', function() {
+    const numberOfPropertiesField = document.getElementById('{{ form.number_of_properties.id_for_label }}');
+    const propertyValueContainer = document.getElementById('property-value-field');
+    const propertyValueInput = propertyValueContainer ? propertyValueContainer.querySelector('input[name="{{ form.total_property_value.html_name }}"]') : null;
 
-        function toggleFields() {
-            // Q2: Show total_property_value if number_of_properties > 0
-            propertyValueField.style.display = numberOfProperties.value > 0 ? 'block' : 'none';
-            const propertyValueInput = propertyValueField.querySelector('input');
-            if (propertyValueInput) {
-                propertyValueInput.required = numberOfProperties.value > 0;
-            }
+    const hasCompaniesRadios = document.querySelectorAll('input[name="{{ form.has_companies.html_name }}"]');
+    const companyFieldsContainer = document.getElementById('company-fields');
+    const numberOfCompaniesInput = companyFieldsContainer ? companyFieldsContainer.querySelector('input[name="{{ form.number_of_companies.html_name }}"]') : null;
+    const companyTaxRegimeRadios = companyFieldsContainer ? companyFieldsContainer.querySelectorAll('input[name="{{ form.company_tax_regime.html_name }}"]') : [];
+    const monthlyProfitInput = companyFieldsContainer ? companyFieldsContainer.querySelector('input[name="{{ form.monthly_profit.html_name }}"]') : null;
 
-            // Q3.1, Q4, Q5: Show company fields if has_companies is 'yes'
-            const hasCompanies = document.querySelector('input[name="{{ form.has_companies.name }}"]:checked')?.value === 'yes';
-            companyFields.style.display = hasCompanies ? 'block' : 'none';
-            const companyInputs = companyFields.querySelectorAll('input:not([type="radio"])');
-            companyInputs.forEach(input => {
-                input.required = hasCompanies;
-            });
-            const companyRadioInputs = companyFields.querySelectorAll('input[type="radio"]');
-            companyRadioInputs.forEach(input => {
-                input.required = hasCompanies;
-            });
+    const receivesRentRadios = document.querySelectorAll('input[name="{{ form.receives_rent.html_name }}"]');
+    const rentFieldContainer = document.getElementById('rent-field');
+    const monthlyRentInput = rentFieldContainer ? rentFieldContainer.querySelector('input[name="{{ form.monthly_rent.html_name }}"]') : null;
 
-            // Q6.1: Show monthly_rent if receives_rent is 'yes'
-            const receivesRent = document.querySelector('input[name="{{ form.receives_rent.name }}"]:checked')?.value === 'yes';
-            rentField.style.display = receivesRent ? 'block' : 'none';
-            const rentInput = rentField.querySelector('input');
-            if (rentInput) {
-                rentInput.required = receivesRent;
-            }
+    function toggleConditionalFields() {
+        const numPropsValue = numberOfPropertiesField ? parseInt(numberOfPropertiesField.value, 10) : 0;
+        if (propertyValueContainer) {
+            propertyValueContainer.style.display = numPropsValue > 0 ? 'block' : 'none';
+            if (propertyValueInput) propertyValueInput.required = numPropsValue > 0;
         }
 
-        numberOfProperties.addEventListener('input', toggleFields);
-        hasCompaniesRadios.forEach(radio => radio.addEventListener('change', toggleFields));
-        receivesRentRadios.forEach(radio => radio.addEventListener('change', toggleFields));
-        toggleFields(); // Initial state
-    });
+        const hasCompaniesChecked = document.querySelector('input[name="{{ form.has_companies.html_name }}"]:checked');
+        const showsCompanyFields = hasCompaniesChecked && hasCompaniesChecked.value === 'yes';
+        
+        if (companyFieldsContainer) {
+            companyFieldsContainer.style.display = showsCompanyFields ? 'block' : 'none';
+            if (numberOfCompaniesInput) numberOfCompaniesInput.required = showsCompanyFields;
+            // Para os radios de regime tributário, só são required se number_of_companies > 0 E o regime não for simples (se essa for a lógica)
+            // Por agora, a lógica do form.py já trata a obrigatoriedade baseada em has_companies
+            companyTaxRegimeRadios.forEach(radio => {
+                // A obrigatoriedade do regime em si é complexa, melhor deixar para a validação do backend/form.py
+                // Aqui podemos apenas garantir que um seja selecionado se o grupo for visível, mas
+                // a lógica de `required` no input já faz isso se o campo for required no form.
+            });
+            if (monthlyProfitInput) monthlyProfitInput.required = showsCompanyFields;
+        }
+
+        const receivesRentChecked = document.querySelector('input[name="{{ form.receives_rent.html_name }}"]:checked');
+        const showsRentFields = receivesRentChecked && receivesRentChecked.value === 'yes';
+
+        if (rentFieldContainer) {
+            rentFieldContainer.style.display = showsRentFields ? 'block' : 'none';
+            if (monthlyRentInput) monthlyRentInput.required = showsRentFields;
+        }
+    }
+
+    if (numberOfPropertiesField) {
+        numberOfPropertiesField.addEventListener('input', toggleConditionalFields);
+    }
+    hasCompaniesRadios.forEach(radio => radio.addEventListener('change', toggleConditionalFields));
+    receivesRentRadios.forEach(radio => radio.addEventListener('change', toggleConditionalFields));
+    
+    // Call on load para garantir que os campos corretos sejam exibidos/ocultados com base nos valores iniciais (se houver)
+    toggleConditionalFields(); 
+});
 </script>
 {% endblock %}
