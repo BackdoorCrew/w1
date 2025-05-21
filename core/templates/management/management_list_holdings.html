@@ -4,77 +4,353 @@
 {% block page_title_content %}{{ page_title|default:"Gerenciamento de Holdings" }}{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <form method="get" class="form-inline my-2 my-lg-0" style="flex-grow: 1; margin-right: 10px;">
-            <div class="input-group">
-                <input class="form-control" type="search" name="q" placeholder="Pesquisar Holdings, Clientes, Consultores..." value="{{ search_query|default:'' }}" aria-label="Pesquisar Holdings">
-                <button class="btn btn-outline-success" type="submit"><i class="fas fa-search"></i> Pesquisar</button>
-            </div>
-        </form>
-        {# Botão para criar holding (se existir essa funcionalidade para admin) - Manter comentado se não implementado #}
-        {# <a href="{% url 'management_create_holding' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Nova Holding</a> #}
+<div class="dashboard-container">
+    <h1 class="dashboard-title">Painel das Holdings</h1>
+    <p class="dashboard-subtitle">Gerencie holdings</p>
+    <div class="card holdings-card">
+        <div class="card-header">
+            <h4 class="card-title">Lista de Holdings</h4>
+            {# Botão para criar holding (mantido comentado) #}
+            {# <a href="{% url 'management_create_holding' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Nova Holding</a> #}
+        </div>
+        <div class="card-body">
+            <!-- Search Form -->
+            <form method="get" class="search-form mb-4">
+                <div class="input-group">
+                    <input class="form-control" type="search" name="q" placeholder="Pesquisar Holdings, Clientes, Consultores..." value="{{ search_query|default:'' }}" aria-label="Pesquisar Holdings">
+                    <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Pesquisar</button>
+                </div>
+            </form>
+
+            <!-- Holdings Table -->
+            {% if holdings_list %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome da Holding</th>
+                                <th>Consultores Responsáveis</th>
+                                <th>Clientes/Sócios</th>
+                                <th>Data Criação</th>
+                                <th>Status Legal</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for holding in holdings_list %}
+                                <tr>
+                                    <td>
+                                        <strong><a href="{% url 'management_holding_detail' holding.id %}" class="result-link">{{ holding.nome_holding }}</a></strong>
+                                    </td>
+                                    <td>
+                                        {% if holding.consultores.all %}
+                                            {% for consultor_obj in holding.consultores.all|slice:":2" %}
+                                                <div class="d-flex align-items-center" style="gap: 8px;">
+                                                    <a href="{% if request.user.is_superuser %}{% url 'management_user_detail' consultor_obj.id %}{% else %}#{% endif %}" class="result-link">
+                                                        {{ consultor_obj.get_full_name|default:consultor_obj.email }}
+                                                    </a>
+                                                    {% if not forloop.last and forloop.counter < 2 %}
+                                                        <span class="separator">•</span>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                            {% if holding.consultores.count > 2 %}
+                                                <small class="text-muted">e mais {{ holding.consultores.count|add:"-2" }}...</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Nenhum</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ holding.clientes.count }}</td>
+                                    <td>{{ holding.processo_criacao.data_inicio_processo|date:"d/m/Y"|default:"-" }}</td>
+                                    <td>
+                                        {% if holding.is_legally_official %}
+                                            <span class="badge status-official">Oficializada</span>
+                                        {% else %}
+                                            <span class="badge status-pending">Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="action-links">
+                                        <a href="{% url 'management_holding_detail' holding.id %}" class="btn btn-details btn-sm" title="Ver Detalhes e Gerenciar Holding">
+                                            <i class="fas fa-eye"></i> Detalhes
+                                        </a>
+                                        {% if request.user.is_superuser %}
+                                            <a href="{% url 'management_manage_holding_details_and_consultants' holding.id %}" class="btn btn-edit btn-sm" title="Editar Dados Básicos/Consultores">
+                                                <i class="fas fa-edit"></i> Editar
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'management_holding_manage_clients' holding.id %}" class="btn btn-clients btn-sm" title="Gerenciar Clientes/Sócios">
+                                            <i class="fas fa-users-cog"></i> Clientes
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">
+                    Nenhuma holding encontrada {% if search_query %} para a pesquisa "{{ search_query }}"{% endif %}.
+                </p>
+            {% endif %}
+        </div>
     </div>
+</div>
 
-    {% if holdings_list %}
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead class="thead-light">
-                    <tr>
-                        <th>Nome da Holding</th>
-                        <th>Consultores Responsáveis</th>
-                        <th>Clientes/Sócios</th>
-                        <th>Data Criação (Plataforma)</th>
-                        <th>Status Legal</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for holding in holdings_list %}
-                    <tr>
-                        <td>
-                            <strong><a href="{% url 'management_holding_detail' holding.id %}">{{ holding.nome_holding }}</a></strong>
-                        </td>
-                        <td>
-                            {% if holding.consultores.all %}
-                                {% for consultor_obj in holding.consultores.all|slice:":2" %} {# Mostra os primeiros 2 para não poluir a tabela #}
-                                    <a href="{% if request.user.is_superuser %}{% url 'management_user_detail' consultor_obj.id %}{% else %}#{% endif %}" class="d-block">
-                                        {{ consultor_obj.get_full_name|default:consultor_obj.email }}
-                                    </a>
-                                {% endfor %}
-                                {% if holding.consultores.count > 2 %}
-                                    <small class="text-muted">e mais {{ holding.consultores.count|add:"-2" }}...</small>
-                                {% endif %}
-                            {% else %}
-                                <span class="text-muted">Nenhum</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ holding.clientes.count }}</td>
-                        <td>{{ holding.processo_criacao.data_inicio_processo|date:"d/m/Y"|default:"-" }}</td>
-                        <td>
-                            {% if holding.is_legally_official %}
-                                <span class="badge bg-success">Oficializada</span>
-                            {% else %}
-                                <span class="badge bg-warning text-dark">Pendente</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{% url 'management_holding_detail' holding.id %}" class="btn btn-sm btn-info" title="Ver Detalhes e Gerenciar Holding"><i class="fas fa-eye"></i> Detalhes</a>
-                            
-                            {% if request.user.is_superuser %}
-                                {# ATUALIZE O NOME DA URL AQUI PARA O QUE VOCÊ DEFINIU EM urls.py #}
-                                <a href="{% url 'management_manage_holding_details_and_consultants' holding.id %}" class="btn btn-sm btn-outline-primary" title="Editar Dados Básicos/Consultores"><i class="fas fa-edit"></i> Editar</a>
-                            {% endif %}
+<style>
+/* General Styles */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Montserrat', sans-serif;
+    color: #e5e7eb;
+}
 
-                            <a href="{% url 'management_holding_manage_clients' holding.id %}" class="btn btn-sm btn-outline-secondary" title="Gerenciar Clientes/Sócios"><i class="fas fa-users-cog"></i> Clientes</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="alert alert-info mt-3" role="alert">
-            Nenhuma holding encontrada {% if search_query %} para a pesquisa "{{ search_query }}"{% endif %}.
-        </div>
-    {% endif %}
+/* Dashboard Title and Subtitle */
+.dashboard-title {
+    font-family: 'Cal Sans', sans-serif;
+    font-size: 2.5rem;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.dashboard-subtitle {
+    font-size: 1.1rem;
+    color: #9ca3af;
+    margin-bottom: 30px;
+}
+
+/* Cards */
+.card {
+    background-color: #033540;
+    border: none;
+    margin: 0; /* Flush cards */
+}
+
+.holdings-card {
+    margin: 0;
+}
+
+.card-header {
+    background-color: #044048;
+    border-bottom: none;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h4 {
+    font-family: 'Cal Sans', sans-serif;
+    color: #fff;
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.search-form {
+    margin-bottom: 30px;
+}
+/* Search Form */
+.search-form .input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.search-form .form-control {
+    background-color: #044048;
+    border: 1px solid #055058;
+    width: 500px;
+    color: #e5e7eb;
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    border-radius: 4px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-form .form-control:focus {
+    border-color: #5fded4;
+    box-shadow: 0 0 0 3px rgba(95, 222, 212, 0.15);
+    outline: none;
+}
+
+.search-form .btn-primary {
+    background-color: #5fded4;
+    border-color: #5fded4;
+    color: #022028;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.search-form .btn-primary:hover {
+    background-color: #4acbc1;
+    border-color: #4acbc1;
+    transform: scale(1.05);
+}
+
+/* Table */
+.table {
+    color: #e5e7eb;
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background-color: #033540;
+    color: #fff;
+    border: none;
+    padding: 12px 15px;
+}
+
+.table tbody tr {
+    transition: background-color 0.3s ease;
+}
+
+.table tbody tr td {
+    border: none;
+    border-top: solid 2px #022028;
+    padding: 12px 15px;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(95, 222, 212, 0.1);
+}
+
+/* Links and Badges */
+.result-link {
+    color: #e5e7eb;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.result-link:hover {
+    color: #4acbc1;
+    text-decoration: underline;
+}
+
+.separator {
+    color: #9ca3af;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.badge {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.status-official {
+    background-color: #22c55e;
+}
+
+.status-pending {
+    background-color: #ffc107;
+    color: #022028;
+}
+
+/* Action Buttons */
+.action-links {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.btn-details, .btn-edit, .btn-clients {
+    min-width: 100px; /* Fixed minimum width for consistency */
+    flex: 1; /* Grow equally */
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.btn-details {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: #e5e7eb;
+}
+
+.btn-details:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: #e5e7eb;
+    transform: scale(1.05);
+}
+
+
+.btn-edit {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: #e5e7eb;
+}
+
+.btn-edit:hover {
+    background-color: #138496;
+    border-color: #138496;
+    color: #e5e7eb;
+    transform: scale(1.05);
+}
+
+.btn-clients {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #e5e7eb;
+}
+
+.btn-clients:hover {
+    background-color: #5c636a;
+    border-color: #5c636a;
+    color: #e5e7eb;
+    transform: scale(1.05);
+}
+
+/* Text Muted */
+.text-muted {
+    color: #9ca3af !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-title {
+        font-size: 2rem;
+    }
+    .dashboard-subtitle {
+        font-size: 1rem;
+    }
+    .card-title {
+        font-size: 1.2rem;
+    }
+    .search-form .input-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .search-form .form-control,
+    .search-form .btn-primary {
+        width: 100%;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .table {
+        font-size: 0.85rem;
+    }
+    .action-links {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .btn-details, .btn-edit, .btn-clients {
+        min-width: 100%; /* Full width on small screens */
+    }
+}
+</style>
 {% endblock %}

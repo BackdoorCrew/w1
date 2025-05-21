@@ -1,44 +1,258 @@
 {% extends 'management/management_base.html' %}
 
 {% block content %}
-    <form method="get" class="filter-form">
-        <label for="user_type">Filtrar por tipo:</label>
-        <select name="user_type" id="user_type" onchange="this.form.submit()">
-            <option value="">Todos</option>
-            {% for value, display_name in user_types %}
-            <option value="{{ value }}" {% if value == selected_user_type %}selected{% endif %}>{{ display_name }}</option>
-            {% endfor %}
-        </select>
-        <noscript><button type="submit">Filtrar</button></noscript>
-    </form>
+<div class="dashboard-container">
+    <!-- Lista de Usuários -->
+     <h1 class="dashboard-title">Painel dos Usuários</h1>
+    <p class="dashboard-subtitle">Gerencie usuários</p>
+    <div class="card users-card">
+        <div class="card-header">
+            <h4 class="card-title">Lista de Usuários</h4>
+        </div>
+        <div class="card-body">
+            <!-- Formulário de Filtro Integrado -->
+            <form method="get" class="filter-form">
+                <div class="input-group">
+                    <label for="user_type">Filtrar por tipo:</label>
+                    <select name="user_type" id="user_type" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        {% for value, display_name in user_types %}
+                            <option value="{{ value }}" {% if value == selected_user_type %}selected{% endif %}>{{ display_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Email</th>
-                <th>Nome Completo</th>
-                <th>Tipo</th>
-                <th>Status</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users_list %}
-            <tr>
-                <td>{{ user.email }}</td>
-                <td>{{ user.get_full_name|default:"Não informado" }}</td>
-                <td>{{ user.get_user_type_display }}</td>
-                <td>{% if user.is_active %}Ativo{% else %}Inativo{% endif %}</td>
-                <td class="action-links">
-                    <a href="{% url 'management_user_detail' user.id %}" class="btn btn-secondary">Detalhes</a>
-                    {# <a href="{% url 'admin:core_user_change' user.id %}" target="_blank" class="btn">Editar (Admin)</a> #}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">Nenhum usuário encontrado.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            <!-- Tabela de Usuários -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Nome Completo</th>
+                            <th>Tipo</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users_list %}
+                            <tr>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.get_full_name|default:"Não informado" }}</td>
+                                <td>{{ user.get_user_type_display }}</td>
+                                <td>
+                                    <span class="badge status-{% if user.is_active %}active{% else %}inactive{% endif %}">
+                                        {% if user.is_active %}Ativo{% else %}Inativo{% endif %}
+                                    </span>
+                                </td>
+                                <td class="action-links">
+                                    <a href="{% url 'management_user_detail' user.id %}" class="btn btn-primary btn-sm">Detalhes</a>
+                                    {# <a href="{% url 'admin:core_user_change' user.id %}" target="_blank" class="btn btn-outline-primary btn-sm">Editar (Admin)</a> #}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-muted">Nenhum usuário encontrado.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos Gerais */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Montserrat', sans-serif;
+    color: #e5e7eb;
+}
+
+/* Cartões */
+.card {
+    background-color: #033540;
+    border: none;
+    margin: 0; /* Gruda os cartões */
+}
+
+.users-card {
+    margin: 0;
+}
+
+.card-header {
+    background-color: #044048;
+    border-bottom: none;
+    padding: 15px 20px;
+}
+
+.card-header h4 {
+    font-family: 'Cal Sans', sans-serif;
+    color: #fff;
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Formulário de Filtro */
+.filter-form {
+    margin-bottom: 20px;
+    background-color: #033540;
+    border: #055058;
+}
+
+.filter-form .input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-form label {
+    color: #e5e7eb;
+    font-weight: 500;
+}
+
+.filter-form select {
+    background-color: #044048;
+    border: 1px solid #055058;
+    color: #e5e7eb;
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    border-radius: 4px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-form select:focus {
+    border-color: #5fded4;
+    box-shadow: 0 0 0 3px rgba(95, 222, 212, 0.15);
+    outline: none;
+}
+
+/* Tabela */
+.table {
+    color: #e5e7eb;
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background-color: #033540;
+    color: #fff;
+    border: none;
+    padding: 12px 15px;
+}
+
+.table tbody tr {
+    transition: background-color 0.3s ease;
+}
+
+.table tbody tr td {
+    border: none;
+    border-top: solid 2px #022028;
+    padding: 12px 15px;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(95, 222, 212, 0.1);
+}
+
+.dashboard-title {
+    font-family: 'Cal Sans', sans-serif;
+    font-size: 2.5rem;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.dashboard-subtitle {
+    font-size: 1.1rem;
+    color: #9ca3af;
+    margin-bottom: 30px;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.status-active {
+    background-color: #22c55e;
+}
+
+.status-inactive {
+    background-color: #ef4444;
+}
+
+/* Botões */
+.btn-primary {
+    background-color: #5fded4;
+    border-color: #5fded4;
+    color: #022028;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #4acbc1;
+    border-color: #4acbc1;
+    transform: scale(1.05);
+}
+
+.btn-outline-primary {
+    border-color: #5fded4;
+    color: #5fded4;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    background-color: #5fded4;
+    color: #022028;
+}
+
+.action-links {
+    display: flex;
+    gap: 10px;
+}
+
+/* Texto Muted */
+.text-muted {
+    color: #9ca3af !important;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .card-title {
+        font-size: 1.2rem;
+    }
+    .filter-form .input-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .filter-form select {
+        width: 100%;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .table {
+        font-size: 0.85rem;
+    }
+    .action-links {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+</style>
 {% endblock %}

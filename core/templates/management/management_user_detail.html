@@ -4,93 +4,296 @@
 {% block page_title_content %}{{ page_title }}{% endblock %}
 
 {% block content %}
-    <div class="user-details-header">
-        <h2 style="font-family: 'Cal Sans', sans-serif; color: #022028;">{{ user_obj.get_full_name|default:user_obj.email }}</h2>
-        <p><strong>E-mail:</strong> {{ user_obj.email }}</p>
-        <p><strong>Tipo:</strong> <span class="badge type-{{ user_obj.user_type }}">{{ user_obj.get_user_type_display }}</span></p>
-        <p><strong>Status:</strong> {% if user_obj.is_active %}<span class="badge status-active">Ativo</span>{% else %}<span class="badge status-inactive">Inativo</span>{% endif %}</p>
-        <p><strong>Data de Cadastro:</strong> {{ user_obj.date_joined|date:"d/m/Y H:i" }}</p>
+<div class="dashboard-container">
+    <!-- Cabeçalho do Usuário -->
+    <div class="card user-details-card">
+        <div class="card-header">
+            <h2 class="card-title">{{ user_obj.get_full_name|default:user_obj.email }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="d-flex align-items-center" style="gap: 8px;">
+                <strong>E-mail:</strong> {{ user_obj.email }}
+                <span class="separator">•</span>
+                <strong>Tipo:</strong> <span class="badge type-{{ user_obj.user_type }}">{{ user_obj.get_user_type_display }}</span>
+            </div>
+            <div class="d-flex align-items-center" style="gap: 8px; margin-top: 10px;">
+                <strong>Status:</strong> 
+                {% if user_obj.is_active %}
+                    <span class="badge status-active">Ativo</span>
+                {% else %}
+                    <span class="badge status-inactive">Inativo</span>
+                {% endif %}
+                <span class="separator">•</span>
+                <strong>Data de Cadastro:</strong> {{ user_obj.date_joined|date:"d/m/Y H:i" }}
+            </div>
+        </div>
     </div>
-    <hr>
 
+    <!-- Detalhes Específicos -->
     {% if user_obj.user_type == 'cliente' %}
-        <section id="client-details">
-            <h4>Detalhes do Cliente</h4>
-            {% if client_profile %}
-                <p><strong>Patrimônio Estimado:</strong> R$ {{ client_profile.patrimonio_total_estimado|default:"N/A" }}</p>
-                <p><strong>Rendimentos Anuais Estimados:</strong> R$ {{ client_profile.rendimentos_estimados_anuais|default:"N/A" }}</p>
-            {% else %}
-                <p>Perfil do cliente não preenchido.</p>
-            {% endif %}
+        <div class="card client-details-card">
+            <div class="card-header">
+                <h4 class="card-title">Detalhes do Cliente</h4>
+            </div>
+            <div class="card-body">
+                {% if client_profile %}
+                    <p><strong>Patrimônio Estimado:</strong> R$ {{ client_profile.patrimonio_total_estimado|default:"N/A" }}</p>
+                    <p><strong>Rendimentos Anuais Estimados:</strong> R$ {{ client_profile.rendimentos_estimados_anuais|default:"N/A" }}</p>
+                {% else %}
+                    <p class="text-muted">Perfil do cliente não preenchido.</p>
+                {% endif %}
 
-            <h5 style="margin-top: 1.5rem;">Holdings Participadas</h5>
-            {% if client_holdings %}
-                <ul class="list-styled">
-                    {% for holding in client_holdings %}
-                    <li>
-                        <strong><a href="{% url 'management_holding_detail' holding.id %}">{{ holding.nome_holding }}</a></strong>
-                        (Consultor Responsável:
-                        {% if holding.consultor_responsavel %}
-                            <a href="{% if request.user.is_superuser %}{% url 'management_user_detail' holding.consultor_responsavel.id %}{% else %}#{% endif %}">
-                                {{ holding.consultor_responsavel.get_full_name|default:holding.consultor_responsavel.email }}
-                            </a>
-                        {% else %}
-                            <span class="text-muted">Nenhum</span>
-                        {% endif %})
-                        <br>
-                        <small class="action-links">
-                            {# Este link agora é o principal para todas as ações da holding #}
-                            <a href="{% url 'management_holding_detail' holding.id %}" class="btn btn-sm btn-light"><i class="fas fa-cogs"></i> Ver Detalhes/Gerenciar Holding</a>
-                            {# O link para editar dados básicos (nome/descrição/consultor) ainda é separado e acessível via superuser #}
-                            {% if request.user.is_superuser %}
-                            <a href="{% url 'management_assign_consultant_to_holding' holding.id %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i> Editar Dados Básicos</a>
-                            {% endif %}
-                        </small>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Nenhuma holding associada.</p>
-            {% endif %}
-
-            {# ... (restante da seção do cliente) ... #}
-        </section>
+                <h5 class="section-title">Holdings Participadas</h5>
+                {% if client_holdings %}
+                    <ul class="list-group">
+                        {% for holding in client_holdings %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center" style="gap: 10px;">
+                                    <div>
+                                        <strong><a href="{% url 'management_holding_detail' holding.id %}" class="result-link">{{ holding.nome_holding }}</a></strong>
+                                        <div class="d-flex align-items-center" style="gap: 8px;">
+                                            <span>Consultor Responsável:</span>
+                                            {% if holding.consultor_responsavel %}
+                                                <a href="{% if request.user.is_superuser %}{% url 'management_user_detail' holding.consultor_responsavel.id %}{% else %}#{% endif %}" class="result-link">
+                                                    {{ holding.consultor_responsavel.get_full_name|default:holding.consultor_responsavel.email }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">Nenhum</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="action-links">
+                                        <a href="{% url 'management_holding_detail' holding.id %}" class="btn btn-primary btn-sm"><i class="fas fa-cogs"></i> Ver Detalhes/Gerenciar</a>
+                                        {% if request.user.is_superuser %}
+                                            <a href="{% url 'management_assign_consultant_to_holding' holding.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> Editar Dados</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Nenhuma holding associada.</p>
+                {% endif %}
+            </div>
+        </div>
 
     {% elif user_obj.user_type == 'consultor' %}
-        <section id="consultant-details">
-            <h4>Detalhes do Consultor</h4>
-            <h5 style="margin-top: 1.5rem;">Holdings Assessoradas (onde é Consultor Responsável)</h5>
-            {% if consultant_assigned_holdings %}
-                <ul class="list-styled">
-                    {% for holding in consultant_assigned_holdings %}
-                    <li>
-                        <strong><a href="{% url 'management_holding_detail' holding.id %}">{{ holding.nome_holding }}</a></strong>
-                        <br/>Cliente(s) Principal(is):
-                        {% for cliente_h in holding.clientes.all %}
-                            <a href="{% url 'management_user_detail' cliente_h.id %}">{{ cliente_h.get_full_name|default:cliente_h.email }}</a>{% if not forloop.last %}, {% endif %}
-                        {% empty %}
-                            <span class="text-muted">Nenhum cliente associado diretamente.</span>
+        <div class="card consultant-details-card">
+            <div class="card-header">
+                <h4 class="card-title">Detalhes do Consultor</h4>
+            </div>
+            <div class="card-body">
+                <h5 class="section-title">Holdings Assessoradas</h5>
+                {% if consultant_assigned_holdings %}
+                    <ul class="list-group">
+                        {% for holding in consultant_assigned_holdings %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center" style="gap: 10px;">
+                                    <div>
+                                        <strong><a href="{% url 'management_holding_detail' holding.id %}" class="result-link">{{ holding.nome_holding }}</a></strong>
+                                        <div class="d-flex align-items-center" style="gap: 8px;">
+                                            <span>Cliente(s) Principal(is):</span>
+                                            {% for cliente_h in holding.clientes.all %}
+                                                <a href="{% url 'management_user_detail' cliente_h.id %}" class="result-link">{{ cliente_h.get_full_name|default:cliente_h.email }}</a>
+                                                {% if not forloop.last %}
+                                                    <span class="separator">•</span>
+                                                {% endif %}
+                                            {% empty %}
+                                                <span class="text-muted">Nenhum cliente associado diretamente.</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="action-links">
+                                        <a href="{% url 'management_holding_detail' holding.id %}" class="btn btn-primary btn-sm"><i class="fas fa-cogs"></i> Ver Detalhes/Gerenciar</a>
+                                        {% if request.user.is_superuser %}
+                                            <a href="{% url 'management_assign_consultant_to_holding' holding.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> Editar Dados</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </li>
                         {% endfor %}
-                        <br>
-                        <small class="action-links">
-                             <a href="{% url 'management_holding_detail' holding.id %}" class="btn btn-sm btn-light"><i class="fas fa-cogs"></i> Ver Detalhes/Gerenciar Holding</a>
-                             {% if request.user.is_superuser %} {# Superuser também pode editar dados básicos #}
-                             <a href="{% url 'management_assign_consultant_to_holding' holding.id %}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i> Editar Dados Básicos</a>
-                             {% endif %}
-                        </small>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-muted">Nenhuma holding diretamente assessorada.</p>
-            {% endif %}
-        </section>
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Nenhuma holding diretamente assessorada.</p>
+                {% endif %}
+            </div>
+        </div>
+
     {% elif user_obj.user_type == 'admin' %}
-        {# ... (seção do admin) ... #}
+        <div class="card admin-details-card">
+            <div class="card-header">
+                <h4 class="card-title">Detalhes do Administrador</h4>
+            </div>
+            <div class="card-body">
+                <p>Este usuário possui privilégios administrativos completos.</p>
+            </div>
+        </div>
     {% endif %}
 
-    <hr style="margin-top: 2rem; margin-bottom: 1.5rem;">
-    <a href="{% url 'management_list_users' %}" class="btn"><i class="fas fa-arrow-left"></i> Voltar para Lista de Usuários</a>
+    <!-- Botão Voltar -->
+    <div class="card actions-card">
+        <div class="card-body">
+            <a href="{% url 'management_list_users' %}" class="btn btn-primary"><i class="fas fa-arrow-left"></i> Voltar para Lista de Usuários</a>
+        </div>
+    </div>
+</div>
 
-    {# ... (estilos) ... #}
+<style>
+/* Estilos Gerais */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Montserrat', sans-serif;
+    color: #e5e7eb;
+    background-color: #022028;
+}
+
+/* Cartões */
+.card {
+    background-color: #033540;
+    border: none;
+    margin: 0; /* Gruda os cartões */
+}
+
+/* Remove margens específicas para cada tipo de cartão */
+.user-details-card, .client-details-card, .consultant-details-card, .admin-details-card, .actions-card {
+    margin: 0;
+}
+
+.card-header {
+    background-color: #044048;
+    border-bottom: none;
+    padding: 15px 20px;
+}
+
+.card-header h2, .card-header h4 {
+    font-family: 'Cal Sans', sans-serif;
+    color: #fff;
+    margin: 0;
+}
+
+.card-title {
+    font-size: 1.5rem;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Títulos Secundários */
+.section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #9ca3af;
+    margin: 1.5rem 0 1rem;
+}
+
+/* Lista de Holdings */
+.list-group {
+    margin: 0;
+}
+
+.list-group-item {
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px 20px;
+    color: #e5e7eb;
+}
+
+/* Links e Botões */
+.result-link {
+    color: #5fded4;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.result-link:hover {
+    color: #4acbc1;
+    text-decoration: underline;
+}
+
+.btn-primary {
+    background-color: #5fded4;
+    border-color: #5fded4;
+    color: #022028;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #4acbc1;
+    border-color: #4acbc1;
+    transform: scale(1.05);
+}
+
+.btn-outline-primary {
+    border-color: #5fded4;
+    color: #5fded4;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    background-color: #5fded4;
+    color: #022028;
+}
+
+.action-links {
+    display: flex;
+    gap: 10px;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.type-cliente { background-color: #17a2b8; }
+.type-consultor { background-color: #ffc107; color: #022028; }
+.type-admin { background-color: #5fded4; color: #022028; }
+.status-active { background-color: #22c55e; }
+.status-inactive { background-color: #ef4444; }
+
+/* Separador */
+.separator {
+    color: #9ca3af;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Texto Muted */
+.text-muted {
+    color: #9ca3af !important;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .card-title {
+        font-size: 1.2rem;
+    }
+    .section-title {
+        font-size: 1rem;
+    }
+    .action-links {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .card-body {
+        padding: 15px;
+    }
+    .list-group-item {
+        padding: 10px 15px;
+    }
+}
+</style>
 {% endblock %}
