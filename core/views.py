@@ -7,6 +7,12 @@ from django.urls import reverse
 from django.db.models import Q, Max, Count
 from django.db import IntegrityError
 from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt # Para simplificar com Fetch API. Em produção, considere CSRF.
+from django.views.decorators.http import require_POST
+from django.conf import settings
+import json # Para ler o corpo da requisição JSON
+import openai
 # from datetime import date # Removido se não usado diretamente
 # from django.core.mail import send_mail # Removido se não usado
 # from django.db import connection # Removido se não usado diretamente
@@ -122,6 +128,74 @@ def dashboard(request):
     
     # logger.warning(f"User '{user.email}' with unhandled type '{user.user_type}' or condition. Redirecting to 'index'.")
     return redirect('index')
+
+@login_required
+@require_POST # Garante que esta view só aceita requisições POST
+@csrf_exempt  # IMPORTANTE: Para este exemplo, desabilitamos a proteção CSRF para esta view
+              # para facilitar a integração com Fetch API. Em um ambiente de produção,
+              # você DEVE configurar o envio do token CSRF corretamente via JavaScript.
+def chat_with_gpt(request):
+    if not settings.OPENAI_API_KEY:
+        return JsonResponse({'error': 'A configuração da API da OpenAI está ausente no servidor.'}, status=503) # Service Unavailable
+
+    try:
+        data = json.loads(request.body)
+        user_message = data.get('message')
+        # Para conversas mais contextuais, você pode querer receber e enviar um histórico:
+        # conversation_history = data.get('history', []) # Lista de {'role': '...', 'content': '...'}
+
+        if not user_message:
+            return JsonResponse({'error': 'Nenhuma mensagem fornecida.'}, status=400)
+
+        # Monta a lista de mensagens para enviar à API
+        messages_to_send = [
+            {
+                "role": "system",
+                "content": (
+                    "Você é o Assistente IA da W1 Holding, um especialista virtual em holdings patrimoniais, "
+                    "planejamento sucessório, e otimização tributária no Brasil. Seu objetivo é fornecer informações "
+                    "claras e úteis para os clientes da W1 Holding. Seja cordial, profissional e objetivo. "
+                    "Ao responder, mencione que as informações são para fins educativos e que para "
+                    "aconselhamento específico sobre o caso do cliente, ele deve consultar um especialista da W1."
+                )
+            },
+            # Se estiver gerenciando histórico, adicione-o aqui:
+            # *conversation_history, 
+            {"role": "user", "content": user_message}
+        ]
+        
+        # Instancia o cliente OpenAI com sua chave de API
+        client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+
+        # Faz a chamada para a API Chat Completions
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",  # Você pode escolher outros modelos como "gpt-4" se tiver acesso e orçamento
+            messages=messages_to_send,
+            max_tokens=2000  # Limite o tamanho da resposta para controlar custos e tempo
+        )
+
+        assistant_response = completion.choices[0].message.content.strip()
+        
+        # logger.info(f"User: {user_message}, GPT: {assistant_response}")
+        return JsonResponse({'reply': assistant_response})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Formato de requisição inválido (esperado JSON).'}, status=400)
+    except openai.APIConnectionError as e:
+        # logger.error(f"OpenAI API Connection Error: {e}")
+        return JsonResponse({'error': 'Não foi possível conectar à API da OpenAI. Verifique sua conexão.'}, status=503)
+    except openai.RateLimitError as e:
+        # logger.error(f"OpenAI API Rate Limit Error: {e}")
+        return JsonResponse({'error': 'Limite de requisições para a API da OpenAI atingido. Tente mais tarde.'}, status=429)
+    except openai.AuthenticationError as e:
+        # logger.error(f"OpenAI API Authentication Error: {e}")
+        return JsonResponse({'error': 'Erro de autenticação com a API da OpenAI. Verifique sua chave de API.'}, status=401)
+    except openai.APIError as e: # Outros erros da API
+        # logger.error(f"OpenAI API Error: {e}")
+        return JsonResponse({'error': f'Ocorreu um erro com a API da OpenAI: {str(e)}'}, status=500)
+    except Exception as e:
+        # logger.error(f"Erro inesperado na view chat_with_gpt: {e}")
+        return JsonResponse({'error': f'Ocorreu um erro inesperado no servidor: {str(e)}'}, status=500)
 
 
 @login_required

@@ -98,10 +98,10 @@
         .progress-status .status-icon { color: #5fded4; } /* For Font Awesome icons */
         .document-upload .upload-btn { display: inline-block; padding: 8px 16px; background-color: #5fded4; color: #022028; border-radius: 4px; font-weight: bold; font-family: "Montserrat", sans-serif; text-decoration: none; cursor: pointer; transition: background-color 0.3s ease; font-size: 0.85rem; }
         .document-upload .upload-btn:hover { background-color: #4acbc1; }
-        .ia-input { padding-top: 20px; }
-        .ia-input textarea { width: 100%; height: 100px; padding: 10px; background: #044048; color: #d1d5db; border: 1px solid #055058; border-radius: 4px; font-family: "Montserrat", sans-serif; }
-        .ia-input button, .chat-input button, .invite-btn.auth-btn { margin-top: 10px; padding: 10px 20px; background-color: #5fded4; color: #022028; border: none; border-radius: 4px; font-weight: bold; font-family: "Montserrat", sans-serif; cursor: pointer; }
-        .ia-input button:hover, .chat-input button:hover, .invite-btn.auth-btn:hover { background-color: #4acbc1; }
+        /* .ia-input { padding-top: 20px; } ia-input é uma classe mais antiga, não usada pelo chat GPT */
+        /* .ia-input textarea { width: 100%; height: 100px; padding: 10px; background: #044048; color: #d1d5db; border: 1px solid #055058; border-radius: 4px; font-family: "Montserrat", sans-serif; } */
+        /* .ia-input button, */ .chat-input button, .invite-btn.auth-btn { margin-top: 10px; padding: 10px 20px; background-color: #5fded4; color: #022028; border: none; border-radius: 4px; font-weight: bold; font-family: "Montserrat", sans-serif; cursor: pointer; }
+        /* .ia-input button:hover, */ .chat-input button:hover, .invite-btn.auth-btn:hover { background-color: #4acbc1; }
         .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #044048; color: #d1d5db; border-radius: 8px; overflow: hidden; }
         .table th, .table td { border: 1px solid #055058; padding: 10px; text-align: left; font-family: "Montserrat", sans-serif; }
         .table th { background: #055058; color: #5fded4; }
@@ -167,6 +167,101 @@
             .progress-card { width: 100%; flex-direction: column; align-items: flex-start;}
             .progress-icon { margin-bottom: 12px; }
         }
+
+        /* ESTILOS PARA O CHAT GPT - INÍCIO */
+        /* As classes .component-card, .component-header-alt, .component-body, .form-control-custom, .submit-btn-custom já existem e serão usadas */
+        #gpt-chat-container .card-header { /* Ajuste para o cabeçalho do card do chat */
+            background-color: #044048; /* Cor consistente com outros cabeçalhos de card-items */
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid #055058; /* Borda sutil */
+        }
+        #gpt-chat-container .component-title {
+            font-size: 1.1rem; /* Tamanho um pouco menor para o título do chat */
+            color: #e0e0e0; /* Cor clara para o título */
+            font-family: "Cal Sans", sans-serif;
+        }
+        #gpt-chat-container .card-body { /* Corpo do chat */
+            display: flex;
+            flex-direction: column;
+            height: 450px; /* Altura fixa para o container do chat */
+            padding: 0.75rem;
+            background-color: #032830; /* Fundo do .content-card original */
+        }
+        #gpt-chat-messages { /* Área das mensagens */
+            flex-grow: 1;
+            overflow-y: auto;
+            background-color: #022028; /* Fundo mais escuro para contraste */
+            border: 1px solid #044048; /* Borda sutil */
+            padding: 0.75rem;
+            border-radius: 6px; /* Bordas arredondadas */
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .chat-message-gpt { /* Container de cada mensagem */
+            display: flex;
+            max-width: 85%;
+            font-family: 'Roboto', sans-serif;
+        }
+        .chat-message-gpt .message-bubble { /* A "bolha" da mensagem */
+            padding: 0.5rem 0.8rem;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            word-wrap: break-word; /* ou word-break: break-word; */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+        .chat-message-gpt.user {
+            align-self: flex-end; /* Usuário à direita */
+        }
+        .chat-message-gpt.user .message-bubble {
+            background-color: #007bff; /* Azul para o usuário (pode ser ajustado para seu tema #5fded4) */
+            /* background-color: #5fded4; */ /* Alternativa de cor W1 */
+            /* color: #022028; */         /* Se usar fundo W1 */
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+        .chat-message-gpt.assistant {
+            align-self: flex-start; /* Assistente à esquerda */
+        }
+        .chat-message-gpt.assistant .message-bubble {
+            background-color: #044048; /* Cor dos cards/inputs */
+            color: #e0e0e0; /* Cor clara para texto */
+            border-bottom-left-radius: 6px;
+        }
+        .chat-message-gpt.error .message-bubble { /* Mensagens de erro */
+            background-color: #721c24; /* Fundo vermelho escuro */
+            color: #f8d7da;    /* Texto claro */
+            border: 1px solid #b21f2d;
+        }
+        #gpt-chat-input-container {
+            padding-top: 0.5rem; /* Espaçamento acima do input */
+        }
+        #gpt-chat-form { /* Formulário de input */
+            display: flex;
+            gap: 0.5rem; /* Espaço entre input e botão */
+        }
+        #gpt-user-message { /* Input de texto */
+            flex-grow: 1;
+             /* Reutilizando .form-control-custom que já tem bom estilo */
+        }
+        #gpt-send-button { /* Botão de enviar */
+            min-width: 80px; /* Largura mínima */
+            white-space: nowrap; /* Evita quebra de linha no texto do botão */
+            /* Reutilizando .submit-btn-custom que já tem bom estilo */
+        }
+        #gpt-send-button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+        #gpt-send-button .fa-spinner { /* Ícone de loading */
+            margin-right: 5px;
+        }
+        #gpt-chat-container .text-muted { /* "Powered by OpenAI" text */
+             color: #6b7280 !important; /* Garante a cor mesmo dentro do card escuro */
+        }
+        /* ESTILOS PARA O CHAT GPT - FIM */
+
     </style>
 {% endblock head_extra_styles %}
 
@@ -224,7 +319,7 @@
                             <div class="progress-bar-container"><div class="progress-bar" style="width: {{ latest_simulation|yesno:'100,0' }}%;"></div></div>
                             <p class="status-text mt-2">
                                 {% if latest_simulation %}100% Concluído <i class="fas fa-check-circle text-green-400"></i>{% else %}Pendente <i class="fas fa-hourglass-half text-yellow-400"></i>{% endif %}
-                                <br><a href="{% url 'dashboard' %}" class="text-teal-400 hover:underline text-sm">Fazer/Refazer Simulação</a>
+                                <br><a href="{% url 'simulation' %}" class="text-teal-400 hover:underline text-sm">Fazer/Refazer Simulação</a>
                             </p>
                         </div>
                     </div>
@@ -453,7 +548,7 @@
                         {% if not user_holdings and latest_simulation %}
                             <a href="{% url 'create_holding' %}" class="text-teal-400 hover:underline text-sm">Iniciar Criação da Holding</a>
                         {% elif not latest_simulation %}
-                             <a href="{% url 'dashboard' %}" class="text-teal-400 hover:underline text-sm">Fazer Simulação para Habilitar Criação</a>
+                             <a href="{% url 'simulation' %}" class="text-teal-400 hover:underline text-sm">Fazer Simulação para Habilitar Criação</a>
                         {% endif %}
                     </div>
                 {% endif %}
@@ -475,7 +570,7 @@
             <section id="simulacao" class="section">
                 <div class="section-header">
                     <h2><svg class="title-icon" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"></rect><rect x="8" y="6" width="8" height="2"></rect><line x1="8" y1="11" x2="16" y2="11"></line><line x1="8" y1="14" x2="16" y2="14"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>Sua Última Simulação</h2>
-                        <a href="{% url 'dashboard' %}" class="auth-btn"><i class="fas fa-redo"></i> Nova Simulação</a>
+                         <a href="{% url 'simulation' %}" class="auth-btn"><i class="fas fa-redo"></i> Nova Simulação</a>
                 </div>
                 {% if latest_simulation %}
                     <div class="content-card">
@@ -495,18 +590,42 @@
                     </div>
                 {% else %}
                     <div class="content-card p-4">
-                        <p class="text-gray-400">Nenhuma simulação realizada ainda. <a href="{% url 'dashboard' %}" class="text-teal-400 hover:underline">Clique aqui para fazer sua primeira simulação.</a></p>
+                        <p class="text-gray-400">Nenhuma simulação realizada ainda. <a href="{% url 'simulation' %}" class="text-teal-400 hover:underline">Clique aqui para fazer sua primeira simulação.</a></p>
                     </div>
                 {% endif %}
             </section>
 
             <section id="ia" class="section">
                 <div class="section-header"><h2><svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a3 3 0 1 0-3-3"></path><path d="M8 16v-5a3 3 0 0 0-6 0v1a3 3 0 1 0 3 3"></path></svg>Inteligência Artificial</h2></div>
-                <div class="content-card">
-                    <div class="ia-input"> <textarea placeholder="Pergunte à IA... (Funcionalidade em desenvolvimento)"></textarea> <button>Enviar</button> </div>
+                
+                <div class="card shadow-sm component-card" id="gpt-chat-container" style="border: 1px solid #044048;">
+                    <div class="card-header component-header-alt d-flex justify-content-between align-items-center" style="background-color: #044048; padding: 0.75rem 1.25rem;">
+                        <h5 class="mb-0 component-title" style="font-size: 1.1rem; color: #fff; font-family: 'Cal Sans', sans-serif;">
+                            <i class="fas fa-robot me-2 text-info"></i> Assistente IA W1
+                        </h5>
+                        <small class="text-muted" style="font-size: 0.75rem; color: #adb5bd !important;">Beta</small>
+                    </div>
+                    <div class="card-body component-body" style="display: flex; flex-direction: column; height: 450px; padding: 0.75rem; background-color: #032830;">
+                        <div id="gpt-chat-messages" class="chat-messages-display mb-2 p-2 border rounded" style="flex-grow: 1; overflow-y: auto; background-color: #022028; border-color: #044048;">
+                            <div class="chat-message-gpt assistant">
+                                <div class="message-bubble">Olá, {{ request.user.first_name|default:request.user.email|capfirst }}! Sou o assistente virtual da W1 Holding. Como posso te ajudar hoje?</div>
+                            </div>
+                        </div>
+                        <div id="gpt-chat-input-container" class="mt-auto">
+                            <form id="gpt-chat-form" class="d-flex">
+                                <input type="text" id="gpt-user-message" class="form-control-custom form-control-sm me-2" placeholder="Digite sua pergunta..." autocomplete="off" aria-label="Sua mensagem para o Assistente IA">
+                                <button class="btn btn-primary btn-sm submit-btn-custom !mt-0" type="submit" id="gpt-send-button" style="min-width: 80px; padding: 0.5rem 0.75rem;">
+                                    <i class="fas fa-paper-plane"></i> Enviar
+                                </button>
+                            </form>
+                            <small class="text-muted d-block mt-1 text-center" style="font-size: 0.7rem;">
+                                Assistente virtual
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </section>
-        </main>
+            </main>
     </div>
 </div>
 {% endblock %}
@@ -521,7 +640,7 @@
         const sections = document.querySelectorAll('.main-content .section');
         const notificationIcon = document.querySelector('.notification-icon');
         const switchSectionLinks = document.querySelectorAll('.switch-section-link');
-        const chatMessageArea = document.getElementById('chat-message-area');
+        const chatMessageArea = document.getElementById('chat-message-area'); // Chat interno da holding
 
         if (chatMessageArea) {
             chatMessageArea.scrollTop = chatMessageArea.scrollHeight;
@@ -559,14 +678,13 @@
                     const targetIdFromData = link.getAttribute('data-section');
                     const targetId = targetIdFromData || targetIdFromHref;
 
-                    if (targetId && targetId !== 'logout') { // Check if targetId is not 'logout'
+                    if (targetId && targetId !== 'logout') { 
                         e.preventDefault();
                         showSection(targetId);
-                        if (targetIdFromHref) { // Only push history if it was a direct hash link
+                        if (targetIdFromHref) { 
                                 history.pushState(null, null, '#' + targetId);
                         }
-                    } else if (href && href.includes('logout')) { // Explicitly check for logout URL for default behavior
-                        // Allow default link behavior for logout
+                    } else if (href && href.includes('logout')) { 
                         return;
                     }
                 });
@@ -613,4 +731,78 @@
         }
     });
     </script>
-{% endblock scripts %}
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatGptContainer = document.getElementById('gpt-chat-container');
+        if (!chatGptContainer) return; // Só executa se o container do chat GPT existir
+
+        const chatForm = document.getElementById('gpt-chat-form');
+        const userInput = document.getElementById('gpt-user-message');
+        const chatMessagesContainer = document.getElementById('gpt-chat-messages');
+        const sendButton = document.getElementById('gpt-send-button');
+        const sendButtonOriginalHTML = sendButton.innerHTML;
+
+        function appendMessage(sender, text, isError = false) {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.classList.add('chat-message-gpt', sender);
+            if (isError) {
+                messageWrapper.classList.add('error');
+            }
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.classList.add('message-bubble');
+            bubbleDiv.innerHTML = text.replace(/\n/g, '<br>'); 
+            
+            messageWrapper.appendChild(bubbleDiv);
+            chatMessagesContainer.appendChild(messageWrapper);
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }
+
+        chatForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const messageText = userInput.value.trim();
+            if (!messageText) return;
+
+            appendMessage('user', messageText);
+            userInput.value = '';
+            userInput.disabled = true;
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const response = await fetch("{% url 'chat_with_gpt' %}", { // Certifique-se que 'chat_with_gpt' é o nome da sua URL
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 'X-CSRFToken': '{{ csrf_token }}', // Removido devido ao @csrf_exempt na view.
+                                                              // Se você remover @csrf_exempt, precisará obter e enviar o token CSRF.
+                                                              // Exemplo: const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                    },
+                    body: JSON.stringify({ 
+                        message: messageText,
+                        // history: [] // Implementar envio de histórico se desejar
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.reply) {
+                    appendMessage('assistant', data.reply);
+                } else {
+                    const errorMessage = data.error || 'Erro ao processar sua mensagem com o assistente.';
+                    appendMessage('assistant', errorMessage, true);
+                }
+            } catch (error) {
+                console.error('Erro na comunicação com o chat GPT:', error);
+                appendMessage('assistant', 'Não foi possível conectar ao assistente. Verifique sua conexão e tente novamente.', true);
+            } finally {
+                userInput.disabled = false;
+                sendButton.disabled = false;
+                sendButton.innerHTML = sendButtonOriginalHTML;
+                userInput.focus();
+            }
+        });
+    });
+    </script>
+    {% endblock scripts %}

@@ -3,7 +3,7 @@ from pathlib import Path
 import os
 from decouple import config, Csv
 import dj_database_url
-
+from decouple import config 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -29,7 +29,9 @@ INSTALLED_APPS = [
 ]
 
 SITE_ID = 1
-
+OPENAI_API_KEY = config('OPENAI_API_KEY', default=None)
+if not OPENAI_API_KEY:
+    print("AVISO DE CONFIGURAÇÃO: A chave da API da OpenAI (OPENAI_API_KEY) não está definida no seu arquivo .env.")
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',

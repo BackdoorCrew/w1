@@ -38,6 +38,7 @@ urlpatterns = [
     path('management/holding/<int:holding_id>/documents/', views.management_holding_documents, name='management_holding_documents'), # Esta view redireciona
     path('management/holding/<int:holding_id>/manage-clients/', views.management_holding_manage_clients, name='management_holding_manage_clients'),
     path('management/holding/<int:holding_id>/chat/', views.management_holding_chat, name='management_holding_chat'), # <-- ADD THIS LINE
+    path('api/chat_com_gpt/', views.chat_with_gpt, name='chat_with_gpt'),
 
 ]
 
