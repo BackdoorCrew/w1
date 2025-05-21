@@ -1,109 +1,101 @@
-{% load static %}
 {% comment %}
-    Recursive template to display folders and documents.
+    Recursive template to display folders and documents in a tree-like structure.
     - folders: List of folder dicts for the current level.
     - documents: List of document objects at the current level (outside any subfolders shown).
-    - depth: Current recursion depth for indentation (optional).
+    - depth: Current recursion depth for indentation.
     - user_is_management: Boolean, true if rendering for management panel.
     - target_processo_id: ID of the current ProcessoHolding.
-    - parent_folder_id_for_new_folder_form: ID for new subfolder creation context.
-    - pasta_creation_form: The form for creating a new folder (passed down for context if needed).
+    - pasta_creation_form: Form for creating folders (passed for context).
 {% endcomment %}
 
-{% for folder_item in folders %}
-<div class="document-group-card mb-3 p-3 border rounded" style="background-color: {% if user_is_management %}#f0f9ff{% else %}#043842{% endif %}; margin-left: {{ depth|default:0|add:0 }}rem; border-left: 3px solid {% if user_is_management %}#3b82f6{% else %}#0ea5e9{% endif %};">
-    <div class="flex justify-between items-center mb-2">
-        <h6 class="text-lg {% if user_is_management %}text-slate-700{% else %}text-teal-300{% endif %} mb-0 flex items-center">
-            <i class="fas fa-folder {% if user_is_management %}text-blue-500{% else %}text-yellow-400{% endif %} mr-2"></i>
-            {{ folder_item.nome }}
-            <span class="text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-400{% endif %} ml-2">({{ folder_item.doc_count|default:folder_item.documentos_contidos|length }} doc(s))</span>
-        </h6>
-        <div>
-            {# Action buttons for folder: e.g., Add Subfolder, Rename, Delete - Placeholder for now #}
-            {# Example: Could open a modal with pasta_creation_form pre-filled with parent_folder_id #}
-            {# <button class="btn btn-xs btn-outline-secondary me-1" title="Nova Subpasta Aqui" onclick="openCreateSubfolderModal('{{ target_processo_id }}', '{{ folder_item.id }}')"><i class="fas fa-folder-plus"></i></button> #}
-        </div>
-    </div>
-    
-    {# Recursively include for subfolders #}
-    {% if folder_item.subpastas or folder_item.documentos_contidos %}
-        <div style="padding-left: 1rem; border-left: 1px dashed {% if user_is_management %}#cbd5e1{% else %}#055058{% endif %}; margin-left: 0.5rem;">
-            {% if folder_item.subpastas %}
-                {% with folders=folder_item.subpastas documents=None depth=depth|default:0|add:1 parent_folder_id_for_new_folder_form=folder_item.id user_is_management=user_is_management target_processo_id=target_processo_id pasta_creation_form=pasta_creation_form %}
-                    {# ***** CORRECTED PATH BELOW ***** #}
-                    {% include "core/folder_tree_display.html" %}
-                {% endwith %}
-            {% endif %}
+{% load static %}
 
-            {# Documents directly in this folder #}
-            {% if folder_item.documentos_contidos %}
-                <ul class="list-none p-0 mt-2 space-y-1">
-                    {% for doc in folder_item.documentos_contidos %}
-                    <li class="document-card flex items-center justify-between p-2 rounded {% if user_is_management %}bg-white hover:bg-slate-50{% else %}bg-gray-700 hover:bg-gray-600{% endif %} transition-colors duration-150" style="width:100%; background-color: {% if user_is_management %}#ffffff{% else %}#055058{% endif %};">
-                        <div class="document-content flex-grow overflow-hidden">
-                            <a href="{{ doc.arquivo.url }}" target="_blank" class="flex items-center group" title="Ver {{ doc.nome_original_arquivo|default:doc.arquivo.name }}">
-                                <i class="fas fa-file-alt {% if user_is_management %}text-gray-500{% else %}text-gray-300{% endif %} mr-2 group-hover:text-teal-400"></i>
-                                <span class="document-title text-sm {% if user_is_management %}text-gray-700 group-hover:text-teal-600{% else %}text-gray-200 group-hover:text-teal-300{% endif %} truncate">
-                                    {{ doc.nome_documento_logico|default:doc.nome_original_arquivo|truncatechars:45 }}
-                                    <strong class="ml-1">(v{{ doc.versao }})</strong>
-                                </span>
-                            </a>
-                            <p class="document-description text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-400{% endif %} mb-0 mt-0.5 truncate">
-                                Cat: {{ doc.get_categoria_display }} | Por: {{ doc.enviado_por.first_name|default:"Usuário" }} | {{ doc.data_upload|date:"d/m/y" }}
-                            </p>
-                            {% if doc.descricao_adicional %}
-                            <p class="document-description text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-500{% endif %} italic mt-0.5 truncate" title="{{ doc.descricao_adicional }}">Obs: {{ doc.descricao_adicional|truncatewords:10 }}</p>
-                            {% endif %}
-                        </div>
-                        <div class="document-actions ml-2 flex-shrink-0 space-x-1">
-                            <a href="{{ doc.arquivo.url }}" target="_blank" class="btn btn-xs {% if user_is_management %}btn-outline-primary{% else %}upload-btn !py-1 !px-2 !text-xs{% endif %}" title="Ver/Baixar v{{doc.versao}}">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            {# Placeholder for future Move/Delete document buttons #}
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% elif not folder_item.subpastas %} 
-                 <p class="text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-500{% endif %} italic mt-1">Esta pasta está vazia.</p>
-            {% endif %}
+<ul class="list-unstyled folder-tree {% if depth > 0 %}folder-tree-nested{% endif %}" style="padding-left: {% if depth > 0 %}20px{% else %}0{% endif %};">
+    {# Display Subfolders First #}
+    {% for folder_item in folders %}
+    <li class="folder-tree-item folder-item mb-2">
+        <div class="d-flex align-items-center p-2 rounded {% if user_is_management %}bg-light border{% else %}management-folder-item-bg{% endif %}" style="background-color: {% if user_is_management %}#e9ecef{% else %}#045058{% endif %};">
+            <i class="fas fa-folder me-2 {% if user_is_management %}text-primary{% else %}text-warning{% endif %}"></i>
+            <strong class="me-auto {% if user_is_management %}text-dark{% else %}text-white{% endif %}">{{ folder_item.nome }}</strong>
+            <span class="badge rounded-pill {% if user_is_management %}bg-secondary{% else %}bg-info text-dark{% endif %}">
+                {{ folder_item.doc_count|default:folder_item.documentos_contidos|length }} doc(s)
+            </span>
+            {# Placeholder for future actions like 'create subfolder here' #}
+            {# <button class="btn btn-sm btn-outline-secondary ms-2 py-0 px-1" title="Nova Subpasta"><i class="fas fa-plus fa-xs"></i></button> #}
         </div>
-    {% else %}
-        <p class="text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-500{% endif %} italic mt-1">Esta pasta está vazia.</p>
-    {% endif %}
-</div>
-{% endfor %}
 
-{# Documents at the current level (not in any of the subfolders listed above / root documents) #}
-{% if documents %}
-    {% for doc in documents %}
-        <div class="document-card flex items-center justify-between p-3 mb-2 rounded {% if user_is_management %}bg-white hover:bg-slate-50 shadow-sm{% else %}bg-gray-700 hover:bg-gray-600{% endif %} transition-colors duration-150" style="margin-left: {{ depth|default:0|add:0 }}rem; background-color: {% if user_is_management %}#ffffff{% else %}#044048{% endif %};">
-             <div class="document-content flex-grow overflow-hidden">
-                <a href="{{ doc.arquivo.url }}" target="_blank" class="flex items-center group" title="Ver {{ doc.nome_original_arquivo|default:doc.arquivo.name }}">
-                    <i class="fas fa-file-alt {% if user_is_management %}text-gray-500{% else %}text-gray-300{% endif %} mr-2 group-hover:text-teal-400"></i>
-                    <span class="document-title text-sm {% if user_is_management %}text-gray-700 group-hover:text-teal-600{% else %}text-gray-200 group-hover:text-teal-300{% endif %} truncate">
-                        {{ doc.nome_documento_logico|default:doc.nome_original_arquivo|truncatechars:45 }}
-                        <strong class="ml-1">(v{{ doc.versao }})</strong>
-                    </span>
-                </a>
-                <p class="document-description text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-400{% endif %} mb-0 mt-0.5 truncate">
-                    Cat: {{ doc.get_categoria_display }} | Por: {{ doc.enviado_por.first_name|default:"Usuário" }} | {{ doc.data_upload|date:"d/m/y" }}
-                </p>
-                {% if doc.descricao_adicional %}
-                <p class="document-description text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-500{% endif %} italic mt-0.5 truncate" title="{{ doc.descricao_adicional }}">Obs: {{ doc.descricao_adicional|truncatewords:10 }}</p>
-                {% endif %}
-            </div>
-            <div class="document-actions ml-2 flex-shrink-0 space-x-1">
-                <a href="{{ doc.arquivo.url }}" target="_blank" class="btn btn-xs {% if user_is_management %}btn-outline-primary{% else %}upload-btn !py-1 !px-2 !text-xs{% endif %}" title="Ver/Baixar v{{doc.versao}}">
-                    <i class="fas fa-eye"></i>
-                </a>
-            </div>
-        </div>
+        {# Recursive call for subfolders and documents within this folder_item #}
+        {% if folder_item.subpastas or folder_item.documentos_contidos %}
+            {% with folders=folder_item.subpastas documents=folder_item.documentos_contidos depth=depth|default:0|add:1 user_is_management=user_is_management target_processo_id=target_processo_id pasta_creation_form=pasta_creation_form %}
+                {% include "core/folder_tree_display.html" %}
+            {% endwith %}
+        {% elif not folder_item.subpastas and not folder_item.documentos_contidos %}
+             <ul class="list-unstyled folder-tree-nested" style="padding-left: 20px;">
+                <li class="folder-tree-item text-muted small fst-italic py-1 ps-2">
+                    <i class="fas fa-info-circle fa-xs me-1"></i> Esta pasta está vazia.
+                </li>
+            </ul>
+        {% endif %}
+    </li>
     {% endfor %}
-{% endif %}
+
+    {# Display Documents at the Current Level #}
+    {% for doc in documents %}
+    <li class="folder-tree-item document-item mb-1">
+        <div class="d-flex align-items-center p-2 rounded {% if user_is_management %}bg-white border hover-bg-light-gray{% else %}management-doc-item-bg{% endif %}" 
+             style="background-color: {% if user_is_management %}#f8f9fa{% else %}#034048{% endif %}; transition: background-color 0.2s ease;">
+            <i class="fas fa-file-alt me-2 {% if user_is_management %}text-secondary{% else %}text-light{% endif %}"></i>
+            <div class="flex-grow-1 overflow-hidden">
+                <a href="{{ doc.arquivo.url }}" target="_blank" 
+                   class="text-decoration-none {% if user_is_management %}text-dark{% else %}text-info{% endif %} hover-text-primary" 
+                   title="Ver/Baixar: {{ doc.nome_original_arquivo|default:doc.arquivo.name }}">
+                    {{ doc.nome_documento_logico|default:doc.nome_original_arquivo|truncatechars:40 }}
+                    <span class="fw-normal {% if user_is_management %}text-muted{% else %}text-light{% endif %}">(v{{ doc.versao }})</span>
+                </a>
+                <small class="d-block text-muted" style="font-size: 0.75rem;">
+                    Cat: {{ doc.get_categoria_display }} | Por: {{ doc.enviado_por.first_name|default:"Usuário" }} | {{ doc.data_upload|date:"d/m/y" }}
+                    {% if doc.descricao_adicional %}| Obs: {{ doc.descricao_adicional|truncatewords:5 }}{% endif %}
+                </small>
+            </div>
+            <a href="{{ doc.arquivo.url }}" target="_blank" 
+               class="btn btn-sm {% if user_is_management %}btn-outline-primary{% else %}btn-outline-info{% endif %} py-0 px-1 ms-2" 
+               title="Ver/Baixar v{{doc.versao}}">
+                <i class="fas fa-download fa-xs"></i>
+            </a>
+            {# Placeholder for more actions #}
+        </div>
+    </li>
+    {% endfor %}
+</ul>
 
 {% if not folders and not documents and depth|default:0 == 0 %}
-     <div class="content-card p-3 text-center mt-4" style="background-color: {% if user_is_management %}#f8f9fa{% else %}#032830{% endif %};">
-        <p class="{% if user_is_management %}text-gray-600{% else %}text-gray-500{% endif %} italic">Nenhum documento ou pasta encontrado para este processo.</p>
+    <div class="p-3 text-center text-muted {% if user_is_management %}bg-light rounded border mt-2{% else %}mt-4{% endif %}">
+        <i class="fas fa-folder-open fa-lg mb-2"></i>
+        <p class="mb-0">Nenhum documento ou pasta encontrado neste nível.</p>
     </div>
 {% endif %}
+
+<style>
+    .folder-tree-item.folder-item > div {
+        font-size: 0.95rem;
+    }
+    .folder-tree-item.document-item > div {
+        font-size: 0.85rem;
+    }
+    .hover-bg-light-gray:hover {
+        background-color: #f1f3f5 !important; /* A slightly different shade for hover on management docs */
+    }
+    .hover-text-primary:hover {
+        color: #0056b3 !important; /* Darker blue on hover for links */
+    }
+    {% if not user_is_management %}
+    .management-folder-item-bg { background-color: #045058 !important; color: #e0f2f1;}
+    .management-folder-item-bg .badge { background-color: #148a99 !important; color: #fff;}
+    .management-folder-item-bg strong { color: #a7ffeb !important;}
+    .management-doc-item-bg { background-color: #034048 !important; color: #b2dfdb;}
+    .management-doc-item-bg a { color: #80cbc4 !important;}
+    .management-doc-item-bg a:hover { color: #4db6ac !important;}
+    .management-doc-item-bg .text-muted { color: #80cbc4 !important;}
+    .management-doc-item-bg i.text-light {color: #e0f2f1 !important;}
+    {% endif %}
+</style>
