@@ -1,33 +1,38 @@
 # create_dev_admin.py
 import os
 import django
-from django.contrib.auth.hashers import make_password
+from django.core.management.base import BaseCommand
 
 # Configura o ambiente Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'w1.settings')
 django.setup()
 
-# Agora você pode importar seus modelos
-from core.models import User # Use o caminho correto para seu modelo User
+from core.models import User
 
-def create_admin_user():
-    ADMIN_EMAIL = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@example.com')
-    ADMIN_PASSWORD = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'senha') # Pega da env var se existir
+class Command(BaseCommand):
+    help = 'Cria um superusuário para desenvolvimento'
 
-    if not User.objects.filter(email=ADMIN_EMAIL).exists():
-        User.objects.create(
-            email=ADMIN_EMAIL,
-            password=make_password(ADMIN_PASSWORD),
-            user_type='admin',
-            is_superuser=True,
-            is_staff=True,
-            is_active=True,
-            first_name='Dev',
-            last_name='Admin'
-        )
-        print(f"Usuário admin '{ADMIN_EMAIL}' criado com senha '{ADMIN_PASSWORD}' (AVISO: senha insegura!).")
-    else:
-        print(f"Usuário admin '{ADMIN_EMAIL}' já existe.")
+    def handle(self, *args, **options):
+        admin_email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'diogo232musso@gmail.com')
+        admin_password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin12345678')
+        admin_first_name = os.environ.get('DJANGO_SUPERUSER_FIRST_NAME', 'Diogo')
+        admin_last_name = os.environ.get('DJANGO_SUPERUSER_LAST_NAME', 'Coutinho')
+
+        if not User.objects.filter(email=admin_email).exists():
+            User.objects.create_superuser(
+                email=admin_email,
+                password=admin_password,
+                first_name=admin_first_name,
+                last_name=admin_last_name,
+                user_type='admin'
+            )
+            self.stdout.write(self.style.SUCCESS(
+                f"Superusuário '{admin_email}' criado com sucesso!"
+            ))
+        else:
+            self.stdout.write(self.style.WARNING(
+                f"Superusuário '{admin_email}' já existe."
+            ))
 
 if __name__ == '__main__':
-    create_admin_user()
+    Command().handle()

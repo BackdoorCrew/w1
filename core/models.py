@@ -1,9 +1,32 @@
 # core/models.py
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.conf import settings
 from decimal import Decimal
 from django.utils import timezone
+
+class CustomUserManager(UserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('O campo email é obrigatório')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault('user_type', 'admin')
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superusuário deve ter is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superusuário deve ter is_superuser=True.')
+
+        return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
@@ -19,6 +42,9 @@ class User(AbstractUser):
         default='cliente',
         verbose_name='Tipo de Usuário'
     )
+
+    objects = CustomUserManager()
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
@@ -57,7 +83,6 @@ class Holding(models.Model):
         limit_choices_to={'user_type': 'cliente'},
         verbose_name='Clientes/Sócios'
     )
-    # ### ALTERAÇÃO PRINCIPAL AQUI ###
     consultores = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         blank=True, 
@@ -65,7 +90,6 @@ class Holding(models.Model):
         limit_choices_to={'user_type': 'consultor'},
         verbose_name='Consultores Responsáveis'
     )
-    # ### FIM DA ALTERAÇÃO PRINCIPAL ###
     data_criacao_registro = models.DateField(null=True, blank=True, verbose_name='Data de Criação/Registro')
     has_bank_savings = models.BooleanField(default=False, verbose_name='Possui Poupança/Dinheiro em Banco?')
     bank_savings_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name='Valor em Banco (R$)')
@@ -152,7 +176,6 @@ class ProcessoHolding(models.Model):
         verbose_name_plural = "Processos de Holding"
         ordering = ['-data_inicio_processo']
 
-
 class Documento(models.Model):
     CATEGORIA_CHOICES = (
         ('pessoais_socios', 'Documentos pessoais dos sócios'),
@@ -181,7 +204,7 @@ class Documento(models.Model):
         default='[Nome Lógico Não Especificado]'
     )
     arquivo = models.FileField(upload_to='documentos_holdings/%Y/%m/%d/', verbose_name='Arquivo')
-    categoria = models.CharField(max_length=30, choices=CATEGORIA_CHOICES, verbose_name='Categoria') # Ajustei o max_length para 'providencias_pos_registro'
+    categoria = models.CharField(max_length=30, choices=CATEGORIA_CHOICES, verbose_name='Categoria')
     data_upload = models.DateTimeField(auto_now_add=True, verbose_name='Data de Upload')
     descricao_adicional = models.TextField(blank=True, null=True, verbose_name='Descrição Adicional (Opcional)')
     versao = models.PositiveIntegerField(default=1, verbose_name="Versão")
@@ -200,7 +223,6 @@ class Documento(models.Model):
         verbose_name_plural = "Documentos"
         ordering = ['processo_holding', 'nome_documento_logico', '-versao', '-data_upload']
         unique_together = ('processo_holding', 'nome_documento_logico', 'versao', 'categoria')
-
 
 class AnaliseEconomia(models.Model):
     holding = models.OneToOneField(
