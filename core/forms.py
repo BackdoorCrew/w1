@@ -2,7 +2,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from .models import User, Holding, ProcessoHolding, Documento
+from .models import User, Holding, ProcessoHolding, Documento,ChatMessage,PastaDocumento
 from decimal import Decimal
 from django.utils import timezone
 
@@ -127,6 +127,19 @@ class HoldingCreationUserForm(forms.ModelForm):
             self.initial['nome_holding'] = default_name
             self.fields['nome_holding'].widget.attrs['placeholder'] = default_name
 
+class ChatMessageForm(forms.ModelForm):
+    content = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'rows': 2,
+            'placeholder': 'Digite sua mensagem aqui...',
+            'class': 'chat-input-textarea form-control-custom' # Add relevant classes
+        }),
+        label="" # No explicit label shown, placeholder is descriptive
+    )
+
+    class Meta:
+        model = ChatMessage
+        fields = ['content']
 
 class ConsultantCreationForm(forms.ModelForm):
     email = forms.EmailField(
@@ -233,11 +246,67 @@ class AddClientToHoldingForm(forms.Form):
         except User.DoesNotExist:
             raise ValidationError("Nenhum cliente ativo encontrado com este e-mail na plataforma.")
         return user
+
+class PastaDocumentoForm(forms.ModelForm):
+    class Meta:
+        model = PastaDocumento
+        fields = ['nome', 'parent_folder']
+        widgets = {
+            'nome': forms.TextInput(attrs={'class': 'form-control-custom', 'placeholder': 'Nome da Nova Pasta'}),
+            'parent_folder': forms.Select(attrs={'class': 'form-control-custom'}),
+        }
+        labels = {
+            'nome': 'Nome da Pasta',
+            'parent_folder': 'Salvar Dentro De (Opcional)'
+        }
+
+    def __init__(self, *args, **kwargs):
+        processo_holding_instance = kwargs.pop('processo_holding', None)
+        # You might want to exclude the current folder if editing, to prevent self-parenting
+        # current_folder_instance = kwargs.pop('current_folder', None) 
+        super().__init__(*args, **kwargs)
+        
+        if processo_holding_instance:
+            queryset = PastaDocumento.objects.filter(processo_holding=processo_holding_instance)
+            # if current_folder_instance: # Logic for editing to prevent self-parenting or circular deps
+            #     queryset = queryset.exclude(pk=current_folder_instance.pk)
+            #     # Also exclude descendants of current_folder_instance if it's an edit form
+            self.fields['parent_folder'].queryset = queryset.order_by('nome')
+            self.fields['parent_folder'].required = False
+            self.fields['parent_folder'].empty_label = "--- Raiz do Processo (Nenhuma Pasta Pai) ---"
+        else:
+            self.fields['parent_folder'].queryset = PastaDocumento.objects.none()
+            self.fields['parent_folder'].widget.attrs['disabled'] = True
+            self.fields['parent_folder'].required = False
+            self.fields['parent_folder'].empty_label = "--- (Processo não definido) ---"
     
+    def clean_nome(self):
+        nome = self.cleaned_data.get('nome')
+        # Basic validation for folder name, e.g., no slashes
+        if '/' in nome or '\\' in nome:
+            raise ValidationError("Nome da pasta não pode conter barras ('/' ou '\\').")
+        return nome
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        parent_folder = cleaned_data.get('parent_folder')
+        # If editing an existing folder (self.instance.pk is not None),
+        # prevent making it a child of itself or its own descendants.
+        # This logic is more complex and can be added if editing folders is implemented.
+        # For creation, unique_together in the model handles duplicates at the same level.
+        return cleaned_data
+
 class DocumentUploadForm(forms.ModelForm):
+    pasta = forms.ModelChoiceField(
+        queryset=PastaDocumento.objects.none(),
+        required=False,
+        label="Salvar na Pasta (Opcional)",
+        widget=forms.Select(attrs={'class': 'form-control-custom'})
+    )
+
     class Meta:
         model = Documento
-        fields = ['nome_documento_logico', 'arquivo', 'categoria', 'descricao_adicional']
+        fields = ['nome_documento_logico', 'pasta', 'arquivo', 'categoria', 'descricao_adicional']
         widgets = {
             'nome_documento_logico': forms.TextInput(attrs={'class': 'form-control-custom', 'placeholder': 'Ex: Contrato Social da Holding X'}),
             'arquivo': forms.ClearableFileInput(attrs={'class': 'form-control-custom'}),
@@ -255,14 +324,33 @@ class DocumentUploadForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        # ***** THIS IS THE CRUCIAL FIX: POP 'processo_holding' BEFORE SUPER() *****
+        processo_holding_instance = kwargs.pop('processo_holding', None)
+        # ***********************************************************************
+        super().__init__(*args, **kwargs) # Now kwargs doesn't contain 'processo_holding'
+        
         self.fields['arquivo'].widget.attrs.update({'lang': 'pt-br'})
+
+        if processo_holding_instance:
+            self.fields['pasta'].queryset = PastaDocumento.objects.filter(processo_holding=processo_holding_instance).order_by('nome')
+            self.fields['pasta'].empty_label = "--- Raiz do Processo (Nenhuma Pasta) ---"
+        else:
+            self.fields['pasta'].widget.attrs['disabled'] = True
+            self.fields['pasta'].empty_label = "--- (Processo não definido para pastas) ---"
+
 
 
 class ManagementDocumentUploadForm(forms.ModelForm):
+    pasta = forms.ModelChoiceField(
+        queryset=PastaDocumento.objects.none(),
+        required=False,
+        label="Salvar na Pasta (Opcional)",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
     class Meta:
         model = Documento
-        fields = ['nome_documento_logico', 'arquivo', 'categoria', 'descricao_adicional']
+        fields = ['nome_documento_logico', 'pasta', 'arquivo', 'categoria', 'descricao_adicional']
         widgets = {
             'nome_documento_logico': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Contrato Social da Holding X'}),
             'arquivo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
@@ -280,5 +368,16 @@ class ManagementDocumentUploadForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        # ***** THIS IS THE CRUCIAL FIX: POP 'processo_holding' BEFORE SUPER() *****
+        processo_holding_instance = kwargs.pop('processo_holding', None)
+        # ***********************************************************************
+        super().__init__(*args, **kwargs) # Now kwargs doesn't contain 'processo_holding'
+
         self.fields['arquivo'].widget.attrs.update({'lang': 'pt-br'})
+
+        if processo_holding_instance:
+            self.fields['pasta'].queryset = PastaDocumento.objects.filter(processo_holding=processo_holding_instance).order_by('nome')
+            self.fields['pasta'].empty_label = "--- Raiz do Processo (Nenhuma Pasta) ---"
+        else:
+            self.fields['pasta'].widget.attrs['disabled'] = True
+            self.fields['pasta'].empty_label = "--- (Processo não definido para pastas) ---"

@@ -1,0 +1,109 @@
+{% load static %}
+{% comment %}
+    Recursive template to display folders and documents.
+    - folders: List of folder dicts for the current level.
+    - documents: List of document objects at the current level (outside any subfolders shown).
+    - depth: Current recursion depth for indentation (optional).
+    - user_is_management: Boolean, true if rendering for management panel.
+    - target_processo_id: ID of the current ProcessoHolding.
+    - parent_folder_id_for_new_folder_form: ID for new subfolder creation context.
+    - pasta_creation_form: The form for creating a new folder (passed down for context if needed).
+{% endcomment %}
+
+{% for folder_item in folders %}
+<div class="document-group-card mb-3 p-3 border rounded" style="background-color: {% if user_is_management %}#f0f9ff{% else %}#043842{% endif %}; margin-left: {{ depth|default:0|add:0 }}rem; border-left: 3px solid {% if user_is_management %}#3b82f6{% else %}#0ea5e9{% endif %};">
+    <div class="flex justify-between items-center mb-2">
+        <h6 class="text-lg {% if user_is_management %}text-slate-700{% else %}text-teal-300{% endif %} mb-0 flex items-center">
+            <i class="fas fa-folder {% if user_is_management %}text-blue-500{% else %}text-yellow-400{% endif %} mr-2"></i>
+            {{ folder_item.nome }}
+            <span class="text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-400{% endif %} ml-2">({{ folder_item.doc_count|default:folder_item.documentos_contidos|length }} doc(s))</span>
+        </h6>
+        <div>
+            {# Action buttons for folder: e.g., Add Subfolder, Rename, Delete - Placeholder for now #}
+            {# Example: Could open a modal with pasta_creation_form pre-filled with parent_folder_id #}
+            {# <button class="btn btn-xs btn-outline-secondary me-1" title="Nova Subpasta Aqui" onclick="openCreateSubfolderModal('{{ target_processo_id }}', '{{ folder_item.id }}')"><i class="fas fa-folder-plus"></i></button> #}
+        </div>
+    </div>
+    
+    {# Recursively include for subfolders #}
+    {% if folder_item.subpastas or folder_item.documentos_contidos %}
+        <div style="padding-left: 1rem; border-left: 1px dashed {% if user_is_management %}#cbd5e1{% else %}#055058{% endif %}; margin-left: 0.5rem;">
+            {% if folder_item.subpastas %}
+                {% with folders=folder_item.subpastas documents=None depth=depth|default:0|add:1 parent_folder_id_for_new_folder_form=folder_item.id user_is_management=user_is_management target_processo_id=target_processo_id pasta_creation_form=pasta_creation_form %}
+                    {# ***** CORRECTED PATH BELOW ***** #}
+                    {% include "core/folder_tree_display.html" %}
+                {% endwith %}
+            {% endif %}
+
+            {# Documents directly in this folder #}
+            {% if folder_item.documentos_contidos %}
+                <ul class="list-none p-0 mt-2 space-y-1">
+                    {% for doc in folder_item.documentos_contidos %}
+                    <li class="document-card flex items-center justify-between p-2 rounded {% if user_is_management %}bg-white hover:bg-slate-50{% else %}bg-gray-700 hover:bg-gray-600{% endif %} transition-colors duration-150" style="width:100%; background-color: {% if user_is_management %}#ffffff{% else %}#055058{% endif %};">
+                        <div class="document-content flex-grow overflow-hidden">
+                            <a href="{{ doc.arquivo.url }}" target="_blank" class="flex items-center group" title="Ver {{ doc.nome_original_arquivo|default:doc.arquivo.name }}">
+                                <i class="fas fa-file-alt {% if user_is_management %}text-gray-500{% else %}text-gray-300{% endif %} mr-2 group-hover:text-teal-400"></i>
+                                <span class="document-title text-sm {% if user_is_management %}text-gray-700 group-hover:text-teal-600{% else %}text-gray-200 group-hover:text-teal-300{% endif %} truncate">
+                                    {{ doc.nome_documento_logico|default:doc.nome_original_arquivo|truncatechars:45 }}
+                                    <strong class="ml-1">(v{{ doc.versao }})</strong>
+                                </span>
+                            </a>
+                            <p class="document-description text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-400{% endif %} mb-0 mt-0.5 truncate">
+                                Cat: {{ doc.get_categoria_display }} | Por: {{ doc.enviado_por.first_name|default:"Usuário" }} | {{ doc.data_upload|date:"d/m/y" }}
+                            </p>
+                            {% if doc.descricao_adicional %}
+                            <p class="document-description text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-500{% endif %} italic mt-0.5 truncate" title="{{ doc.descricao_adicional }}">Obs: {{ doc.descricao_adicional|truncatewords:10 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="document-actions ml-2 flex-shrink-0 space-x-1">
+                            <a href="{{ doc.arquivo.url }}" target="_blank" class="btn btn-xs {% if user_is_management %}btn-outline-primary{% else %}upload-btn !py-1 !px-2 !text-xs{% endif %}" title="Ver/Baixar v{{doc.versao}}">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {# Placeholder for future Move/Delete document buttons #}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% elif not folder_item.subpastas %} 
+                 <p class="text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-500{% endif %} italic mt-1">Esta pasta está vazia.</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <p class="text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-500{% endif %} italic mt-1">Esta pasta está vazia.</p>
+    {% endif %}
+</div>
+{% endfor %}
+
+{# Documents at the current level (not in any of the subfolders listed above / root documents) #}
+{% if documents %}
+    {% for doc in documents %}
+        <div class="document-card flex items-center justify-between p-3 mb-2 rounded {% if user_is_management %}bg-white hover:bg-slate-50 shadow-sm{% else %}bg-gray-700 hover:bg-gray-600{% endif %} transition-colors duration-150" style="margin-left: {{ depth|default:0|add:0 }}rem; background-color: {% if user_is_management %}#ffffff{% else %}#044048{% endif %};">
+             <div class="document-content flex-grow overflow-hidden">
+                <a href="{{ doc.arquivo.url }}" target="_blank" class="flex items-center group" title="Ver {{ doc.nome_original_arquivo|default:doc.arquivo.name }}">
+                    <i class="fas fa-file-alt {% if user_is_management %}text-gray-500{% else %}text-gray-300{% endif %} mr-2 group-hover:text-teal-400"></i>
+                    <span class="document-title text-sm {% if user_is_management %}text-gray-700 group-hover:text-teal-600{% else %}text-gray-200 group-hover:text-teal-300{% endif %} truncate">
+                        {{ doc.nome_documento_logico|default:doc.nome_original_arquivo|truncatechars:45 }}
+                        <strong class="ml-1">(v{{ doc.versao }})</strong>
+                    </span>
+                </a>
+                <p class="document-description text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-400{% endif %} mb-0 mt-0.5 truncate">
+                    Cat: {{ doc.get_categoria_display }} | Por: {{ doc.enviado_por.first_name|default:"Usuário" }} | {{ doc.data_upload|date:"d/m/y" }}
+                </p>
+                {% if doc.descricao_adicional %}
+                <p class="document-description text-xs {% if user_is_management %}text-gray-500{% else %}text-gray-500{% endif %} italic mt-0.5 truncate" title="{{ doc.descricao_adicional }}">Obs: {{ doc.descricao_adicional|truncatewords:10 }}</p>
+                {% endif %}
+            </div>
+            <div class="document-actions ml-2 flex-shrink-0 space-x-1">
+                <a href="{{ doc.arquivo.url }}" target="_blank" class="btn btn-xs {% if user_is_management %}btn-outline-primary{% else %}upload-btn !py-1 !px-2 !text-xs{% endif %}" title="Ver/Baixar v{{doc.versao}}">
+                    <i class="fas fa-eye"></i>
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if not folders and not documents and depth|default:0 == 0 %}
+     <div class="content-card p-3 text-center mt-4" style="background-color: {% if user_is_management %}#f8f9fa{% else %}#032830{% endif %};">
+        <p class="{% if user_is_management %}text-gray-600{% else %}text-gray-500{% endif %} italic">Nenhum documento ou pasta encontrado para este processo.</p>
+    </div>
+{% endif %}

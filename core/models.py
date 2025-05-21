@@ -28,6 +28,7 @@ class CustomUserManager(UserManager):
 
         return self.create_user(email, password, **extra_fields)
 
+
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
         ('admin', 'Administrador'),
@@ -85,8 +86,8 @@ class Holding(models.Model):
     )
     consultores = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        blank=True, 
-        related_name='holdings_assessoradas', 
+        blank=True,
+        related_name='holdings_assessoradas',
         limit_choices_to={'user_type': 'consultor'},
         verbose_name='Consultores Responsáveis'
     )
@@ -130,6 +131,21 @@ class Holding(models.Model):
         verbose_name_plural = "Holdings"
         ordering = ['nome_holding']
 
+class ChatMessage(models.Model):
+    holding = models.ForeignKey(Holding, on_delete=models.CASCADE, related_name='chat_messages', verbose_name='Holding')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_chat_messages', verbose_name='Remetente')
+    content = models.TextField(verbose_name='Conteúdo da Mensagem')
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name='Data e Hora')
+
+    def __str__(self):
+        sender_name = self.sender.get_full_name() or self.sender.email
+        return f"Msg por {sender_name} em '{self.holding.nome_holding}' às {self.timestamp.strftime('%d/%m/%y %H:%M')}"
+
+    class Meta:
+        verbose_name = 'Mensagem do Chat da Holding'
+        verbose_name_plural = 'Mensagens do Chat da Holding'
+        ordering = ['timestamp']
+
 class ProcessoHolding(models.Model):
     STATUS_CHOICES = (
         ('aguardando_documentos', 'Aguardando Documentos'),
@@ -143,21 +159,21 @@ class ProcessoHolding(models.Model):
     )
     cliente_principal = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.PROTECT, # Consider models.SET_NULL or another strategy if a client can be deleted
         related_name='processos_holding',
         limit_choices_to={'user_type': 'cliente'},
         verbose_name='Cliente Principal'
     )
     holding_associada = models.OneToOneField(
         Holding,
-        on_delete=models.SET_NULL,
+        on_delete=models.SET_NULL, # Or models.CASCADE if process is deleted when holding is
         null=True,
         blank=True,
         related_name='processo_criacao',
         verbose_name='Holding Associada'
     )
     status_atual = models.CharField(
-        max_length=30, 
+        max_length=30, # Increased length for 'concluido_oficializado'
         choices=STATUS_CHOICES,
         default='aguardando_documentos',
         verbose_name='Status Atual do Processo'
@@ -176,6 +192,31 @@ class ProcessoHolding(models.Model):
         verbose_name_plural = "Processos de Holding"
         ordering = ['-data_inicio_processo']
 
+# PastaDocumento must be defined before Documento if Documento refers to it
+class PastaDocumento(models.Model):
+    processo_holding = models.ForeignKey(ProcessoHolding, on_delete=models.CASCADE, related_name='pastas_documentos', verbose_name="Processo da Holding")
+    parent_folder = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='subpastas', verbose_name='Pasta Pai')
+    nome = models.CharField(max_length=150, verbose_name='Nome da Pasta')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='pastas_criadas_por_mim', verbose_name="Criado por")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última Modificação")
+
+    def __str__(self):
+        path = self.nome
+        current = self.parent_folder
+        while current:
+            path = f"{current.nome} > {path}"
+            current = current.parent_folder
+        # Include ProcessoHolding ID for clarity in admin or logs if needed
+        return f"PH({self.processo_holding_id}): {path}"
+
+
+    class Meta:
+        verbose_name = 'Pasta de Documento'
+        verbose_name_plural = 'Pastas de Documentos'
+        ordering = ['processo_holding', 'parent_folder__nome', 'nome']
+        unique_together = ('processo_holding', 'parent_folder', 'nome')
+
 class Documento(models.Model):
     CATEGORIA_CHOICES = (
         ('pessoais_socios', 'Documentos pessoais dos sócios'),
@@ -187,8 +228,16 @@ class Documento(models.Model):
     processo_holding = models.ForeignKey(
         ProcessoHolding,
         on_delete=models.CASCADE,
-        related_name='documentos',
+        related_name='documentos_processo', # Changed related_name to avoid clash if any
         verbose_name='Processo da Holding'
+    )
+    pasta = models.ForeignKey(
+        PastaDocumento,
+        on_delete=models.SET_NULL, # Or models.CASCADE if documents should be deleted with folder
+        null=True,
+        blank=True,
+        related_name='documentos_contidos', # This matches your PastaDocumentoAdmin and get_folder_structure
+        verbose_name='Pasta de Armazenamento'
     )
     enviado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -204,7 +253,7 @@ class Documento(models.Model):
         default='[Nome Lógico Não Especificado]'
     )
     arquivo = models.FileField(upload_to='documentos_holdings/%Y/%m/%d/', verbose_name='Arquivo')
-    categoria = models.CharField(max_length=30, choices=CATEGORIA_CHOICES, verbose_name='Categoria')
+    categoria = models.CharField(max_length=30, choices=CATEGORIA_CHOICES, verbose_name='Categoria') # Max length adjusted
     data_upload = models.DateTimeField(auto_now_add=True, verbose_name='Data de Upload')
     descricao_adicional = models.TextField(blank=True, null=True, verbose_name='Descrição Adicional (Opcional)')
     versao = models.PositiveIntegerField(default=1, verbose_name="Versão")
@@ -213,16 +262,24 @@ class Documento(models.Model):
     def save(self, *args, **kwargs):
         if self.arquivo and not self.nome_original_arquivo:
             self.nome_original_arquivo = self.arquivo.name
+        # Versioning logic is typically handled in the view upon new upload
+        # to correctly check against existing versions with same name, category, and pasta.
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.nome_documento_logico} (v{self.versao}) - Processo ID: {self.processo_holding_id if self.processo_holding else 'N/A'}"
+        pasta_nome = f" (Pasta: {self.pasta.nome})" if self.pasta else " (Raiz do Processo)"
+        return f"{self.nome_documento_logico} (v{self.versao}) - Proc: {self.processo_holding_id if self.processo_holding else 'N/A'}{pasta_nome}"
 
     class Meta:
         verbose_name = "Documento"
         verbose_name_plural = "Documentos"
-        ordering = ['processo_holding', 'nome_documento_logico', '-versao', '-data_upload']
+        ordering = ['processo_holding', 'pasta__nome', 'nome_documento_logico', '-versao', '-data_upload']
+        # Ensure this unique_together constraint aligns with your versioning logic.
+        # If version is per folder:
+        # unique_together = ('processo_holding', 'pasta', 'nome_documento_logico', 'versao', 'categoria')
+        # If version is per process regardless of folder (current):
         unique_together = ('processo_holding', 'nome_documento_logico', 'versao', 'categoria')
+
 
 class AnaliseEconomia(models.Model):
     holding = models.OneToOneField(
@@ -255,7 +312,7 @@ class SimulationResult(models.Model):
     number_of_properties = models.IntegerField(default=0)
     total_property_value = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
     inventory_cost_without = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    inventory_cost_with = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00')) 
+    inventory_cost_with = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
     inventory_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
     has_companies = models.BooleanField(default=False)
     number_of_companies = models.IntegerField(default=0)

@@ -4,7 +4,8 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
-from django.db.models import Q, Max
+from django.db.models import Q, Max, Count
+from django.db import IntegrityError
 from django.conf import settings
 # from datetime import date # Removido se não usado diretamente
 # from django.core.mail import send_mail # Removido se não usado
@@ -19,7 +20,9 @@ from .forms import (
     ProcessStatusUpdateForm, HoldingOfficializeForm,
     AddClientToHoldingForm,
     DocumentUploadForm, 
-    ManagementDocumentUploadForm
+    ManagementDocumentUploadForm,
+    ChatMessageForm,
+    PastaDocumentoForm,
 )
 from allauth.account.forms import LoginForm
 # from allauth.account.utils import complete_signup # Removido se não usado diretamente
@@ -27,7 +30,7 @@ from allauth.account.forms import LoginForm
 
 from .models import (
     User, Holding, ProcessoHolding, AnaliseEconomia, Documento,
-    ClienteProfile, SimulationResult
+    ClienteProfile, SimulationResult,ChatMessage , PastaDocumento
 )
 
 from decimal import Decimal
@@ -317,82 +320,246 @@ def create_holding(request):
 
     return render(request, 'core/create_holding.html', {'form': form})
 
+# Helper function to get folder structure (can be in views.py or a utils.py)
+def get_folder_structure_with_documents(processo_holding, parent_folder=None):
+    """
+    Recursively fetches folder structure along with documents.
+    Returns a list of folder dicts and a list of documents at the current level.
+    Each folder dict contains: 'id', 'nome', 'instance', 'subpastas' (recursive call), 'documentos_contidos'.
+    """
+    if not processo_holding:
+        return [], []
+
+    folders_data = []
+    # Get folders at the current level
+    current_level_folders_qs = PastaDocumento.objects.filter(
+        processo_holding=processo_holding,
+        parent_folder=parent_folder
+    ).prefetch_related(
+        'documentos_contidos__enviado_por' # Documents directly in this folder
+    ).annotate(
+        doc_count=Count('documentos_contidos') # Count documents in this folder
+    ).order_by('nome')
+
+    for folder_instance in current_level_folders_qs:
+        subfolders_list, _ = get_folder_structure_with_documents(processo_holding, folder_instance) # Recursive call for subfolders
+        
+        # Documents directly within this folder_instance are already prefetched by 'documentos_contidos'
+        direct_documents_in_folder = list(folder_instance.documentos_contidos.all().select_related('enviado_por').order_by('nome_documento_logico', '-versao'))
+
+        folders_data.append({
+            'id': folder_instance.id,
+            'nome': folder_instance.nome,
+            'instance': folder_instance,
+            'subpastas': subfolders_list,
+            'documentos_contidos': direct_documents_in_folder, # Documents directly in this folder
+            'doc_count': folder_instance.doc_count # From annotation
+        })
+
+    # Documents at the root of the current level (i.e., not in any subfolder of this level)
+    # If parent_folder is None, these are documents at the very root of the processo_holding
+    documents_at_this_level_qs = Documento.objects.filter(
+        processo_holding=processo_holding,
+        pasta=parent_folder # This will correctly fetch documents whose 'pasta' FK matches the current parent_folder
+    ).select_related('enviado_por').order_by('nome_documento_logico', '-versao')
+
+    return folders_data, list(documents_at_this_level_qs)
+
+
 @login_required
-def dashboard_final(request): # Dashboard principal do cliente
+def dashboard_final(request):
     if request.user.is_superuser:
         return redirect('management_dashboard')
 
     latest_simulation = SimulationResult.objects.filter(user=request.user).order_by('-created_at').first()
-    
-    # Holdings onde o usuário é cliente
     user_holdings_qs = Holding.objects.filter(clientes=request.user).prefetch_related(
-        'consultores', 'processo_criacao__documentos__enviado_por' # Adicionado 'consultores'
+        'consultores', 'processo_criacao'
     )
     
+    active_holding = None
     target_processo = None
-    active_holding_with_process = None # Holding para a qual o upload de documentos será feito
+    # Prioritize holding with an active process
+    for h_obj in user_holdings_qs:
+        if hasattr(h_obj, 'processo_criacao') and h_obj.processo_criacao:
+            active_holding = h_obj
+            target_processo = h_obj.processo_criacao
+            break
+    # Fallback to the first holding if none has an active process or if the loop didn't find one
+    if not active_holding and user_holdings_qs.exists():
+        active_holding = user_holdings_qs.first()
+        if hasattr(active_holding, 'processo_criacao') and active_holding.processo_criacao:
+            target_processo = active_holding.processo_criacao
 
-    # Determina a holding ativa para upload (pode ser a primeira com processo)
-    for h in user_holdings_qs:
-        if hasattr(h, 'processo_criacao') and h.processo_criacao:
-            active_holding_with_process = h
-            target_processo = h.processo_criacao
-            break 
-            # Em uma app mais complexa, permitiria ao usuário escolher a holding/processo
-            # se ele tiver múltiplas.
 
-    document_form = DocumentUploadForm() 
+    # Initialize forms and document/folder structures
+    # Pass target_processo to forms so they can filter their querysets
+    document_form = DocumentUploadForm(processo_holding=target_processo) if target_processo else DocumentUploadForm()
+    pasta_form = PastaDocumentoForm(processo_holding=target_processo) if target_processo else PastaDocumentoForm()
+    chat_form = ChatMessageForm()
+    
+    folder_structure = []
+    root_documents = []
+    chat_messages = []
+
+    if active_holding:
+        can_access_chat = (
+            request.user.is_superuser or
+            request.user in active_holding.clientes.all() or
+            (active_holding.consultores and request.user in active_holding.consultores.all())
+        )
+        if can_access_chat:
+            chat_messages = ChatMessage.objects.filter(holding=active_holding).select_related('sender').order_by('timestamp')
+        # else:
+            # active_holding = None # Prevent chat if no permission # This might be too restrictive for other parts of dashboard
+
+        if target_processo: # Folders and documents are tied to a process
+            folder_structure, root_documents = get_folder_structure_with_documents(target_processo)
+
 
     if request.method == 'POST':
-        if 'upload_document_cliente' in request.POST and target_processo:
-            form_post = DocumentUploadForm(request.POST, request.FILES)
+        # Handle Folder Creation
+        if 'create_folder' in request.POST and target_processo:
+            posted_pasta_form = PastaDocumentoForm(request.POST, processo_holding=target_processo)
+            if posted_pasta_form.is_valid():
+                new_folder = posted_pasta_form.save(commit=False)
+                new_folder.processo_holding = target_processo
+                new_folder.created_by = request.user
+                try:
+                    new_folder.save()
+                    messages.success(request, f"Pasta '{new_folder.nome}' criada com sucesso.")
+                except IntegrityError: # Catch if unique_together constraint is violated
+                    messages.error(request, f"Já existe uma pasta com o nome '{new_folder.nome}' neste local para este processo.")
+                return redirect(request.path_info + '#documentos') # Use request.path_info for current URL
+            else:
+                messages.error(request, "Erro ao criar pasta. Verifique os dados informados.")
+                pasta_form = posted_pasta_form # Show form with errors
+
+        # Handle Document Upload
+        elif 'upload_document_cliente' in request.POST and target_processo:
+            # Pass target_processo to the form instance
+            form_post = DocumentUploadForm(request.POST, request.FILES, processo_holding=target_processo)
             if form_post.is_valid():
                 doc = form_post.save(commit=False)
                 doc.processo_holding = target_processo
                 doc.enviado_por = request.user
                 doc.nome_original_arquivo = doc.arquivo.name
+                
+                # The 'pasta' field is now part of the form and will be in cleaned_data
+                # doc.pasta = form_post.cleaned_data.get('pasta') # This is handled by form.save()
 
+                # Versioning logic
+                # Check for existing documents with the same logical name, category, AND pasta
                 latest_version_data = Documento.objects.filter(
                     processo_holding=target_processo,
                     nome_documento_logico=doc.nome_documento_logico,
-                    categoria=doc.categoria
+                    categoria=doc.categoria,
+                    pasta=doc.pasta # Consider pasta for versioning uniqueness
                 ).aggregate(max_versao=Max('versao'))
-                
                 current_max_version = latest_version_data.get('max_versao')
                 doc.versao = (current_max_version + 1) if current_max_version is not None else 1
                 
-                doc.save()
-                messages.success(request, f"Documento '{doc.nome_documento_logico}' (v{doc.versao}) enviado com sucesso!")
-                return redirect('dashboard_final') 
+                try:
+                    doc.save() # This will save the 'pasta' if it's part of the form's model
+                    messages.success(request, f"Documento '{doc.nome_documento_logico}' (v{doc.versao}) enviado com sucesso!")
+                except IntegrityError:
+                     messages.error(request, f"Erro de integridade ao salvar. Um documento com nome '{doc.nome_documento_logico}', versão {doc.versao} e categoria '{doc.categoria}' já pode existir neste processo (ou pasta, dependendo do unique_together).")
+
+                return redirect(request.path_info + '#documentos') 
             else:
                 messages.error(request, "Erro ao enviar o documento. Por favor, verifique os campos.")
-                document_form = form_post # Passa o formulário com erros de volta ao template
-        # Adicionar mais handlers de POST se necessário (ex: chat)
-
-    grouped_documents_cliente = {}
-    if target_processo:
-        docs_for_process = Documento.objects.filter(processo_holding=target_processo).select_related('enviado_por').order_by('nome_documento_logico', 'categoria', '-versao')
-        for doc in docs_for_process:
-            key = (doc.nome_documento_logico, doc.categoria)
-            if key not in grouped_documents_cliente:
-                grouped_documents_cliente[key] = {
-                    'nome_logico': doc.nome_documento_logico,
-                    'categoria_display': doc.get_categoria_display(),
-                    'versoes': []
-                }
-            grouped_documents_cliente[key]['versoes'].append(doc)
+                document_form = form_post # Show form with errors
+        
+        # Handle Chat Message (ensure active_holding check is robust)
+        elif 'send_chat_message' in request.POST and active_holding:
+            # Re-verify permission before processing POST for chat
+            can_send_message_post = (
+                request.user.is_superuser or
+                request.user in active_holding.clientes.all() or
+                (active_holding.consultores and request.user in active_holding.consultores.all())
+            )
+            if can_send_message_post:
+                posted_chat_form = ChatMessageForm(request.POST)
+                if posted_chat_form.is_valid():
+                    new_message = posted_chat_form.save(commit=False)
+                    new_message.holding = active_holding
+                    new_message.sender = request.user
+                    new_message.save()
+                    return redirect(request.path_info + '#consultor') 
+                else:
+                    messages.error(request, "Erro ao enviar mensagem. O conteúdo não pode estar vazio.")
+                    chat_form = posted_chat_form 
+            else:
+                messages.error(request, "Você não tem permissão para enviar mensagens neste chat.")
+                return redirect(request.path_info + '#consultor')
             
     context = {
         'user': request.user,
-        'user_holdings': user_holdings_qs, # Lista de holdings do usuário
+        'user_holdings': user_holdings_qs, 
         'latest_simulation': latest_simulation,
-        'document_form': document_form,
-        'active_holding_for_docs': active_holding_with_process, 
+        
+        'active_holding_for_docs': active_holding if target_processo else None, 
         'target_processo_id': target_processo.id if target_processo else None,
-        'grouped_documents_cliente': grouped_documents_cliente,
+        'document_form': document_form,
+        'pasta_form': pasta_form,
+        'folder_structure': folder_structure,
+        'root_documents': root_documents,
+        
+        'active_holding_for_chat': active_holding, 
+        'chat_form': chat_form,
+        'chat_messages': chat_messages,
     }
     return render(request, 'core/dashboard.html', context)
 
+@login_required
+@consultant_or_superuser_required # Ensures only authorized staff can access
+def management_holding_chat(request, holding_id):
+    holding_base_qs = Holding.objects.prefetch_related(
+        'consultores', 
+        'clientes', 
+        # 'chat_messages__sender' # Fetch dynamically or with the holding instance below
+    )
+    
+    try:
+        if request.user.is_superuser:
+            holding = holding_base_qs.get(pk=holding_id)
+        elif request.user.user_type == 'consultor':
+            # Consultant can access chat if they are one of the assigned consultants for this holding
+            holding = holding_base_qs.get(pk=holding_id, consultores=request.user)
+        else: # Should not be reached due to decorator
+            messages.error(request, "Acesso negado.")
+            return redirect('login') 
+    except Holding.DoesNotExist:
+        messages.error(request, "Holding não encontrada ou acesso negado.")
+        return redirect('management_dashboard')
+
+    chat_form = ChatMessageForm()
+    
+    if request.method == 'POST':
+        # Make sure the button name in the template form matches "send_chat_message_management"
+        if 'send_chat_message_management' in request.POST:
+            posted_chat_form = ChatMessageForm(request.POST)
+            if posted_chat_form.is_valid():
+                new_message = posted_chat_form.save(commit=False)
+                new_message.holding = holding
+                new_message.sender = request.user # Sender is the logged-in admin/consultant
+                new_message.save()
+                # messages.success(request, "Mensagem enviada no chat da holding.") # Optional
+                return redirect('management_holding_chat', holding_id=holding.id) # Redirect to refresh
+            else:
+                messages.error(request, "Erro ao enviar mensagem. O conteúdo não pode estar vazio.")
+                chat_form = posted_chat_form # Pass form with errors back to template
+    
+    # Fetch all messages for this holding, ordered by timestamp
+    chat_messages = ChatMessage.objects.filter(holding=holding).select_related('sender').order_by('timestamp')
+
+    context = {
+        'holding': holding,
+        'chat_messages': chat_messages,
+        'chat_form': chat_form,
+        'page_title': f'Chat da Holding: {holding.nome_holding}',
+        'submit_button_text': 'Enviar Mensagem', # For the form if using a generic template part
+    }
+    return render(request, 'management/management_holding_chat.html', context)
 
 @login_required
 def invite_partners(request):
@@ -676,52 +843,90 @@ def management_manage_holding_details_and_consultants(request, holding_id): # RE
 @login_required
 @consultant_or_superuser_required
 def management_holding_detail(request, holding_id):
-    holding_base_qs = Holding.objects.prefetch_related( # Usar prefetch para M2M
-        'consultores', 
-        'clientes', 
-        'processo_criacao__documentos__enviado_por',
-    ).select_related('processo_criacao', 'analise_economia') # select_related para OneToOne/FK
+    # ... (initial holding fetching logic remains the same) ...
+    holding_base_qs = Holding.objects.prefetch_related(
+        'consultores', 'clientes', 
+        'processo_criacao__pastas_documentos__documentos_contidos__enviado_por', # Deeper prefetch for folders and their docs
+        'processo_criacao__documentos_processo__enviado_por' # For root documents of the process
+    ).select_related('processo_criacao', 'analise_economia')
 
-    if request.user.is_superuser:
-        holding = get_object_or_404(holding_base_qs, pk=holding_id)
-    elif request.user.user_type == 'consultor':
-        # Consultor pode ver se ele é um dos consultores associados à holding
-        holding = get_object_or_404(holding_base_qs, pk=holding_id, consultores=request.user)
-    else:
-        messages.error(request, "Acesso negado.")
-        return redirect('login') 
+    try:
+        if request.user.is_superuser:
+            holding = holding_base_qs.get(pk=holding_id)
+        elif request.user.user_type == 'consultor':
+            holding = holding_base_qs.get(pk=holding_id, consultores=request.user)
+        else: # Should not be reached due to decorator
+            messages.error(request, "Acesso negado.")
+            return redirect('login')
+    except Holding.DoesNotExist:
+        messages.error(request, "Holding não encontrada ou acesso negado.")
+        return redirect('management_dashboard')
 
     processo_criacao = getattr(holding, 'processo_criacao', None)
     process_status_form, officialize_form = None, None
-    management_document_form = ManagementDocumentUploadForm()
+    
+    # Pass processo_criacao to forms
+    pasta_form_mgmt = PastaDocumentoForm(processo_holding=processo_criacao) if processo_criacao else PastaDocumentoForm()
+    management_document_form = ManagementDocumentUploadForm(processo_holding=processo_criacao) if processo_criacao else ManagementDocumentUploadForm()
+    
+    folder_structure_mgmt = []
+    root_documents_mgmt = []
+    documentos_holding_count = 0
 
-    if not processo_criacao and request.method == 'POST' and 'upload_document_management' in request.POST:
-        messages.error(request, "Não é possível adicionar documentos pois esta holding não possui um processo de criação ativo.")
-    elif request.method == 'POST':
-        if 'upload_document_management' in request.POST and processo_criacao:
-            form_post_mgmt = ManagementDocumentUploadForm(request.POST, request.FILES)
-            if form_post_mgmt.is_valid():
-                doc = form_post_mgmt.save(commit=False)
-                doc.processo_holding = processo_criacao
-                doc.enviado_por = request.user 
-                doc.nome_original_arquivo = doc.arquivo.name
+    if processo_criacao:
+        folder_structure_mgmt, root_documents_mgmt = get_folder_structure_with_documents(processo_criacao)
+        documentos_holding_count = Documento.objects.filter(processo_holding=processo_criacao).count()
 
-                latest_version_data_mgmt = Documento.objects.filter(
-                    processo_holding=processo_criacao,
-                    nome_documento_logico=doc.nome_documento_logico,
-                    categoria=doc.categoria
-                ).aggregate(max_versao=Max('versao'))
-                
-                current_max_version_mgmt = latest_version_data_mgmt.get('max_versao')
-                doc.versao = (current_max_version_mgmt + 1) if current_max_version_mgmt is not None else 1
-                
-                doc.save()
-                messages.success(request, f"Documento '{doc.nome_documento_logico}' (v{doc.versao}) enviado para a holding '{holding.nome_holding}'.")
-                return redirect('management_holding_detail', holding_id=holding.id)
+
+    if request.method == 'POST':
+        if 'create_folder_management' in request.POST and processo_criacao:
+            posted_pasta_form_mgmt = PastaDocumentoForm(request.POST, processo_holding=processo_criacao)
+            if posted_pasta_form_mgmt.is_valid():
+                new_folder = posted_pasta_form_mgmt.save(commit=False)
+                new_folder.processo_holding = processo_criacao
+                new_folder.created_by = request.user
+                try:
+                    new_folder.save()
+                    messages.success(request, f"Pasta '{new_folder.nome}' criada com sucesso.")
+                except IntegrityError:
+                    messages.error(request, f"Já existe uma pasta com o nome '{new_folder.nome}' neste local para este processo.")
+                return redirect('management_holding_detail', holding_id=holding.id) # Refresh page
             else:
-                messages.error(request, "Erro ao enviar o documento pela gestão. Verifique os campos.")
-                management_document_form = form_post_mgmt
+                messages.error(request, "Erro ao criar pasta. Verifique os dados informados.")
+                pasta_form_mgmt = posted_pasta_form_mgmt
+
+        elif 'upload_document_management' in request.POST:
+            if not processo_criacao:
+                messages.error(request, "Não é possível adicionar documentos pois esta holding não possui um processo de criação ativo.")
+            else:
+                form_post_mgmt = ManagementDocumentUploadForm(request.POST, request.FILES, processo_holding=processo_criacao)
+                if form_post_mgmt.is_valid():
+                    doc = form_post_mgmt.save(commit=False)
+                    doc.processo_holding = processo_criacao
+                    doc.enviado_por = request.user 
+                    doc.nome_original_arquivo = doc.arquivo.name
+                    # doc.pasta is handled by form.save()
+
+                    latest_version_data_mgmt = Documento.objects.filter(
+                        processo_holding=processo_criacao,
+                        nome_documento_logico=doc.nome_documento_logico,
+                        categoria=doc.categoria,
+                        pasta=doc.pasta # Consider pasta for versioning
+                    ).aggregate(max_versao=Max('versao'))
+                    current_max_version_mgmt = latest_version_data_mgmt.get('max_versao')
+                    doc.versao = (current_max_version_mgmt + 1) if current_max_version_mgmt is not None else 1
+                    
+                    try:
+                        doc.save()
+                        messages.success(request, f"Documento '{doc.nome_documento_logico}' (v{doc.versao}) enviado para a holding '{holding.nome_holding}'.")
+                    except IntegrityError:
+                        messages.error(request, f"Erro de integridade ao salvar. Um documento com nome '{doc.nome_documento_logico}', versão {doc.versao} e categoria '{doc.categoria}' já pode existir neste processo (ou pasta).")
+                    return redirect('management_holding_detail', holding_id=holding.id) # Refresh page
+                else:
+                    messages.error(request, "Erro ao enviar o documento pela gestão. Verifique os campos.")
+                    management_document_form = form_post_mgmt
         
+        # ... (rest of your POST handling for status update, officialize, etc. remains the same) ...
         elif 'update_status' in request.POST and processo_criacao:
             process_status_form = ProcessStatusUpdateForm(request.POST, instance=processo_criacao)
             if process_status_form.is_valid():
@@ -737,8 +942,8 @@ def management_holding_detail(request, holding_id):
                 if processo_criacao:
                     if any('concluido_oficializado' == choice[0] for choice in ProcessoHolding.STATUS_CHOICES):
                         processo_criacao.status_atual = 'concluido_oficializado'
-                    elif processo_criacao.status_atual != 'concluido': # Evita reverter um 'cancelado' para 'concluido'
-                        processo_criacao.status_atual = 'concluido'
+                    elif processo_criacao.status_atual != 'concluido': 
+                        processo_criacao.status_atual = 'concluido' # Or some other appropriate status
                     processo_criacao.save()
                 messages.success(request, f"Holding '{holding.nome_holding}' oficializada.")
                 return redirect('management_holding_detail', holding_id=holding.id)
@@ -747,50 +952,39 @@ def management_holding_detail(request, holding_id):
             holding.data_oficializacao = None
             holding.save()
             if processo_criacao and processo_criacao.status_atual == 'concluido_oficializado':
-                # Volta para 'concluido' ou um status anterior apropriado
-                # Aqui, se estava 'concluido_oficializado', volta para 'concluido'
-                # mas poderia ser um status anterior se o processo não estivesse realmente concluído.
-                processo_criacao.status_atual = 'concluido' # Ou outro status relevante
+                # Revert to a suitable status, e.g., 'concluido' or 'providencias_pos_registro'
+                processo_criacao.status_atual = 'concluido' 
                 processo_criacao.save()
             messages.info(request, f"Oficialização da holding '{holding.nome_holding}' revertida.")
             return redirect('management_holding_detail', holding_id=holding.id)
 
-    if processo_criacao and not process_status_form: 
+
+    # Initialize forms for GET request or if POST had errors for other forms
+    if processo_criacao and not process_status_form and 'update_status' not in request.POST : 
         process_status_form = ProcessStatusUpdateForm(instance=processo_criacao)
-    if not holding.is_legally_official and not officialize_form:
+    if not holding.is_legally_official and not officialize_form and 'officialize_holding' not in request.POST:
         officialize_form = HoldingOfficializeForm(initial={'data_oficializacao': holding.data_oficializacao or timezone.now().date()})
 
     socios = holding.clientes.all()
-    
-    grouped_documents_management = {}
-    documentos_holding_count = 0
-    if processo_criacao:
-        docs_for_mgmt = Documento.objects.filter(processo_holding=processo_criacao).order_by('nome_documento_logico', 'categoria', '-versao')
-        documentos_holding_count = docs_for_mgmt.count()
-        for doc in docs_for_mgmt:
-            key_mgmt = (doc.nome_documento_logico, doc.categoria)
-            if key_mgmt not in grouped_documents_management:
-                grouped_documents_management[key_mgmt] = {
-                    'nome_logico': doc.nome_documento_logico,
-                    'categoria_display': doc.get_categoria_display(),
-                    'versoes': []
-                }
-            grouped_documents_management[key_mgmt]['versoes'].append(doc)
-    
     analise = getattr(holding, 'analise_economia', None)
+
     context = {
         'holding': holding, 
         'socios': socios, 
         'processo_criacao': processo_criacao,
-        'documentos_holding_count': documentos_holding_count,
-        'grouped_documents_management': grouped_documents_management,
         'analise': analise,
         'process_status_form': process_status_form, 
         'officialize_form': officialize_form,
         'management_document_form': management_document_form,
+        'pasta_form_management': pasta_form_mgmt,
+        'folder_structure_management': folder_structure_mgmt,
+        'root_documents_management': root_documents_mgmt,
+        'documentos_holding_count': documentos_holding_count,
         'page_title': f'Detalhes da Holding: {holding.nome_holding}'
     }
     return render(request, 'management/management_holding_details.html', context)
+
+
 
 
 @login_required

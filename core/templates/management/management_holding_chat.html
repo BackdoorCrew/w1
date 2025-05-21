@@ -1,0 +1,93 @@
+{% extends 'management/management_base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block page_title_content %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <div class="mb-3">
+        <a href="{% url 'management_holding_detail' holding.id %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar para Detalhes de {{ holding.nome_holding }}
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h4 class="mb-0"><i class="fas fa-comments"></i> Chat da Holding: {{ holding.nome_holding }}</h4>
+        </div>
+        <div class="card-body">
+            <div id="management-chat-area" class="chat-messages-display mb-3 p-3 border rounded" style="min-height: 300px; max-height: 60vh; overflow-y: auto; background-color: #f8f9fa; display: flex; flex-direction: column;">
+                {% if chat_messages %}
+                    {% for message in chat_messages %}
+                        <div class="chat-message mb-2 {% if message.sender == request.user %}align-self-end text-end{% else %}align-self-start text-start{% endif %} w-100">
+                            <div class="d-inline-block p-2 rounded shadow-sm" style="max-width: 75%; {% if message.sender == request.user %}background-color: #cfe2ff; margin-left: auto;{% else %}background-color: #e9ecef;{% endif %}">
+                                <strong class="d-block small {% if message.sender == request.user %}text-primary{% else %}text-secondary{% endif %}">
+                                    {{ message.sender.get_full_name|default:message.sender.email.split|first|capfirst }}
+                                    {% if message.sender.is_superuser %}
+                                        <span class="badge bg-danger small ms-1">Admin</span>
+                                    {% elif message.sender.user_type == 'consultor' %}
+                                        <span class="badge bg-warning text-dark small ms-1">Consultor</span>
+                                    {% elif message.sender.user_type == 'cliente' %}
+                                        <span class="badge bg-info text-dark small ms-1">Cliente</span>
+                                    {% endif %}
+                                </strong>
+                                <p class="mb-0 small text-dark" style="word-wrap: break-word;">{{ message.content|linebreaksbr }}</p>
+                                <small class="text-muted d-block text-end" style="font-size: 0.7em;">{{ message.timestamp|date:"d/m/Y H:i" }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center fst-italic my-auto">Nenhuma mensagem neste chat ainda.</p>
+                {% endif %}
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group mb-2">
+                    {# {{ chat_form.content.label_tag }} #} {{ chat_form.content }} {# Uses class 'chat-input-textarea form-control-custom' #}
+                    {% if chat_form.content.errors %}
+                        <div class="invalid-feedback d-block small text-danger">{{ chat_form.content.errors|join:", " }}</div>
+                    {% endif %}
+                     {% if chat_form.non_field_errors %}
+                        <div class="alert alert-danger p-1 small mt-1">{{ chat_form.non_field_errors|join:", " }}</div>
+                    {% endif %}
+                </div>
+                <button type="submit" name="send_chat_message_management" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> {{ submit_button_text|default:"Enviar Mensagem" }}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Ensure chat textarea has good default styling if not globally set by form-control-custom */
+        .chat-input-textarea {
+            width: 100%;
+            padding: .5rem .75rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #212529;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
+            transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+            box-sizing: border-box; /* Crucial for 100% width with padding */
+            resize: vertical;
+            min-height: 70px; /* Good for a couple of lines */
+        }
+        .chat-input-textarea:focus {
+            border-color: #5fded4; /* Assuming this is your theme color */
+            outline: 0;
+            box-shadow: 0 0 0 .2rem rgba(95, 222, 212, 0.25);
+        }
+    </style>
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+           const chatWindow = document.getElementById('management-chat-area');
+           if (chatWindow) {
+               chatWindow.scrollTop = chatWindow.scrollHeight;
+           }
+       });
+   </script>
+{% endblock %}

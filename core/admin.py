@@ -1,6 +1,6 @@
 # core/admin.py
 from django.contrib import admin
-from .models import User, ClienteProfile, Holding, ProcessoHolding, Documento, AnaliseEconomia, SimulationResult
+from .models import User, ClienteProfile, Holding, ProcessoHolding, Documento, AnaliseEconomia, SimulationResult, ChatMessage,PastaDocumento 
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -21,6 +21,95 @@ class ClienteProfileAdmin(admin.ModelAdmin):
     user_email.short_description = 'Email do Cliente'
     user_email.admin_order_field = 'user__email'
 
+@admin.register(PastaDocumento)
+class PastaDocumentoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'processo_holding_link', 'parent_folder_link', 'created_by_link', 'created_at_formatted', 'document_count_display')
+    list_filter = ('processo_holding__holding_associada__nome_holding', 'created_by__email', 'created_at')
+    search_fields = ('nome', 'processo_holding__holding_associada__nome_holding', 'created_by__email')
+    raw_id_fields = ('processo_holding', 'parent_folder', 'created_by')
+    ordering = ('processo_holding__holding_associada__nome_holding', 'parent_folder__nome', 'nome')
+    list_select_related = ('processo_holding__holding_associada', 'parent_folder', 'created_by')
+
+    def processo_holding_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if obj.processo_holding and obj.processo_holding.holding_associada:
+            link = reverse("admin:core_processoholding_change", args=[obj.processo_holding.id])
+            return format_html('<a href="{}">Proc. {} (Holding: {})</a>', link, obj.processo_holding.id, obj.processo_holding.holding_associada.nome_holding)
+        elif obj.processo_holding:
+            link = reverse("admin:core_processoholding_change", args=[obj.processo_holding.id])
+            return format_html('<a href="{}">Proc. {}</a>', link, obj.processo_holding.id)
+        return "N/A"
+    processo_holding_link.short_description = 'Processo da Holding'
+    processo_holding_link.admin_order_field = 'processo_holding__holding_associada__nome_holding'
+
+    def parent_folder_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if obj.parent_folder:
+            link = reverse("admin:core_pastadocumento_change", args=[obj.parent_folder.id])
+            return format_html('<a href="{}">{}</a>', link, obj.parent_folder.nome)
+        return "Raiz"
+    parent_folder_link.short_description = 'Pasta Pai'
+    parent_folder_link.admin_order_field = 'parent_folder__nome'
+    
+    def created_by_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if obj.created_by:
+            link = reverse("admin:core_user_change", args=[obj.created_by.id])
+            return format_html('<a href="{}">{}</a>', link, obj.created_by.email)
+        return 'N/A'
+    created_by_link.short_description = 'Criado por'
+    created_by_link.admin_order_field = 'created_by__email'
+
+    def created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M')
+    created_at_formatted.short_description = 'Criado em'
+    created_at_formatted.admin_order_field = 'created_at'
+    
+    def document_count_display(self, obj):
+        return obj.documentos_contidos.count()
+    document_count_display.short_description = 'Nº Docs na Pasta'
+
+@admin.register(ChatMessage)
+class ChatMessageAdmin(admin.ModelAdmin):
+    list_display = ('holding_link', 'sender_link', 'content_preview', 'formatted_timestamp')
+    list_filter = ('holding__nome_holding', 'sender__user_type', 'timestamp')
+    search_fields = ('content', 'sender__email', 'sender__first_name', 'sender__last_name', 'holding__nome_holding')
+    raw_id_fields = ('holding', 'sender')
+    readonly_fields = ('timestamp',)
+    list_per_page = 30
+    ordering = ('-timestamp',)
+
+    def sender_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if obj.sender:
+            link = reverse("admin:core_user_change", args=[obj.sender.id])
+            return format_html('<a href="{}">{}</a>', link, obj.sender.get_full_name() or obj.sender.email)
+        return "-"
+    sender_link.short_description = 'Remetente'
+    sender_link.admin_order_field = 'sender__email'
+
+    def holding_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if obj.holding:
+            link = reverse("admin:core_holding_change", args=[obj.holding.id])
+            return format_html('<a href="{}">{}</a>', link, obj.holding.nome_holding)
+        return "-"
+    holding_link.short_description = 'Holding'
+    holding_link.admin_order_field = 'holding__nome_holding'
+
+    def content_preview(self, obj):
+        return (obj.content[:75] + '...') if len(obj.content) > 75 else obj.content
+    content_preview.short_description = 'Conteúdo'
+
+    def formatted_timestamp(self, obj):
+        return obj.timestamp.strftime('%d/%m/%Y %H:%M:%S')
+    formatted_timestamp.short_description = 'Data e Hora'
+    formatted_timestamp.admin_order_field = 'timestamp'
 
 @admin.register(Holding)
 class HoldingAdmin(admin.ModelAdmin):
@@ -78,22 +167,26 @@ class DocumentoAdmin(admin.ModelAdmin):
         'versao', 
         'categoria', 
         'processo_holding_link',
+        'pasta_link', # ***** ADDED *****
         'enviado_por_link', 
         'data_upload', 
         'nome_original_arquivo',
-        'arquivo'
+        # 'arquivo' # Can make the list wide, consider removing or keeping based on need
     ]
-    list_filter = ['categoria', 'processo_holding__holding_associada__nome_holding', 'enviado_por__user_type']
+    list_filter = ['categoria', 'processo_holding__holding_associada__nome_holding', 'enviado_por__user_type', 'pasta__nome'] # ***** ADDED pasta__nome *****
     search_fields = [
         'nome_documento_logico', 
         'nome_original_arquivo', 
         'processo_holding__holding_associada__nome_holding', 
-        'enviado_por__email'
+        'enviado_por__email',
+        'pasta__nome' # ***** ADDED *****
     ]
     readonly_fields = ['data_upload', 'nome_original_arquivo', 'versao'] 
     date_hierarchy = 'data_upload'
     list_per_page = 20
-    raw_id_fields = ['processo_holding', 'enviado_por']
+    raw_id_fields = ['processo_holding', 'enviado_por', 'pasta'] # ***** ADDED pasta *****
+    list_select_related = ('processo_holding__holding_associada', 'enviado_por', 'pasta') # ***** ADDED pasta, and list_select_related for efficiency *****
+
 
     def processo_holding_link(self, obj):
         from django.urls import reverse
@@ -106,6 +199,7 @@ class DocumentoAdmin(admin.ModelAdmin):
             return format_html('<a href="{}">Proc. ID: {} (Holding não associada)</a>', link, obj.processo_holding.id)
         return "N/A"
     processo_holding_link.short_description = 'Processo da Holding'
+    processo_holding_link.admin_order_field = 'processo_holding__holding_associada__nome_holding' # Added for sorting
 
     def enviado_por_link(self,obj):
         from django.urls import reverse
@@ -116,6 +210,17 @@ class DocumentoAdmin(admin.ModelAdmin):
         return "N/A"
     enviado_por_link.short_description = 'Enviado Por'
     enviado_por_link.admin_order_field = 'enviado_por__email'
+
+    # ***** NEW METHOD for pasta link *****
+    def pasta_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if obj.pasta:
+            link = reverse("admin:core_pastadocumento_change", args=[obj.pasta.id])
+            return format_html('<a href="{}">{}</a>', link, obj.pasta.nome)
+        return "Raiz do Processo"
+    pasta_link.short_description = 'Pasta'
+    pasta_link.admin_order_field = 'pasta__nome'
 
 
 @admin.register(SimulationResult)

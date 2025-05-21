@@ -1,0 +1,37 @@
+{% load humanize %} {% for folder_item in items %}
+<li class="list-group-item folder-item">
+    <div class="d-flex justify-content-between align-items-center">
+        <span>
+            <i class="fas fa-folder mr-2 text-warning"></i> <strong>{{ folder_item.nome }}</strong>
+            <small class="text-muted ml-2">({{ folder_item.doc_count }} doc{{ folder_item.doc_count|pluralize }}, {{ folder_item.subpastas|length }} subpasta{{ folder_item.subpastas|length|pluralize }})</small>
+        </span>
+        </div>
+
+    {% if folder_item.documentos_contidos or folder_item.subpastas %}
+    <ul class="list-group mt-2 mb-2">
+        {% for doc in folder_item.documentos_contidos %}
+        <li class="list-group-item document-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="fas fa-file-alt mr-2 text-info"></i> <a href="{{ doc.arquivo.url }}" target="_blank">{{ doc.nome_documento_logico }} (v{{ doc.versao }})</a>
+                    <small class="text-muted">- Cat: {{ doc.get_categoria_display }}</small>
+                </span>
+                <small class="text-muted">
+                    Enviado por: {{ doc.enviado_por.get_full_name|default:doc.enviado_por.email|default:'N/A' }} em {{ doc.data_upload|date:"d/m/Y H:i" }}
+                </small>
+            </div>
+            {% if doc.descricao_adicional %}
+            <small class="d-block text-muted mt-1"><em>Obs: {{ doc.descricao_adicional }}</em></small>
+            {% endif %}
+        </li>
+        {% endfor %}
+
+        {% if folder_item.subpastas %}
+            {% include "core/_recursive_folder_display.html" with items=folder_item.subpastas %}
+        {% endif %}
+    </ul>
+    {% else %}
+    <p class="text-muted mt-1"><small>Esta pasta está vazia.</small></p>
+    {% endif %}
+</li>
+{% endfor %}

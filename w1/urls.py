@@ -37,6 +37,8 @@ urlpatterns = [
     
     path('management/holding/<int:holding_id>/documents/', views.management_holding_documents, name='management_holding_documents'), # Esta view redireciona
     path('management/holding/<int:holding_id>/manage-clients/', views.management_holding_manage_clients, name='management_holding_manage_clients'),
+    path('management/holding/<int:holding_id>/chat/', views.management_holding_chat, name='management_holding_chat'), # <-- ADD THIS LINE
+
 ]
 
 if settings.DEBUG:
