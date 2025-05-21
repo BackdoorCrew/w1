@@ -1,29 +1,75 @@
+# core/admin.py
 from django.contrib import admin
 from .models import User, ClienteProfile, Holding, ProcessoHolding, Documento, AnaliseEconomia, SimulationResult
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['email', 'user_type', 'is_active']
-    list_filter = ['user_type']
-    search_fields = ['email']
+    list_display = ['email', 'first_name', 'last_name', 'user_type', 'is_active', 'is_staff', 'is_superuser']
+    list_filter = ['user_type', 'is_active', 'is_staff', 'is_superuser']
+    search_fields = ['email', 'first_name', 'last_name']
+    ordering = ['email']
+    readonly_fields = ['date_joined', 'last_login']
 
 @admin.register(ClienteProfile)
 class ClienteProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'patrimonio_total_estimado']
-    search_fields = ['user__email']
+    list_display = ['user_email', 'patrimonio_total_estimado', 'rendimentos_estimados_anuais']
+    search_fields = ['user__email', 'user__first_name']
+    raw_id_fields = ['user']
+
+    def user_email(self, obj):
+        return obj.user.email
+    user_email.short_description = 'Email do Cliente'
+    user_email.admin_order_field = 'user__email'
+
 
 @admin.register(Holding)
 class HoldingAdmin(admin.ModelAdmin):
-    list_display = ['nome_holding', 'data_criacao_registro', 'has_heirs', 'rental_property_count']
-    list_filter = ['has_heirs', 'has_rental_properties']
-    search_fields = ['nome_holding']
-    filter_horizontal = ['clientes']
+    list_display = ['nome_holding', 'get_consultores_display', 'get_clientes_count', 'data_criacao_registro', 'is_legally_official']
+    list_filter = ['is_legally_official', 'consultores', 'clientes'] # Adicionado 'consultores' ao filtro
+    search_fields = ['nome_holding', 'description', 'clientes__email', 'consultores__email']
+    # ### CAMPO ATUALIZADO PARA filter_horizontal ###
+    filter_horizontal = ['clientes', 'consultores'] 
+    date_hierarchy = 'data_criacao_registro'
+    ordering = ['nome_holding']
+
+    def get_clientes_count(self, obj):
+        return obj.clientes.count()
+    get_clientes_count.short_description = 'Nº Clientes'
+
+    def get_consultores_display(self, obj):
+        return ", ".join([c.get_full_name() or c.email for c in obj.consultores.all()[:3]]) + ('...' if obj.consultores.count() > 3 else '')
+    get_consultores_display.short_description = 'Consultores'
+
 
 @admin.register(ProcessoHolding)
 class ProcessoHoldingAdmin(admin.ModelAdmin):
-    list_display = ['cliente_principal', 'status_atual', 'data_inicio_processo']
-    list_filter = ['status_atual']
-    search_fields = ['cliente_principal__email']
+    list_display = ['holding_associada_link', 'cliente_principal_link', 'status_atual', 'data_inicio_processo', 'data_ultima_atualizacao']
+    list_filter = ['status_atual', 'holding_associada__consultores']
+    search_fields = ['cliente_principal__email', 'holding_associada__nome_holding']
+    raw_id_fields = ['cliente_principal', 'holding_associada']
+    date_hierarchy = 'data_inicio_processo'
+    ordering = ['-data_inicio_processo']
+
+    def holding_associada_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if obj.holding_associada:
+            link = reverse("admin:core_holding_change", args=[obj.holding_associada.id])
+            return format_html('<a href="{}">{}</a>', link, obj.holding_associada.nome_holding)
+        return "-"
+    holding_associada_link.short_description = 'Holding Associada'
+    holding_associada_link.admin_order_field = 'holding_associada__nome_holding'
+
+    def cliente_principal_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if obj.cliente_principal:
+            link = reverse("admin:core_user_change", args=[obj.cliente_principal.id])
+            return format_html('<a href="{}">{}</a>', link, obj.cliente_principal.email)
+        return "-"
+    cliente_principal_link.short_description = 'Cliente Principal'
+    cliente_principal_link.admin_order_field = 'cliente_principal__email'
+
 
 @admin.register(Documento)
 class DocumentoAdmin(admin.ModelAdmin):
@@ -31,8 +77,8 @@ class DocumentoAdmin(admin.ModelAdmin):
         'nome_documento_logico', 
         'versao', 
         'categoria', 
-        'processo_holding_link', # Usaremos um método para linkar ao processo
-        'enviado_por', 
+        'processo_holding_link',
+        'enviado_por_link', 
         'data_upload', 
         'nome_original_arquivo',
         'arquivo'
@@ -52,23 +98,50 @@ class DocumentoAdmin(admin.ModelAdmin):
     def processo_holding_link(self, obj):
         from django.urls import reverse
         from django.utils.html import format_html
-        if obj.processo_holding:
+        if obj.processo_holding and obj.processo_holding.holding_associada:
             link = reverse("admin:core_processoholding_change", args=[obj.processo_holding.id])
-            return format_html('<a href="{}">Proc. ID: {} (Holding: {})</a>', link, obj.processo_holding.id, obj.processo_holding.holding_associada)
+            return format_html('<a href="{}">Proc. ID: {} (Holding: {})</a>', link, obj.processo_holding.id, obj.processo_holding.holding_associada.nome_holding)
+        elif obj.processo_holding:
+            link = reverse("admin:core_processoholding_change", args=[obj.processo_holding.id])
+            return format_html('<a href="{}">Proc. ID: {} (Holding não associada)</a>', link, obj.processo_holding.id)
         return "N/A"
     processo_holding_link.short_description = 'Processo da Holding'
 
+    def enviado_por_link(self,obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if obj.enviado_por:
+            link = reverse("admin:core_user_change", args=[obj.enviado_por.id])
+            return format_html('<a href="{}">{}</a>', link, obj.enviado_por.email)
+        return "N/A"
+    enviado_por_link.short_description = 'Enviado Por'
+    enviado_por_link.admin_order_field = 'enviado_por__email'
+
+
 @admin.register(SimulationResult)
 class SimulationResultAdmin(admin.ModelAdmin):
-    list_display = ['user', 'created_at', 'total_property_value', 'total_savings', 'number_of_heirs']
+    list_display = ['user_email_link', 'created_at', 'total_property_value', 'total_savings', 'number_of_heirs']
     list_filter = ['created_at', 'has_companies', 'receives_rent']
-    search_fields = ['user__email', 'user__first_name']
+    search_fields = ['user__email', 'user__first_name', 'user__last_name']
     date_hierarchy = 'created_at'
-    readonly_fields = [f.name for f in SimulationResult._meta.fields] # Torna todos os campos readonly
+    readonly_fields = [f.name for f in SimulationResult._meta.fields]
     list_per_page = 25
 
-    def has_add_permission(self, request): # Impede adição pelo admin
+    def user_email_link(self, obj):
+        from django.urls import reverse
+        from django.utils.html import format_html
+        if obj.user:
+            link = reverse("admin:core_user_change", args=[obj.user.id])
+            return format_html('<a href="{}">{}</a>', link, obj.user.email)
+        return "N/A"
+    user_email_link.short_description = 'Usuário'
+    user_email_link.admin_order_field = 'user__email'
+
+    def has_add_permission(self, request):
         return False
 
-    def has_change_permission(self, request, obj=None): # Impede edição pelo admin
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None): # Também impedir delete se necessário
         return False

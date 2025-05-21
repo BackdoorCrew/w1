@@ -4,7 +4,6 @@ from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from decimal import Decimal
 from django.utils import timezone
-# Removido import os, não será usado diretamente aqui para upload_to
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
@@ -58,15 +57,15 @@ class Holding(models.Model):
         limit_choices_to={'user_type': 'cliente'},
         verbose_name='Clientes/Sócios'
     )
-    consultor_responsavel = models.ForeignKey(
+    # ### ALTERAÇÃO PRINCIPAL AQUI ###
+    consultores = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='holdings_assessoradas',
+        blank=True, 
+        related_name='holdings_assessoradas', 
         limit_choices_to={'user_type': 'consultor'},
-        verbose_name='Consultor Responsável'
+        verbose_name='Consultores Responsáveis'
     )
+    # ### FIM DA ALTERAÇÃO PRINCIPAL ###
     data_criacao_registro = models.DateField(null=True, blank=True, verbose_name='Data de Criação/Registro')
     has_bank_savings = models.BooleanField(default=False, verbose_name='Possui Poupança/Dinheiro em Banco?')
     bank_savings_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name='Valor em Banco (R$)')
@@ -134,7 +133,7 @@ class ProcessoHolding(models.Model):
         verbose_name='Holding Associada'
     )
     status_atual = models.CharField(
-        max_length=30, # Aumentado para acomodar 'concluido_oficializado'
+        max_length=30, 
         choices=STATUS_CHOICES,
         default='aguardando_documentos',
         verbose_name='Status Atual do Processo'
@@ -153,14 +152,6 @@ class ProcessoHolding(models.Model):
         verbose_name_plural = "Processos de Holding"
         ordering = ['-data_inicio_processo']
 
-# core/models.py
-
-
-# ... (outros modelos como User, ClienteProfile, Holding, ProcessoHolding) ...
-
-# core/models.py
-
-# ... (imports e outros modelos) ...
 
 class Documento(models.Model):
     CATEGORIA_CHOICES = (
@@ -190,10 +181,9 @@ class Documento(models.Model):
         default='[Nome Lógico Não Especificado]'
     )
     arquivo = models.FileField(upload_to='documentos_holdings/%Y/%m/%d/', verbose_name='Arquivo')
-    categoria = models.CharField(max_length=30, choices=CATEGORIA_CHOICES, verbose_name='Categoria')
+    categoria = models.CharField(max_length=30, choices=CATEGORIA_CHOICES, verbose_name='Categoria') # Ajustei o max_length para 'providencias_pos_registro'
     data_upload = models.DateTimeField(auto_now_add=True, verbose_name='Data de Upload')
     descricao_adicional = models.TextField(blank=True, null=True, verbose_name='Descrição Adicional (Opcional)')
-
     versao = models.PositiveIntegerField(default=1, verbose_name="Versão")
     nome_original_arquivo = models.CharField(max_length=255, blank=True, verbose_name="Nome Original do Arquivo Enviado")
 
@@ -203,14 +193,13 @@ class Documento(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.nome_documento_logico} (v{self.versao}) - Processo ID: {self.processo_holding_id if self.processo_holding else 'N/A'}" # Adicionado if para evitar erro se processo_holding_id for None
+        return f"{self.nome_documento_logico} (v{self.versao}) - Processo ID: {self.processo_holding_id if self.processo_holding else 'N/A'}"
 
     class Meta:
         verbose_name = "Documento"
         verbose_name_plural = "Documentos"
         ordering = ['processo_holding', 'nome_documento_logico', '-versao', '-data_upload']
         unique_together = ('processo_holding', 'nome_documento_logico', 'versao', 'categoria')
-
 
 
 class AnaliseEconomia(models.Model):
@@ -244,7 +233,7 @@ class SimulationResult(models.Model):
     number_of_properties = models.IntegerField(default=0)
     total_property_value = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
     inventory_cost_without = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    inventory_cost_with = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00')) # Geralmente 0
+    inventory_cost_with = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00')) 
     inventory_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
     has_companies = models.BooleanField(default=False)
     number_of_companies = models.IntegerField(default=0)

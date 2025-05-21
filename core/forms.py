@@ -1,44 +1,38 @@
 # core/forms.py
 from django import forms
-from django.contrib.auth.forms import UserCreationForm # Para CustomSignupForm
+from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from .models import User, Holding # Seu User customizado e Holding
-from decimal import Decimal
 from .models import User, Holding, ProcessoHolding, Documento
+from decimal import Decimal
 from django.utils import timezone
-# Seu formulário de cadastro customizado.
-# Lembre-se: se for usar este, defina ACCOUNT_SIGNUP_FORM_CLASS em settings.py.
-# Caso contrário, o allauth.account.forms.SignupForm será usado pela view signup.
+
 class CustomSignupForm(UserCreationForm):
     first_name = forms.CharField(max_length=150, required=True, label="Nome")
     last_name = forms.CharField(max_length=150, required=False, label="Sobrenome")
-    # A senha e confirmação de senha são herdadas do UserCreationForm
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("email", "first_name", "last_name") # email é o USERNAME_FIELD
+        fields = ("email", "first_name", "last_name")
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.user_type = 'cliente' # Define o tipo de usuário padrão
-        # A senha já é hasheada e tratada pelo UserCreationForm.save()
+        user.user_type = 'cliente'
         if commit:
             user.save()
         return user
 
-# Formulário para a página de simulação do cliente
 class SimulationForm(forms.Form):
     number_of_properties = forms.IntegerField(
         label="Quantos imóveis você possui?", min_value=0, required=True,
         widget=forms.NumberInput(attrs={'class': 'form-control-simulacao'})
     )
     total_property_value = forms.DecimalField(
-        label="Qual o valor total dos imóveis? (R$)", max_digits=15, decimal_places=2, min_value=0, required=False,
+        label="Qual o valor total dos imóveis? (R$)", max_digits=15, decimal_places=2, min_value=Decimal('0.01'), required=False,
         widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': '0.00'})
     )
     has_companies = forms.ChoiceField(
         label="Você possui empresas?", choices=[('no', 'Não'), ('yes', 'Sim')],
-        widget=forms.RadioSelect, required=True
+        widget=forms.RadioSelect, required=True, initial='no'
     )
     number_of_companies = forms.IntegerField(
         label="Quantas empresas você possui?", min_value=0, required=False,
@@ -55,10 +49,10 @@ class SimulationForm(forms.Form):
     )
     receives_rent = forms.ChoiceField(
         label="Você recebe aluguéis de imóveis?", choices=[('no', 'Não'), ('yes', 'Sim')],
-        widget=forms.RadioSelect, required=True
+        widget=forms.RadioSelect, required=True, initial='no'
     )
     monthly_rent = forms.DecimalField(
-        label="Qual o valor mensal total dos aluguéis? (R$)", max_digits=15, decimal_places=2, min_value=0, required=False,
+        label="Qual o valor mensal total dos aluguéis? (R$)", max_digits=15, decimal_places=2, min_value=Decimal('0.01'), required=False,
         widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': '0.00'})
     )
     number_of_heirs = forms.IntegerField(
@@ -68,7 +62,7 @@ class SimulationForm(forms.Form):
     avoid_conflicts = forms.ChoiceField(
         label="Você gostaria de evitar conflitos familiares e deixar tudo organizado?",
         choices=[('no', 'Não'), ('yes', 'Sim')],
-        widget=forms.RadioSelect, required=True
+        widget=forms.RadioSelect, required=True, initial='no'
     )
 
     def clean(self):
@@ -82,33 +76,36 @@ class SimulationForm(forms.Form):
         receives_rent = cleaned_data.get('receives_rent')
         monthly_rent = cleaned_data.get('monthly_rent')
 
-        if number_of_properties and number_of_properties > 0:
+        if number_of_properties is not None and number_of_properties > 0:
             if not total_property_value or total_property_value <= 0:
                 self.add_error('total_property_value', "Com imóveis, o valor total deve ser informado e maior que zero.")
-        
+        else:
+            cleaned_data['total_property_value'] = Decimal('0')
+
+
         if has_companies == 'yes':
-            if not number_of_companies or number_of_companies <= 0:
+            if number_of_companies is None or number_of_companies <= 0:
                 self.add_error('number_of_companies', "Se possui empresas, informe a quantidade.")
             if not company_tax_regime:
                 self.add_error('company_tax_regime', "Se possui empresas, informe o regime tributário.")
-            if monthly_profit is None: # Lucro pode ser 0, mas o campo deve ser enviado
-                 self.add_error('monthly_profit', "Se possui empresas, informe o lucro mensal (pode ser 0).")
-            elif monthly_profit < 0: # Não pode ser negativo
+            if monthly_profit is None:
+                self.add_error('monthly_profit', "Se possui empresas, informe o lucro mensal (pode ser 0).")
+            elif monthly_profit < 0:
                 self.add_error('monthly_profit', "O lucro mensal não pode ser negativo.")
-        else: # Se não tem empresas, define valores padrão para os campos dependentes
+        else:
             cleaned_data['number_of_companies'] = 0
-            cleaned_data['company_tax_regime'] = None # ou '' se preferir
+            cleaned_data['company_tax_regime'] = ''
             cleaned_data['monthly_profit'] = Decimal('0')
 
         if receives_rent == 'yes':
             if not monthly_rent or monthly_rent <= 0:
                 self.add_error('monthly_rent', "Se recebe aluguéis, o valor mensal deve ser informado e maior que zero.")
-        else: # Se não recebe aluguel, define valor padrão
+        else:
             cleaned_data['monthly_rent'] = Decimal('0')
             
         return cleaned_data
 
-# Formulário simplificado para o cliente iniciar a criação de uma Holding
+
 class HoldingCreationUserForm(forms.ModelForm):
     nome_holding = forms.CharField(
         label="Nome que você gostaria para sua Holding",
@@ -119,25 +116,18 @@ class HoldingCreationUserForm(forms.ModelForm):
 
     class Meta:
         model = Holding
-        fields = ['nome_holding'] # Apenas o nome da holding
+        fields = ['nome_holding']
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        
-        # Aplica a classe CSS customizada ao campo nome_holding
-        self.fields['nome_holding'].widget.attrs.update(
-            {'class': 'form-control-custom'}
-        )
-
-        # Preenche o nome da holding com uma sugestão se o usuário estiver logado e o campo não tiver valor inicial
+        self.fields['nome_holding'].widget.attrs.update({'class': 'form-control-custom'})
         if user and user.is_authenticated and not self.initial.get('nome_holding'):
             default_name = f"Holding de {user.first_name}" if user.first_name else "Minha Holding Patrimonial"
             self.initial['nome_holding'] = default_name
             self.fields['nome_holding'].widget.attrs['placeholder'] = default_name
 
 
-# Formulário para o superusuário criar Consultores
 class ConsultantCreationForm(forms.ModelForm):
     email = forms.EmailField(
         label="E-mail do Consultor", required=True,
@@ -175,28 +165,30 @@ class ConsultantCreationForm(forms.ModelForm):
             user.save()
         return user
 
-# Formulário para atribuir consultor a uma Holding e editar detalhes básicos da Holding
-class AssignConsultantToHoldingForm(forms.ModelForm):
+# ### FORMULÁRIO ATUALIZADO ###
+class AssignConsultantAndHoldingDetailsForm(forms.ModelForm):
     nome_holding = forms.CharField(label="Nome da Holding", max_length=255, widget=forms.TextInput(attrs={'class': 'form-control'}))
     description = forms.CharField(label="Descrição da Holding", widget=forms.Textarea(attrs={'rows':3, 'class': 'form-control'}), required=False)
-    consultor_responsavel = forms.ModelChoiceField(
-        queryset=User.objects.filter(user_type='consultor', is_active=True),
+    
+    consultores = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(user_type='consultor', is_active=True).order_by('first_name', 'last_name'),
         required=False,
-        label="Consultor Responsável",
-        empty_label="---- Nenhum (Remover Consultor) ----",
-        widget=forms.Select(attrs={'class': 'form-control'}) # ou form-select se usar Bootstrap/Tailwind
+        label="Consultores Responsáveis",
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input-group'}), # Mais amigável para M2M
+        help_text="Selecione um ou mais consultores. Desmarque todos para remover."
     )
 
     class Meta:
         model = Holding
-        fields = ['nome_holding', 'description', 'consultor_responsavel']
+        fields = ['nome_holding', 'description', 'consultores']
+# ### FIM DO FORMULÁRIO ATUALIZADO ###
 
 class ProcessStatusUpdateForm(forms.ModelForm):
     class Meta:
         model = ProcessoHolding
-        fields = ['status_atual', 'observacoes'] # Incluindo observações
+        fields = ['status_atual', 'observacoes']
         widgets = {
-            'status_atual': forms.Select(attrs={'class': 'form-control'}), # Use sua classe de estilo de management
+            'status_atual': forms.Select(attrs={'class': 'form-control'}),
             'observacoes': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
         }
         labels = {
@@ -207,19 +199,20 @@ class ProcessStatusUpdateForm(forms.ModelForm):
 class HoldingOfficializeForm(forms.ModelForm):
     data_oficializacao = forms.DateField(
         label="Data de Oficialização Legal",
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}), # Classe de estilo management
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         required=True,
-        initial=timezone.now().date # Sugere a data atual
+        initial=timezone.now().date
     )
     class Meta:
         model = Holding
-        fields = ['data_oficializacao'] # 'is_legally_official' será definido na view
+        fields = ['data_oficializacao']
 
     def clean_data_oficializacao(self):
         data = self.cleaned_data.get('data_oficializacao')
         if data and data > timezone.now().date():
             raise ValidationError("A data de oficialização não pode ser no futuro.")
         return data
+
 class AddClientToHoldingForm(forms.Form):
     email = forms.EmailField(
         label="E-mail do Cliente a Adicionar",
@@ -230,18 +223,16 @@ class AddClientToHoldingForm(forms.Form):
     def clean_email(self):
         email_str = self.cleaned_data.get('email')
         if not email_str:
-            # Isso não deveria acontecer se o campo for required=True (padrão), mas por segurança.
             raise ValidationError("E-mail é obrigatório.") 
         
         email_cleaned = email_str.lower()
         try:
-            # Busca por um usuário que seja do tipo cliente e esteja ativo
             user = User.objects.get(email=email_cleaned, user_type='cliente')
             if not user.is_active:
                 raise ValidationError("A conta deste cliente não está ativa.")
         except User.DoesNotExist:
             raise ValidationError("Nenhum cliente ativo encontrado com este e-mail na plataforma.")
-        return user # Retorna o objeto User do cliente completo
+        return user
     
 class DocumentUploadForm(forms.ModelForm):
     class Meta:
@@ -249,44 +240,43 @@ class DocumentUploadForm(forms.ModelForm):
         fields = ['nome_documento_logico', 'arquivo', 'categoria', 'descricao_adicional']
         widgets = {
             'nome_documento_logico': forms.TextInput(attrs={'class': 'form-control-custom', 'placeholder': 'Ex: Contrato Social da Holding X'}),
-            'arquivo': forms.ClearableFileInput(attrs={'class': 'form-control-custom'}), # Permite limpar o arquivo
+            'arquivo': forms.ClearableFileInput(attrs={'class': 'form-control-custom'}),
             'categoria': forms.Select(attrs={'class': 'form-control-custom'}),
             'descricao_adicional': forms.Textarea(attrs={'class': 'form-control-custom', 'rows': 3, 'placeholder': 'Opcional: Descreva brevemente o documento ou a versão.'}),
         }
         labels = {
-            'nome_documento_logico': 'Nome/Tipo do Documento', # Rótulo ajustado
-            'arquivo': 'Selecione o Arquivo',
-            'categoria': 'Categoria do Documento',
-            'descricao_adicional': 'Descrição/Observações da Versão (Opcional)',
-        }
-        help_texts = {
-            'nome_documento_logico': 'Use um nome claro que identifique o documento, como "Contrato Social Holding XPTO" ou "RG Sócio João". Todas as versões deste documento serão agrupadas sob este nome.',
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['arquivo'].widget.attrs.update({'lang': 'pt-br'}) # Para tradução do botão "Escolher arquivo"
-
-
-# Formulário para Admin/Consultor, pode usar classes CSS diferentes se necessário
-class ManagementDocumentUploadForm(forms.ModelForm):
-    class Meta:
-        model = Documento
-        fields = ['nome_documento_logico', 'arquivo', 'categoria', 'descricao_adicional']
-        widgets = { # Use as classes CSS do painel de gestão
-            'nome_documento_logico': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Contrato Social da Holding X'}),
-            'arquivo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'categoria': forms.Select(attrs={'class': 'form-control'}),
-            'descricao_adicional': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Opcional: Descreva brevemente o documento ou a versão.'}),
-        }
-        labels = { # Rótulos podem ser os mesmos
             'nome_documento_logico': 'Nome/Tipo do Documento',
             'arquivo': 'Selecione o Arquivo',
             'categoria': 'Categoria do Documento',
             'descricao_adicional': 'Descrição/Observações da Versão (Opcional)',
         }
         help_texts = {
-            'nome_documento_logico': 'Use um nome claro que identifique o documento, como "Contrato Social Holding XPTO" ou "RG Sócio João". Todas as versões deste documento serão agrupadas sob este nome.',
+            'nome_documento_logico': 'Use um nome claro que identifique o documento. Todas as versões deste documento serão agrupadas sob este nome.',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['arquivo'].widget.attrs.update({'lang': 'pt-br'})
+
+
+class ManagementDocumentUploadForm(forms.ModelForm):
+    class Meta:
+        model = Documento
+        fields = ['nome_documento_logico', 'arquivo', 'categoria', 'descricao_adicional']
+        widgets = {
+            'nome_documento_logico': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Contrato Social da Holding X'}),
+            'arquivo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'categoria': forms.Select(attrs={'class': 'form-control'}),
+            'descricao_adicional': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Opcional: Descreva brevemente o documento ou a versão.'}),
+        }
+        labels = {
+            'nome_documento_logico': 'Nome/Tipo do Documento',
+            'arquivo': 'Selecione o Arquivo',
+            'categoria': 'Categoria do Documento',
+            'descricao_adicional': 'Descrição/Observações da Versão (Opcional)',
+        }
+        help_texts = {
+            'nome_documento_logico': 'Use um nome claro que identifique o documento. Todas as versões deste documento serão agrupadas sob este nome.',
         }
 
     def __init__(self, *args, **kwargs):

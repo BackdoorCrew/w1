@@ -2,7 +2,7 @@
 {% load static %}
 {% load humanize %}
 
-{% block page_title_content %}{{ page_title }}{% endblock %}
+{% block page_title_content %}{{ page_title|default:"Detalhes da Holding" }}{% endblock %}
 
 {% block content %}
     <div class="holding-details-header mb-4 pb-3 border-bottom">
@@ -17,18 +17,32 @@
             </div>
         </div>
         <p class="text-muted"><strong>Descrição:</strong> {{ holding.description|default:"Sem descrição."|linebreaksbr }}</p>
-        <p><strong>Consultor Responsável:</strong>
-            {% if holding.consultor_responsavel %}
-                <a href="{% if request.user.is_superuser %}{% url 'management_user_detail' holding.consultor_responsavel.id %}{% else %}#{% endif %}">
-                    {{ holding.consultor_responsavel.get_full_name|default:holding.consultor_responsavel.email }}
-                </a>
-            {% else %}
-                <span class="text-danger">Nenhum consultor atribuído.</span>
+        
+        {# ### SEÇÃO DE CONSULTORES ATUALIZADA ### #}
+        <div class="d-flex align-items-start">
+            <strong class="me-2">Consultores Responsáveis:</strong>
+            <div>
+                {% if holding.consultores.all %}
+                    <ul class="list-unstyled mb-0" style="padding-left: 0;">
+                        {% for consultor_obj in holding.consultores.all %}
+                        <li style="display: inline-block; margin-right: 10px;">
+                            <a href="{% if request.user.is_superuser %}{% url 'management_user_detail' consultor_obj.id %}{% else %}#{% endif %}">
+                                {{ consultor_obj.get_full_name|default:consultor_obj.email }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <span class="text-danger">Nenhum consultor atribuído.</span>
+                {% endif %}
+            </div>
+             {% if request.user.is_superuser %}
+                {# Certifique-se que o nome da URL 'management_manage_holding_details_and_consultants' está correto em urls.py #}
+                <a href="{% url 'management_manage_holding_details_and_consultants' holding.id %}" class="btn btn-sm btn-outline-primary ms-2"><i class="fas fa-edit"></i> Editar Detalhes/Consultores</a>
             {% endif %}
-            {% if request.user.is_superuser %}
-                <a href="{% url 'management_assign_consultant_to_holding' holding.id %}" class="btn btn-sm btn-outline-primary ms-2"><i class="fas fa-edit"></i> Editar Nome/Descrição/Consultor</a>
-            {% endif %}
-        </p>
+        </div>
+        {# ### FIM DA SEÇÃO DE CONSULTORES ATUALIZADA ### #}
+
         <p><strong>Data de Criação (Registro na Plataforma):</strong> {{ holding.processo_criacao.data_inicio_processo|date:"d/m/Y H:i"|default_if_none:"Não disponível" }}</p>
         <p><strong>Data de Registro (Junta/Cartório):</strong> {{ holding.data_criacao_registro|date:"d/m/Y"|default_if_none:"Não informado" }}</p>
     </div>
@@ -111,8 +125,9 @@
                     </div>
                     {% if request.user.is_superuser %}
                         <hr class="my-3">
-                        <a href="{% url 'management_assign_consultant_to_holding' holding.id %}" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-pencil-alt"></i> Editar Dados Básicos (Nome, Descrição, Consultor)
+                        {# Certifique-se que o nome da URL 'management_manage_holding_details_and_consultants' está correto em urls.py #}
+                        <a href="{% url 'management_manage_holding_details_and_consultants' holding.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-pencil-alt"></i> Editar Dados Básicos e Consultores
                         </a>
                     {% endif %}
                 </div>
@@ -196,7 +211,7 @@
                 <ul class="list-group list-group-flush">
                     {% for socio in socios %}
                     <li class="list-group-item">
-                        <a href="{% if request.user.is_superuser or request.user.id == holding.consultor_responsavel_id %}{% url 'management_user_detail' socio.id %}{% else %}#{% endif %}">{{ socio.get_full_name|default:socio.email }}</a>
+                        <a href="{% if request.user.is_superuser or request.user in holding.consultores.all %}{% url 'management_user_detail' socio.id %}{% else %}#{% endif %}">{{ socio.get_full_name|default:socio.email }}</a>
                         {% if holding.processo_criacao and holding.processo_criacao.cliente_principal_id == socio.id %}<span class="badge bg-info ms-1">Cliente Principal</span>{% endif %}
                     </li>
                     {% empty %}<li class="list-group-item text-muted">Nenhum cliente/sócio associado.</li>{% endfor %}
@@ -234,11 +249,11 @@
                         <hr>
                         <h5 class="mb-3">Documentos Existentes</h5>
                     {% else %}
-                         <div class="alert alert-warning" role="alert" style="font-size:0.9em;">
+                          <div class="alert alert-warning" role="alert" style="font-size:0.9em;">
                             O processo de criação desta holding ainda não foi formalmente iniciado pelo cliente principal. Documentos não podem ser adicionados ou listados ainda.
-                         </div>
+                          </div>
                     {% endif %}
-        
+    
                     {% if grouped_documents_management %}
                         {% for group_key, group_data in grouped_documents_management.items %}
                             <div class="document-group-card mb-3 p-2 border rounded" style="background-color: #f8f9fa;">
@@ -298,8 +313,11 @@
         .ms-1 { margin-left: .25rem !important; }
         .ms-2 { margin-left: .5rem !important; }
         .me-1 { margin-right: .25rem !important; }
+        .me-2 { margin-right: .5rem !important; } /* Adicionado para consistência */
+        .mb-0 { margin-bottom: 0 !important; }
+        .list-unstyled { padding-left: 0; list-style: none;}
         .badge.bg-info { background-color: #0dcaf0 !important; color: #000;}
-        .badge.bg-primary { background-color: #007bff !important;} /* Estilo para o badge Mais Recente */
+        .badge.bg-primary { background-color: #007bff !important;}
         .bg-light { background-color: #f8f9fa !important; }
         .p-2 { padding: .5rem !important; }
         .rounded { border-radius: .25rem !important; }
