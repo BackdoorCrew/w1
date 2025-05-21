@@ -97,28 +97,52 @@ def signup(request):
 
 # --- Área do Cliente ---
 @login_required
-def dashboard(request): # Este é o dashboard inicial que leva para a simulação
-    if request.user.is_superuser:
+def dashboard(request):
+    user = request.user
+    # logger.info(f"Dashboard access by user: {user.email} (ID: {user.id}), User Type: {user.user_type}")
+
+    if user.user_type == 'admin' or user.user_type == 'consultor':
+        # logger.info(f"Redirecting admin/consultor '{user.email}' to 'management_dashboard'.")
         return redirect('management_dashboard')
+
+    if user.user_type == 'cliente':
+        fez_simulacao = SimulationResult.objects.filter(user=user).exists()
+        tem_intencao_holding = ProcessoHolding.objects.filter(cliente_principal=user).exists()
+        # logger.info(f"Cliente '{user.email}': fez_simulacao = {fez_simulacao}, tem_intencao_holding = {tem_intencao_holding}")
+
+        if tem_intencao_holding:
+            # logger.info(f"Redirecting '{user.email}' to 'dashboard_final' (has holding intention).")
+            return redirect('dashboard_final')
+        elif fez_simulacao:
+            # logger.info(f"Redirecting '{user.email}' to 'create_holding' (did simulation, no intention yet).")
+            return redirect('create_holding')
+        else:
+            # logger.info(f"Redirecting '{user.email}' to 'simulation' (no simulation, no intention).")
+            return redirect('simulation')
     
-    # Verifica se já existe uma simulação. Se sim, pode redirecionar para dashboard_final
-    # ou permitir refazer. Por agora, sempre mostra o input da simulação aqui.
-    form = SimulationForm()
-    return render(request, 'core/simulation_input.html', {'form': form, 'user': request.user})
+    # logger.warning(f"User '{user.email}' with unhandled type '{user.user_type}' or condition. Redirecting to 'index'.")
+    return redirect('index')
 
 
 @login_required
 def simulation(request): # Processa o formulário de simulação e mostra os resultados
-    if request.user.is_superuser:
+    if request.user.is_superuser: # Superusuários não fazem simulação de cliente
         return redirect('management_dashboard')
+
+    # Se o cliente já manifestou intenção de holding, não deveria estar refazendo a simulação
+    # a menos que seja um fluxo específico para isso.
+    # if ProcessoHolding.objects.filter(cliente_principal=request.user).exists():
+    #     messages.info(request, "Você já está no processo de criação de holding.")
+    #     return redirect('dashboard_final') # Ou 'create_holding' se ele ainda não finalizou a intenção
 
     if request.method == 'POST':
         form = SimulationForm(request.POST)
         if form.is_valid():
             cleaned_data = form.cleaned_data
             
+            # --- Início da Lógica de Cálculo (mantida da sua versão, com pequenas melhorias) ---
             number_of_properties = cleaned_data.get('number_of_properties', 0)
-            total_property_value = cleaned_data.get('total_property_value') or Decimal('0') # Garantir Decimal
+            total_property_value = cleaned_data.get('total_property_value') or Decimal('0')
             
             inventory_cost_without = Decimal('0')
             inventory_savings = Decimal('0')
@@ -126,11 +150,11 @@ def simulation(request): # Processa o formulário de simulação e mostra os res
 
             if number_of_properties > 0 and total_property_value > 0:
                 inventory_cost_without = total_property_value * INVENTORY_COST_RATE
-                inventory_savings = inventory_cost_without # Com holding, o custo é evitado
+                inventory_savings = inventory_cost_without
                 inventory_text = (
-                    f"Você possui {number_of_properties} imóvel(is) com valor total de R${total_property_value:,.2f}. "
-                    f"Sem uma holding, o custo de inventário (taxas, ITCMD, honorários) seria aproximadamente R${inventory_cost_without:,.2f}. "
-                    f"Com uma holding, este custo é evitado, resultando em uma economia de R${inventory_savings:,.2f}."
+                    f"Você possui {number_of_properties} imóvel(is) com valor total de R$ {total_property_value:,.2f}. "
+                    f"Sem uma holding, o custo de inventário (taxas, ITCMD, honorários) seria aproximadamente R$ {inventory_cost_without:,.2f}. "
+                    f"Com uma holding, este custo é significativamente reduzido ou evitado na sucessão, resultando em uma economia aproximada de R$ {inventory_savings:,.2f}."
                 )
 
             has_companies = cleaned_data.get('has_companies') == 'yes'
@@ -140,24 +164,24 @@ def simulation(request): # Processa o formulário de simulação e mostra os res
             
             annual_profit = Decimal('0')
             profit_savings = Decimal('0')
-            profit_text = "Sem empresas informadas ou lucros mensais distribuídos relevantes, não há economia sobre lucros a simular."
-            tax_regime_label = dict(SimulationForm.base_fields['company_tax_regime'].choices)
-
+            profit_text = "Sem empresas informadas ou lucros mensais relevantes, não há economia sobre lucros a simular."
+            company_tax_regime_choices_dict = dict(form.fields['company_tax_regime'].choices)
 
             if has_companies and number_of_companies > 0 and monthly_profit_val > 0:
                 annual_profit = monthly_profit_val * Decimal('12')
-                if company_tax_regime in ['presumido', 'real']: # Para Simples, a distribuição já é isenta
-                    profit_tax_pf_value = annual_profit * PROFIT_TAX_PF # IRPF sobre lucro distribuído para PF
-                    profit_savings = profit_tax_pf_value # Com holding, distribuição é isenta de IRPF
+                regime_display = company_tax_regime_choices_dict.get(company_tax_regime, str(company_tax_regime or '').capitalize())
+                if company_tax_regime in ['presumido', 'real']:
+                    profit_tax_pf_value = annual_profit * PROFIT_TAX_PF
+                    profit_savings = profit_tax_pf_value
                     profit_text = (
-                        f"Com {number_of_companies} empresa(s) no regime {tax_regime_label.get(company_tax_regime, str(company_tax_regime or '').capitalize())} "
-                        f"e um lucro mensal distribuído de R${monthly_profit_val:,.2f} (totalizando R${annual_profit:,.2f}/ano). "
-                        f"Ao distribuir este lucro para Pessoa Física, o IRPF seria aproximadamente R${profit_savings:,.2f}. "
+                        f"Com {number_of_companies} empresa(s) no regime {regime_display} "
+                        f"e um lucro mensal distribuído de R$ {monthly_profit_val:,.2f} (totalizando R$ {annual_profit:,.2f}/ano). "
+                        f"Ao distribuir este lucro para Pessoa Física, o IRPF seria aproximadamente R$ {profit_savings:,.2f}. "
                         f"Através da holding, a distribuição de lucros é isenta de IRPF, economizando este valor anualmente."
                     )
                 elif company_tax_regime == 'simples':
                     profit_text = (
-                        f"Para {number_of_companies} empresa(s) no Simples Nacional, a distribuição de lucros já é isenta de IRPF. "
+                        f"Para {number_of_companies} empresa(s) no Simples Nacional ({regime_display}), a distribuição de lucros já é isenta de IRPF. "
                         f"Uma holding ainda pode oferecer vantagens na organização societária, proteção patrimonial e planejamento sucessório."
                     )
             
@@ -175,114 +199,121 @@ def simulation(request): # Processa o formulário de simulação e mostra os res
                 rental_savings = tax_without_holding_rent - tax_with_holding_rent
                 if rental_savings > 0:
                     rental_text = (
-                        f"Com uma renda mensal de aluguéis de R${monthly_rent_val:,.2f} (totalizando R${annual_rent:,.2f}/ano). "
-                        f"Recebendo como Pessoa Física, o imposto de renda seria aproximadamente R${tax_without_holding_rent:,.2f} (alíquota de até 27,5%). "
-                        f"Através de uma holding tributada pelo Lucro Presumido, o imposto seria cerca de R${tax_with_holding_rent:,.2f} (alíquota efetiva de ~11,33%). "
-                        f"Isso representa uma economia anual de R${rental_savings:,.2f}."
+                        f"Com uma renda mensal de aluguéis de R$ {monthly_rent_val:,.2f} (totalizando R$ {annual_rent:,.2f}/ano). "
+                        f"Recebendo como Pessoa Física, o imposto de renda seria aproximadamente R$ {tax_without_holding_rent:,.2f} (alíquota de até 27,5%). "
+                        f"Através de uma holding tributada pelo Lucro Presumido, o imposto seria cerca de R$ {tax_with_holding_rent:,.2f} (alíquota efetiva entre ~11,33% e ~14,53%). "
+                        f"Isso representa uma economia anual de R$ {rental_savings:,.2f}."
                     )
                 else:
                      rental_text = (
-                        f"Com uma renda mensal de aluguéis de R${monthly_rent_val:,.2f}, os impostos na Pessoa Jurídica (Holding) e Pessoa Física são similares ou a holding pode não ser vantajosa apenas para esta finalidade. Consulte um especialista."
+                        f"Com uma renda mensal de aluguéis de R$ {monthly_rent_val:,.2f}, os impostos na Pessoa Jurídica (Holding) e Pessoa Física são similares neste cenário, ou a holding pode não ser vantajosa apenas para esta finalidade com base nos dados fornecidos. Consulte um especialista para uma análise detalhada."
                      )
 
-
             number_of_heirs = cleaned_data.get('number_of_heirs', 0)
-            avoid_conflicts = cleaned_data.get('avoid_conflicts', 'no') # Valor padrão 'no' se não vier
+            avoid_conflicts = cleaned_data.get('avoid_conflicts', 'no')
             
             inventory_time_without = 0
-            inventory_time_with = 0 # Com holding, não há inventário dos bens nela contidos
+            inventory_time_with = 0
             conflict_risk = "Não Aplicável"
             succession_text = "O planejamento sucessório através de uma holding visa evitar o demorado e custoso processo de inventário, além de minimizar conflitos familiares."
 
-            if number_of_heirs > 0 and total_property_value > 0: # Apenas se houver patrimônio a ser inventariado
+            if number_of_heirs > 0 and total_property_value > 0:
                 inventory_time_without = 12 if number_of_heirs == 1 else (24 if number_of_heirs <= 3 else 36)
-                conflict_risk = "Baixo" if number_of_heirs == 1 else ("Médio" if number_of_heirs <= 3 else "Alto")
+                conflict_risk_display = "Baixo" if number_of_heirs == 1 else ("Médio" if number_of_heirs <= 3 else "Alto")
+                conflict_risk = conflict_risk_display # Para salvar no BD
                 succession_text = (
-                    f"Com {number_of_heirs} herdeiro(s) e um patrimônio de R${total_property_value:,.2f}, "
-                    f"o processo de inventário tradicional pode levar até {inventory_time_without} meses, com custos de aproximadamente R${inventory_cost_without:,.2f} e um risco de conflito familiar considerado {conflict_risk.lower()}. "
-                    f"A holding permite que a sucessão seja planejada e executada em vida, de forma mais ágil, barata e com menor potencial de disputas, pois os bens já estão organizados dentro da Pessoa Jurídica."
+                    f"Com {number_of_heirs} herdeiro(s) e um patrimônio de R$ {total_property_value:,.2f}, "
+                    f"o processo de inventário tradicional pode levar até {inventory_time_without} meses, com custos de aproximadamente R$ {inventory_cost_without:,.2f} e um risco de conflito familiar considerado {conflict_risk_display.lower()}. "
+                    f"A holding permite que a sucessão seja planejada e executada em vida, de forma mais ágil, barata e com menor potencial de disputas."
                 )
             elif number_of_heirs > 0:
                  succession_text = f"Mesmo sem um valor de patrimônio expressivo informado para simulação, com {number_of_heirs} herdeiro(s), a holding é uma ferramenta poderosa para organizar a sucessão e evitar burocracias futuras."
-
 
             if avoid_conflicts == 'yes':
                 succession_text += " Seu interesse em evitar conflitos familiares e organizar a sucessão é um dos principais benefícios que a holding pode oferecer, permitindo definir regras claras em vida."
             
             total_savings = inventory_savings + profit_savings + rental_savings
+            # --- Fim da Lógica de Cálculo ---
 
-            # Salvar o resultado da simulação
             try:
-                SimulationResult.objects.create(
+                SimulationResult.objects.update_or_create( # Usar update_or_create para evitar duplicatas se o usuário reenviar
                     user=request.user,
-                    number_of_properties=number_of_properties,
-                    total_property_value=total_property_value,
-                    inventory_cost_without=inventory_cost_without,
-                    inventory_cost_with=Decimal('0'), # Custo com holding é tipicamente de constituição, não inventário
-                    inventory_savings=inventory_savings,
-                    has_companies=has_companies,
-                    number_of_companies=number_of_companies,
-                    company_tax_regime=company_tax_regime or '',
-                    monthly_profit=monthly_profit_val,
-                    annual_profit=annual_profit,
-                    profit_savings=profit_savings,
-                    receives_rent=receives_rent,
-                    monthly_rent=monthly_rent_val,
-                    annual_rent=annual_rent,
-                    rental_savings=rental_savings,
-                    number_of_heirs=number_of_heirs,
-                    inventory_time_without=inventory_time_without,
-                    inventory_time_with=inventory_time_with, # Tempo com holding é imediato para bens nela
-                    conflict_risk=conflict_risk,
-                    total_savings=total_savings
+                    defaults={
+                        'number_of_properties': number_of_properties,
+                        'total_property_value': total_property_value,
+                        'inventory_cost_without': inventory_cost_without,
+                        'inventory_cost_with': Decimal('0'),
+                        'inventory_savings': inventory_savings,
+                        'has_companies': has_companies,
+                        'number_of_companies': number_of_companies,
+                        'company_tax_regime': company_tax_regime or '',
+                        'monthly_profit': monthly_profit_val,
+                        'annual_profit': annual_profit,
+                        'profit_savings': profit_savings,
+                        'receives_rent': receives_rent,
+                        'monthly_rent': monthly_rent_val,
+                        'annual_rent': annual_rent,
+                        'rental_savings': rental_savings,
+                        'number_of_heirs': number_of_heirs,
+                        'inventory_time_without': inventory_time_without,
+                        'inventory_time_with': inventory_time_with,
+                        'conflict_risk': conflict_risk,
+                        'total_savings': total_savings
+                    }
                 )
                 messages.success(request, "Simulação calculada e salva com sucesso!")
             except Exception as e:
-                messages.error(request, f"Ocorreu um erro ao tentar salvar os resultados da simulação: {e}")
-
+                # logger.error(f"Erro ao salvar SimulationResult para {request.user.email}: {e}")
+                messages.error(request, f"Ocorreu um erro ao salvar os resultados da simulação: {e}")
 
             context = {
+                'page_title': "Resultado da Sua Simulação",
                 'user': request.user,
                 'number_of_properties': number_of_properties,
-                'total_property_value': float(total_property_value), # Chart.js espera float
+                'total_property_value': float(total_property_value),
                 'inventory_savings': float(inventory_savings),
                 'inventory_text': inventory_text,
                 'inventory_cost_without': float(inventory_cost_without),
-                'inventory_cost_with': 0.0, # Para o gráfico, o custo direto de inventário com holding é zero
-                
+                'inventory_cost_with': 0.0,
                 'has_companies': 'yes' if has_companies else 'no',
                 'number_of_companies': number_of_companies,
+                'company_tax_regime_display': company_tax_regime_choices_dict.get(company_tax_regime, str(company_tax_regime or '').capitalize()),
                 'company_tax_regime': company_tax_regime,
                 'monthly_profit': float(monthly_profit_val),
                 'annual_profit': float(annual_profit),
                 'profit_savings': float(profit_savings),
                 'profit_text': profit_text,
-
                 'receives_rent': 'yes' if receives_rent else 'no',
                 'monthly_rent': float(monthly_rent_val),
                 'annual_rent': float(annual_rent),
                 'rental_savings': float(rental_savings),
                 'rental_text': rental_text,
-
                 'number_of_heirs': number_of_heirs,
                 'avoid_conflicts': avoid_conflicts == 'yes',
                 'succession_text': succession_text,
                 'inventory_time_without': inventory_time_without,
                 'inventory_time_with': inventory_time_with,
                 'conflict_risk': conflict_risk,
-                
                 'total_savings': float(total_savings),
-                'RENTAL_TAX_PF': RENTAL_TAX_PF * 100, # Passar como percentual para display
-                'RENTAL_TAX_PJ': RENTAL_TAX_PJ * 100,
-                'PROFIT_TAX_PF': PROFIT_TAX_PF * 100,
+                'RENTAL_TAX_PF_PERCENT': RENTAL_TAX_PF * 100,
+                'RENTAL_TAX_PJ_PERCENT': RENTAL_TAX_PJ * 100,
+                'PROFIT_TAX_PF_PERCENT': PROFIT_TAX_PF * 100,
+                'INVENTORY_COST_RATE_PERCENT': INVENTORY_COST_RATE * 100,
             }
-            return render(request, 'core/simulation.html', context)
-        else: # Form is invalid
+            # Após salvar a simulação, o usuário vê os resultados.
+            # O próximo passo lógico, se ele quiser prosseguir, seria ir para 'create_holding'.
+            # A view dashboard cuidará do redirecionamento após esta etapa.
+            return render(request, 'core/simulation.html', context) # Mostra a página de resultados da simulação
+        
+        else: # Formulário POST é inválido
             messages.error(request, "Por favor, corrija os erros no formulário de simulação.")
-            return render(request, 'core/simulation_input.html', {'form': form, 'user': request.user})
+            return render(request, 'core/simulation_input.html', {'form': form, 'page_title': "Simulação de Benefícios", 'user': request.user})
     
-    # GET request or other cases
-    return redirect('dashboard')
+    # Se for uma requisição GET, ou seja, o usuário está acessando a página para preencher o formulário
+    else: 
+        form = SimulationForm()
+        return render(request, 'core/simulation_input.html', {'form': form, 'page_title': "Faça sua Simulação", 'user': request.user})
+
 
 
 @login_required

@@ -118,7 +118,7 @@ ACCOUNT_LOGIN_ON_SIGNUP = True
 
 # Redirecionamento padrão após login (usado pelo allauth se não houver 'next')
 # A view 'login' customizada e a view 'dashboard' tratarão a lógica de onde enviar o usuário.
-LOGIN_REDIRECT_URL = '/dashboard-final/' # Usuários existentes vão para o dashboard com sidebar
+LOGIN_REDIRECT_URL = '/dashboard/' # Usuários existentes vão para o dashboard com sidebar
 
 # Redirecionamento após logout
 ACCOUNT_LOGOUT_REDIRECT_URL = '/' # Redireciona para a página inicial (index) após logout
