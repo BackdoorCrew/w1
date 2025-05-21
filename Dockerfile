@@ -14,13 +14,14 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./create_dev_admin.py /app/create_dev_admin.py
-#COPY ./entrypoint.sh /app/entrypoint.sh
-#RUN chmod +x /app/entrypoint.sh
+COPY ./docker_entrypoint.py /app/docker_entrypoint.py
+RUN chmod +x /app/docker_entrypoint.py
 # copia todo o seu código Django
 COPY . .
 
 # expõe a porta padrão do Django dev server
 EXPOSE 8000
-#ENTRYPOINT ["/app/entrypoint.sh"] # <<< ADICIONE/CORRIJA ESTA LINHA
+ENTRYPOINT ["python", "/app/docker_entrypoint.py"]
+
 # comando padrão para subir o servidor
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
