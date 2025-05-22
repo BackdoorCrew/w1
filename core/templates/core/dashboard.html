@@ -1,16 +1,17 @@
 {% extends 'core/base.html' %}
 {% load static %}
 {% load humanize %}
-
+{% load l10n %}
 {% block title %}Meu Painel - W1 Holding Platform{% endblock %}
 
 {% block header %}
     <header class="dashboard-header">
         <div class="logo-container">
             <img src="{% static 'images/logo.png' %}" alt="W1 Logo">
-            <h1>Bem-vindo, {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.email.split|first|capfirst }}{% endif %}!</h1>
+            <h1>Holding</h1>
+            
         </div>
-        <div class="header-right" style="display: flex; flex-direction: row;">
+        <div class="header-right" style="display: flex; flex-direction: row; margin-right: 50px;">
             <div class="search-container">
                 <input type="text" class="search-bar" placeholder="Pesquisar...">
                 <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -34,16 +35,15 @@
 {% endblock header %}
 
 {% block head_extra_styles %}
-    {# <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"> #}
-    {# Using Font Awesome via CDN for icons if not already included in base.html #}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         body { background-color: #022028 !important; color: #e5e7eb; font-family: 'Montserrat', sans-serif; margin: 0; overflow-x: hidden; }
         .cal-sans-regular { font-family: "Cal Sans", sans-serif; font-weight: 400; font-style: normal; }
-        .dashboard-header { background: #011A21; border-bottom: solid 1px #000; color: #fff; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; left: 0; width: 100%; z-index: 1050; height: 70px; }
-        .logo-container { display: flex; align-items: center; }
-        .logo-container img { max-height: 35px; margin-right: 12px; }
-        .logo-container h1 { font-size: 1.2rem; font-family: "Cal Sans", sans-serif; color: #fff; margin: 0; }
+        .dashboard-header { background: #011A21; border-bottom: solid 1px #000; color: #fff; padding: 0px 20px; display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; left: 0; width: 100%; z-index: 1050; height: 70px; }
+        .logo-container { display: flex; align-items: baseline; gap: 10px; }
+        .logo-container span { font-weight: bold; font-size: 1.5rem; margin-left: 100px; }
+        .logo-container img { height: 35px; width: auto;}
+        .logo-container h1 { font-family: "Montserrat", sans-serif; font-size: 1.5rem; font-weight: normal; margin: 0; color: #fff; }
         .search-container { display: flex; align-items: center; width: 280px; background: #044048; border: 1px solid #055058; border-radius: 4px; padding: 6px 10px; margin-right: 15px; }
         .search-bar { flex: 1; background: transparent; color: #d1d5db; border: none; outline: none; font-family: "Montserrat", sans-serif; font-size: 0.9rem; }
         .search-bar::placeholder { color: #6b7280; }
@@ -68,16 +68,16 @@
         .sidebar-item a.logout-btn:hover .nav-icon-container svg { stroke: #ef5350; }
         .main-content-wrapper { margin-left: 260px; width: calc(100% - 260px); background-color: #022028; padding: 25px; }
         .main-content { color: #fff; }
-        .section { display: none; margin-bottom: 2rem; background-color: #022028; padding: 0px; border-radius: 8px;  animation: fadeInContent 0.5s ease-out; }
+        .section { display: none;  background-color: #022028; padding: 0px; border-radius: 8px;  animation: fadeInContent 0.5s ease-out; }
         @keyframes fadeInContent { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .section.active { display: block; }
-        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #044048; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem;padding-top: 20px; border-bottom: 1px solid #044048; }
         .section-header h2 { font-size: 1.75rem; color: #fff; font-family: "Cal Sans", sans-serif; margin: 0; display: flex; align-items:center; }
         .section-header .fas { font-size: 1.5rem; color: #5fded4; margin-right: 10px; } /* For Font Awesome icons */
         .section-header svg.title-icon { width: 24px; height: 24px; stroke: #fff; fill:none; margin-right: 10px; }
         .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
         .progress-list, .document-list-container { display: flex; flex-wrap: wrap; gap: 20px; }
-        .progress-card { background: #044048; border: 1px solid #055058; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; width: calc(50% - 10px); box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.3s ease; }
+        .progress-card { background: #044048; border: 1px solid #055058; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; width: calc(45%); box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.3s ease; }
          @media (max-width: 1024px) { .progress-card { width: 100%; } }
         .progress-card:hover { transform: translateY(-2px); }
         .progress-icon { width: 40px; height: 40px; margin-right: 16px; flex-shrink: 0; }
@@ -98,21 +98,16 @@
         .progress-status .status-icon { color: #5fded4; } /* For Font Awesome icons */
         .document-upload .upload-btn { display: inline-block; padding: 8px 16px; background-color: #5fded4; color: #022028; border-radius: 4px; font-weight: bold; font-family: "Montserrat", sans-serif; text-decoration: none; cursor: pointer; transition: background-color 0.3s ease; font-size: 0.85rem; }
         .document-upload .upload-btn:hover { background-color: #4acbc1; }
-        /* .ia-input { padding-top: 20px; } ia-input é uma classe mais antiga, não usada pelo chat GPT */
-        /* .ia-input textarea { width: 100%; height: 100px; padding: 10px; background: #044048; color: #d1d5db; border: 1px solid #055058; border-radius: 4px; font-family: "Montserrat", sans-serif; } */
-        /* .ia-input button, */ .chat-input button, .invite-btn.auth-btn { margin-top: 10px; padding: 10px 20px; background-color: #5fded4; color: #022028; border: none; border-radius: 4px; font-weight: bold; font-family: "Montserrat", sans-serif; cursor: pointer; }
-        /* .ia-input button:hover, */ .chat-input button:hover, .invite-btn.auth-btn:hover { background-color: #4acbc1; }
+
         .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #044048; color: #d1d5db; border-radius: 8px; overflow: hidden; }
         .table th, .table td { border: 1px solid #055058; padding: 10px; text-align: left; font-family: "Montserrat", sans-serif; }
         .table th { background: #055058; color: #5fded4; }
         .table a { color: #5fded4; text-decoration: underline; }
         .table a:hover { color: #7aded5; }
-        .chat-window { border: 1px solid #055058; padding: 10px; min-height: 150px; overflow-y: auto; margin-bottom: 10px; background: #032830; /* Darker background for chat messages area */ color: #d1d5db; font-family: "Montserrat", sans-serif; border-radius: 4px; }
-        .chat-input-group textarea.form-control-custom { min-height: 50px; resize: vertical; flex-grow: 1; } /* Make textarea grow */
-        .chat-input { display: flex; } /* For older chat input if still used elsewhere */
+
         .sidebar-item a.logout-btn { background-color: transparent; color: #e57373; border: none; }
         .sidebar-item a.logout-btn:hover { background-color: rgba(227, 52, 52, 0.1); color: #ef5350; }
-        .django-messages-container { padding: 0 0 15px 0; } /* Adjusted padding to align with section content */
+        .django-messages-container { padding: 0 0 15px 0; }
         .content-card { background-color: #032830; padding: 1.5rem; border-radius: 8px; border: 1px solid #044048; }
         .form-group-custom { margin-bottom: 1.5rem; }
         .form-group-custom label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #cbd5e1; font-size:0.9rem; }
@@ -131,7 +126,7 @@
         .text-xs { font-size: 0.75rem; }
         .mt-1 { margin-top: 0.25rem; }
         .db { display:block; }
-        .mb-6 { margin-bottom: 1.5rem; } /* Tailwind-like mb-6 */
+        .mb-6 { margin-bottom: 1.5rem; }
         .text-teal-300 { color: #5eead4; }
         .text-teal-400 { color: #2dd4bf; }
         .text-gray-300 { color: #d1d5db; }
@@ -141,12 +136,360 @@
         .font-semibold { font-weight: 600; }
         .mr-1 { margin-right: 0.25rem; }
         .mr-2 { margin-right: 0.5rem; }
-        .auth-btn { /* Reusing some styles from ia-input button for consistency */
-            padding: 0.5rem 1rem; background-color: #5fded4; color: #022028; border: none; border-radius: 0.375rem; font-weight: bold; font-family: "Montserrat", sans-serif; cursor: pointer; font-size: 0.875rem; text-decoration: none; display: inline-flex; align-items: center;
-        }
+        .auth-btn { padding: 0.5rem 1rem; background-color: #5fded4; color: #022028; border: none; border-radius: 0.375rem; font-weight: bold; font-family: "Montserrat", sans-serif; cursor: pointer; font-size: 0.875rem; text-decoration: none; display: inline-flex; align-items: center; }
         .auth-btn:hover { background-color: #4acbc1; }
         .auth-btn i.fas { margin-right: 0.5rem;}
         .hover\:underline:hover { text-decoration: underline; }
+
+        /* === CHAT STYLES (Unified for Mensagens & IA) === */
+        .chat-messages-display-area {
+            background-color: #011a21;
+            border: 1px solid #044048;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse; /* Novas mensagens no final, scroll de baixo */
+        }
+        /* Wrapper interno para manter a ordem correta com column-reverse */
+        .chat-messages-display-area > div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-message-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+            max-width: 85%; /* Limita a largura da mensagem inteira */
+        }
+        .chat-message-container.user {
+            align-items: flex-end;
+            margin-left: auto; /* Alinha o container à direita */
+        }
+        .chat-message-container.other {
+            align-items: flex-start;
+            margin-right: auto; /* Alinha o container à esquerda */
+        }
+
+        .message-sender-name {
+            font-size: 0.75rem; /* 12px */
+            color: #9ca3af; /* cinza-400 */
+            margin-bottom: 2px;
+            font-weight: 500;
+            padding: 0 8px; /* Pequeno padding lateral */
+        }
+        .chat-message-container.user .message-sender-name {
+            text-align: right;
+            color: #5eead4; /* text-teal-300, para destacar o próprio nome */
+        }
+        .chat-message-container.other .message-sender-name {
+            text-align: left;
+        }
+
+        .message-bubble-wrapper {
+            padding: 8px 15px; /* Ajustado o padding superior e inferior */
+            border-radius: 18px;
+            /* max-width: 75%; /* Movido para .chat-message-container para melhor controle do alinhamento */
+            word-wrap: break-word;
+            line-height: 1.5;
+            font-size: 0.9rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15); /* Sombra sutil */
+        }
+        .chat-message-container.user .message-bubble-wrapper {
+            background-color: #5fded4;
+            color: #022028;
+            border-bottom-right-radius: 6px;
+        }
+        .chat-message-container.other .message-bubble-wrapper {
+            background-color: #044048;
+            color: #e5e7eb;
+            border-bottom-left-radius: 6px;
+        }
+        .message-bubble-wrapper p.message-content { /* Alvo específico para o conteúdo */
+            margin: 0 !important;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .message-timestamp-chat {
+            font-size: 0.7rem; /* 11px */
+            color: #6b7280; /* cinza-500 */
+            margin-top: 4px;
+            display: block;
+        }
+        .chat-message-container.user .message-timestamp-chat {
+            text-align: right;
+            color: #011A21;
+        }
+        .chat-message-container.other .message-timestamp-chat {
+            text-align: left;
+            color: #9ca3af; /* Cor mais clara para timestamp em bolhas 'other' */
+        }
+        
+        /* Estilos para o input de chat - aplicados a AMBOS os chats */
+        .chat-input-area {
+            margin-top: 1rem;
+        }
+        .chat-form-group {
+            display: flex;
+            align-items: stretch; /* Faz textarea e botão terem a mesma altura */
+            gap: 0.5rem;
+            height: 40px; 
+        }
+        .chat-form-group textarea {
+            flex-basis: 80%;
+            width: 80%; 
+            height: 100%; 
+            min-height: 40px;
+            padding: 8px 12px; 
+            line-height: 1.3; 
+            font-size: 0.9rem; 
+            box-sizing: border-box;
+            background-color: #044048;
+            color: #e5e7eb;
+            border: 1px solid #055058;
+            border-radius: 6px;
+            resize: none; 
+            font-family: 'Montserrat', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .chat-form-group textarea::placeholder {
+            color: #6b7280;
+        }
+        .chat-form-group textarea:focus {
+            border-color: #5fded4;
+            box-shadow: 0 0 0 0.2rem rgba(95, 222, 212, 0.25);
+            outline: none;
+        }
+        .chat-form-group button {
+            flex-basis: 20%;
+            width: 20%;
+            height: 100%; 
+            min-height: 40px;
+            padding: 0 0.5rem; 
+            font-size: 0.85rem; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            margin-top: 0 !important; 
+            border-radius: 6px;
+            background-color: #5fded4;
+            color: #022028;
+            border: none;
+            font-weight: bold;
+            font-family: "Montserrat", sans-serif;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            white-space: nowrap; /* Evita quebra de texto no botão */
+        }
+        .chat-form-group button:hover {
+            background-color: #4acbc1;
+            transform: translateY(-1px);
+        }
+        .chat-form-group button .fas {
+            margin-right: 0.3rem;
+        }
+        .chat-form-group button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+        
+        .sim-section-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+            text-align: center;
+        }
+        .sim-content-box {
+            background: #033038;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 0 auto 20px auto;
+            box-sizing: border-box;
+            text-align: left;
+        }
+        .sim-logo {
+            display: block;
+            max-width: 120px;
+            margin: 0 auto 25px auto;
+        }
+        .sim-content-box h1 {
+            font-size: 2rem;
+            font-family: "Cal Sans", sans-serif;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .sim-content-box > p.intro-text {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #9ca3af;
+            font-family: "Montserrat", sans-serif;
+            margin-bottom: 2rem;
+        }
+        .benefit-card h2, .summary-card h2 {
+            font-size: 1.5rem;
+            color: #5fded4;
+            font-family: "Cal Sans", sans-serif;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #055058;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .benefit-card h2 .fas, .summary-card h2 .fas {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        .benefit-card p, .summary-card p:not(.total-value-amount):not(.total-value-text) {
+            color: #d1d5db;
+            font-family: "Montserrat", sans-serif;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        .summary-card .total-value-text {
+            font-size: 1.1rem;
+            color: #d1d5db;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .summary-card .total-value-amount {
+            font-size: 2.5rem;
+            color: #5fded4;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 1.5rem;
+            font-family: "Cal Sans", sans-serif;
+            text-align: center;
+        }
+        .benefit-card, .summary-card {
+            background: #044048;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.6s ease-in-out;
+        }
+        .simulation-action-btn {
+            background-color: #5fded4;
+            color: #022028;
+            padding: 12px 25px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.2s ease;
+            font-family: "Montserrat", sans-serif;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .simulation-action-btn:hover {
+            background-color: #4acbc1;
+        }
+        .simulation-action-btn.secondary {
+            background-color: transparent;
+            border: 2px solid #5fded4;
+            color: #5fded4;
+        }
+        .simulation-action-btn.secondary:hover {
+            background-color: rgba(95, 222, 212, 0.1);
+        }
+        .dynamic-icons-display span {
+            font-size: 1.5rem;
+            margin-right: 5px;
+            display: inline-block;
+        }
+        canvas {
+            max-width: 100%;
+            width: 100% !important;
+            display: block;
+            margin: 20px auto 0 auto;
+            max-height: 300px;
+            min-height: 200px;
+        }
+        .metrics-grid {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .metric-card {
+            background: #055058;
+            padding: 15px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 130px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .metric-icon {
+            font-size: 1.75rem;
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+        .metric-label {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            min-height: 2.4em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 3px;
+        }
+        .metric-value {
+            font-size: 1.05rem;
+            color: #5fded4;
+            font-weight: bold;
+        }
+        .metric-value.highlight { color: #5fded4; }
+        .custom-table {
+            width: 100%;
+            margin: 1.5rem 0;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .custom-table th, .custom-table td {
+            border: 1px solid #055058;
+            padding: 6px 8px;
+            text-align: left;
+            color: #d1d5db;
+        }
+        .custom-table th {
+            background-color: #055058;
+            color: #5fded4;
+            font-weight: 600;
+        }
+        .error-messages-container {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #f87171;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1.5rem;
+        }
+        .error-messages-container .error-title {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #ef4444;
+        }
+        /* Fallback para legendas do Chart.js */
+        .chart-legend {
+            color: #ffffff !important;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media (max-width: 640px) {
+            .sim-content-box { padding: 20px; }
+            .sim-content-box h1 { font-size: 1.75rem; }
+            .benefit-card h2, .summary-card h2 { font-size: 1.25rem; }
+            canvas { max-height: 250px; }
+        }
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
@@ -155,113 +498,25 @@
             .header-right { width: 100%; margin-top: 10px; flex-direction: column; align-items: flex-start; }
             .search-container { width: 100%; margin-right: 0; margin-bottom:10px; }
             .header-icons { gap: 10px; }
-            .dashboard-container { flex-direction: column; padding-top: 130px; } /* Increased padding for taller responsive header */
+            .dashboard-container { flex-direction: column; padding-top: 130px; }
             .sidebar { position: static; width: 100%; height: auto; border-right: none; border-bottom: solid 1px #000; padding: 10px 0; }
             .sidebar ul { display: flex; flex-wrap: wrap; justify-content: space-around;}
             .sidebar-item { width: 48%; margin-bottom: 5px;}
             .sidebar-item a { padding: 10px; font-size: 0.9rem; }
             .nav-icon-container svg { width: 16px; height: 16px; }
             .main-content-wrapper { margin-left: 0; width: 100%; padding: 15px; }
-            .section { padding: 0; } /* Removed padding for section to use content-card padding */
+            .section { padding: 0; }
             .section-header h2 { font-size: 1.5rem; }
             .progress-card { width: 100%; flex-direction: column; align-items: flex-start;}
             .progress-icon { margin-bottom: 12px; }
-        }
+            .chat-form-group { flex-direction: column; height: auto; }
+            .chat-form-group textarea { flex-basis: auto; width:100%; margin-bottom: 0.5rem;}
+            .chat-form-group button { flex-basis: auto; width:100%; min-height: 40px;}
 
-        /* ESTILOS PARA O CHAT GPT - INÍCIO */
-        /* As classes .component-card, .component-header-alt, .component-body, .form-control-custom, .submit-btn-custom já existem e serão usadas */
-        #gpt-chat-container .card-header { /* Ajuste para o cabeçalho do card do chat */
-            background-color: #044048; /* Cor consistente com outros cabeçalhos de card-items */
-            padding: 0.75rem 1.25rem;
-            border-bottom: 1px solid #055058; /* Borda sutil */
         }
-        #gpt-chat-container .component-title {
-            font-size: 1.1rem; /* Tamanho um pouco menor para o título do chat */
-            color: #e0e0e0; /* Cor clara para o título */
-            font-family: "Cal Sans", sans-serif;
+        #gpt-chat-container .text-muted { /* "Powered by OpenAI" text, etc. */
+             color: #6b7280 !important;
         }
-        #gpt-chat-container .card-body { /* Corpo do chat */
-            display: flex;
-            flex-direction: column;
-            height: 450px; /* Altura fixa para o container do chat */
-            padding: 0.75rem;
-            background-color: #032830; /* Fundo do .content-card original */
-        }
-        #gpt-chat-messages { /* Área das mensagens */
-            flex-grow: 1;
-            overflow-y: auto;
-            background-color: #022028; /* Fundo mais escuro para contraste */
-            border: 1px solid #044048; /* Borda sutil */
-            padding: 0.75rem;
-            border-radius: 6px; /* Bordas arredondadas */
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
-        .chat-message-gpt { /* Container de cada mensagem */
-            display: flex;
-            max-width: 85%;
-            font-family: 'Roboto', sans-serif;
-        }
-        .chat-message-gpt .message-bubble { /* A "bolha" da mensagem */
-            padding: 0.5rem 0.8rem;
-            border-radius: 18px;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            word-wrap: break-word; /* ou word-break: break-word; */
-            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-        }
-        .chat-message-gpt.user {
-            align-self: flex-end; /* Usuário à direita */
-        }
-        .chat-message-gpt.user .message-bubble {
-            background-color: #007bff; /* Azul para o usuário (pode ser ajustado para seu tema #5fded4) */
-            /* background-color: #5fded4; */ /* Alternativa de cor W1 */
-            /* color: #022028; */         /* Se usar fundo W1 */
-            color: white;
-            border-bottom-right-radius: 6px;
-        }
-        .chat-message-gpt.assistant {
-            align-self: flex-start; /* Assistente à esquerda */
-        }
-        .chat-message-gpt.assistant .message-bubble {
-            background-color: #044048; /* Cor dos cards/inputs */
-            color: #e0e0e0; /* Cor clara para texto */
-            border-bottom-left-radius: 6px;
-        }
-        .chat-message-gpt.error .message-bubble { /* Mensagens de erro */
-            background-color: #721c24; /* Fundo vermelho escuro */
-            color: #f8d7da;    /* Texto claro */
-            border: 1px solid #b21f2d;
-        }
-        #gpt-chat-input-container {
-            padding-top: 0.5rem; /* Espaçamento acima do input */
-        }
-        #gpt-chat-form { /* Formulário de input */
-            display: flex;
-            gap: 0.5rem; /* Espaço entre input e botão */
-        }
-        #gpt-user-message { /* Input de texto */
-            flex-grow: 1;
-             /* Reutilizando .form-control-custom que já tem bom estilo */
-        }
-        #gpt-send-button { /* Botão de enviar */
-            min-width: 80px; /* Largura mínima */
-            white-space: nowrap; /* Evita quebra de linha no texto do botão */
-            /* Reutilizando .submit-btn-custom que já tem bom estilo */
-        }
-        #gpt-send-button:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
-        }
-        #gpt-send-button .fa-spinner { /* Ícone de loading */
-            margin-right: 5px;
-        }
-        #gpt-chat-container .text-muted { /* "Powered by OpenAI" text */
-             color: #6b7280 !important; /* Garante a cor mesmo dentro do card escuro */
-        }
-        /* ESTILOS PARA O CHAT GPT - FIM */
-
     </style>
 {% endblock head_extra_styles %}
 
@@ -272,9 +527,22 @@
             <li class="sidebar-item"><a href="#progresso"><div class="nav-icon-container"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Progresso</div><span>&gt;</span></a></li>
             <li class="sidebar-item"><a href="#documentos"><div class="nav-icon-container"><svg viewBox="0 0 24 24"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M2 15h10"></path><path d="M9 18l3-3-3-3"></path></svg>Documentos</div><span>&gt;</span></a></li>
             <li class="sidebar-item"><a href="#socios"><div class="nav-icon-container"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>Sócios</div><span>&gt;</span></a></li>
-            <li class="sidebar-item"><a href="#consultor"><div class="nav-icon-container"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>Consultor</div><span>&gt;</span></a></li>
+            <li class="sidebar-item"><a href="#mensagens"><div class="nav-icon-container"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>Mensagens</div><span>&gt;</span></a></li>
             <li class="sidebar-item"><a href="#simulacao"><div class="nav-icon-container"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"></rect><rect x="8" y="6" width="8" height="2"></rect><line x1="8" y1="11" x2="16" y2="11"></line><line x1="8" y1="14" x2="16" y2="14"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>Simulação</div><span>&gt;</span></a></li>
-            <li class="sidebar-item"><a href="#ia"><div class="nav-icon-container"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a3 3 0 1 0-3-3"></path><path d="M8 16v-5a3 3 0 0 0-6 0v1a3 3 0 1 0 3 3"></path></svg>IA</div><span>&gt;</span></a></li>
+            <li class="sidebar-item">
+    <a href="#ia">
+        <div class="nav-icon-container">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="8" width="14" height="10" rx="2"></rect>
+                <path d="M7 4h10v4H7z"></path>
+                <line x1="9.5" y1="12.5" x2="9.5" y2="13.5"></line> 
+                <line x1="14.5" y1="12.5" x2="14.5" y2="13.5"></line> 
+            </svg>
+            Assistente
+        </div>
+        <span>&gt;</span>
+    </a>
+</li>
             <li class="sidebar-item" style="margin-top: 20px; ">
                 <a href="{% url 'account_logout' %}" id="logout" class="logout-btn"><div class="nav-icon-container"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>Sair</div><span>&gt;</span></a></li>
         </ul>
@@ -286,11 +554,11 @@
                 <div class="django-messages-container">
                 {% for message in messages %}
                     <div class="p-3 mb-3 rounded-md text-sm
-                        {% if message.tags == 'success' %} bg-green-100 border border-green-400 text-green-700
-                        {% elif message.tags == 'error' %} bg-red-100 border border-red-400 text-red-700
-                        {% elif message.tags == 'warning' %} bg-yellow-100 border border-yellow-400 text-yellow-700
-                        {% else %} bg-blue-100 border border-blue-400 text-blue-700 {% endif %}"
-                        role="alert" style="color: #1f2937; background-color: {% if message.tags == 'success' %}#d1fae5{% elif message.tags == 'error' %}#fee2e2{% elif message.tags == 'warning' %}#fef3c7{% else %}#dbeafe{% endif %}; border-color: {% if message.tags == 'success' %}#6ee7b7{% elif message.tags == 'error' %}#fca5a5{% elif message.tags == 'warning' %}#fcd34d{% else %}#93c5fd{% endif %};">
+                                {% if message.tags == 'success' %} bg-green-100 border border-green-400 text-green-700
+                                {% elif message.tags == 'error' %} bg-red-100 border border-red-400 text-red-700
+                                {% elif message.tags == 'warning' %} bg-yellow-100 border border-yellow-400 text-yellow-700
+                                {% else %} bg-blue-100 border border-blue-400 text-blue-700 {% endif %}"
+                                role="alert" style="color: #1f2937; background-color: {% if message.tags == 'success' %}#d1fae5{% elif message.tags == 'error' %}#fee2e2{% elif message.tags == 'warning' %}#fef3c7{% else %}#dbeafe{% endif %}; border-color: {% if message.tags == 'success' %}#6ee7b7{% elif message.tags == 'error' %}#fca5a5{% elif message.tags == 'warning' %}#fcd34d{% else %}#93c5fd{% endif %};">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -357,7 +625,7 @@
                             <p class="status-text mt-2">
                                 {% if chat_messages %}Em Andamento <i class="fas fa-tasks text-blue-400"></i>
                                 {% else %}Pendente <i class="fas fa-hourglass-half text-yellow-400"></i>{% endif %}
-                                <br><a href="#consultor" class="text-teal-400 hover:underline text-sm switch-section-link">Acessar Chat</a>
+                                <br><a href="#mensagens" class="text-teal-400 hover:underline text-sm switch-section-link">Acessar Chat</a>
                             </p>
                         </div>
                     </div>
@@ -470,87 +738,61 @@
                 {% endif %}
             </section>
 
-            <section id="consultor" class="section">
+            <section id="mensagens" class="section">
                 <div class="section-header">
                     <h2>
-                        <svg class="title-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                        Comunicação da Holding: {% if active_holding_for_chat %}{{ active_holding_for_chat.nome_holding }}{% else %}Nenhuma Holding Ativa{% endif %}
+                        <svg class="title-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        Mensagens da Holding
                     </h2>
                 </div>
-
-                {% if active_holding_for_chat %}
-                    <div class="content-card mb-6">
-                        <h4 class="text-lg font-semibold text-teal-300 mb-2">Consultor(es) Designado(s) para {{ active_holding_for_chat.nome_holding }}:</h4>
-                        {% if active_holding_for_chat.consultores.all %}
-                            <ul class="list-disc list-inside text-gray-300 ml-2">
-                                {% for consultor_user in active_holding_for_chat.consultores.all %}
-                                    <li>
-                                        <strong>{{ consultor_user.get_full_name|default:consultor_user.email }}</strong>
-                                        {% if request.user.is_superuser or request.user.user_type == 'consultor' %}
-                                            <span class="text-xs text-gray-400">({{ consultor_user.email }})</span>
-                                        {% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p class="text-gray-400 italic">Nenhum consultor atribuído a esta holding ainda. Em breve nossa equipe entrará em contato.</p>
-                        {% endif %}
-                    </div>
-
-                    <div class="content-card">
-                        <h4 class="text-lg font-semibold text-teal-300 mb-3">Chat do Grupo da Holding</h4>
-                        <div id="chat-message-area" class="chat-window mb-3 p-3" style="min-height: 250px; max-height: 450px; overflow-y: auto; display: flex; flex-direction: column;">
-                            {% if chat_messages %}
-                                {% for message in chat_messages %}
-                                    <div class="chat-message mb-2 {% if message.sender == request.user %}self-end text-right{% else %}self-start text-left{% endif %}">
-                                        <div class="inline-block p-2 rounded-lg max-w-xs sm:max-w-sm md:max-w-md break-words {% if message.sender == request.user %}bg-teal-600 text-white{% else %}bg-gray-600 text-gray-100{% endif %}" style="background-color: {% if message.sender == request.user %}#0d9488{% else %}#4b5563{% endif %};">
-                                            <strong class="block text-xs font-semibold mb-0.5 {% if message.sender == request.user %}text-teal-100{% else %}text-teal-300{% endif %}">
-                                                {{ message.sender.first_name|default:message.sender.email.split|first|capfirst }}
-                                                {% if message.sender.is_superuser %}
-                                                    <span class="text-red-300">(Admin)</span>
-                                                {% elif message.sender.user_type == 'consultor' %}
-                                                    <span class="text-yellow-300">(Consultor)</span>
-                                                {% endif %}
-                                            </strong>
-                                            <p class="mb-0 text-sm">{{ message.content|linebreaksbr }}</p>
-                                            <small class="block text-xs mt-1 {% if message.sender == request.user %}text-teal-200{% else %}text-gray-400{% endif %}">{{ message.timestamp|date:"d/m H:i" }}</small>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                <p class="text-gray-500 italic text-center my-auto">Nenhuma mensagem neste chat ainda. Seja o primeiro a enviar!</p>
-                            {% endif %}
-                        </div>
-
-                        {% if request.user.is_superuser or request.user in active_holding_for_chat.clientes.all or request.user in active_holding_for_chat.consultores.all %}
-                            <form method="post" action="{% url 'dashboard_final' %}#consultor" class="mt-3">
-                                {% csrf_token %}
-                                <div class="chat-input-group flex items-start gap-2">
-                                    {{ chat_form.content }} {# Assumes chat_form.content has 'chat-input-textarea form-control-custom' classes from forms.py #}
-                                    <button type="submit" name="send_chat_message" class="auth-btn !mt-0 !py-2.5 !px-4 self-start whitespace-nowrap">
-                                        <i class="fas fa-paper-plane mr-1"></i> Enviar
-                                    </button>
+                        
+                <div id="chat-message-area" class="chat-messages-display-area mb-3" style="height: 330px;">
+                    {% if chat_messages %}
+                        <div> {# Wrapper para manter a ordem correta com column-reverse #}
+                        {% for message in chat_messages %}
+                            <div class="chat-message-container {% if message.sender == request.user %}user{% else %}other{% endif %}">
+                                <div class="message-sender-name">
+                                    {% if message.sender == request.user %}
+                                        
+                                    {% else %}
+                                        {{ message.sender.first_name|default:message.sender.email.split|capfirst }}
+                                    {% endif %}
+                                    {% if message.sender.is_superuser %}
+                                        <span class="text-xs" style="color: #f87171;">(Admin)</span>
+                                    {% elif message.sender.user_type == 'consultor' %}
+                                        <span class="text-xs" style="color: #facc15;">(Consultor)</span>
+                                    {% endif %}
                                 </div>
-                                {% if chat_form.content.errors %}
-                                    <div class="text-red-400 text-xs mt-1">{{ chat_form.content.errors|join:", " }}</div>
-                                {% endif %}
-                                 {% if chat_form.non_field_errors %}
-                                    <div class="text-red-400 text-xs mt-1">{{ chat_form.non_field_errors|join:", " }}</div>
-                                {% endif %}
-                            </form>
-                        {% else %}
-                            <p class="text-sm text-gray-500 italic mt-3">Você não tem permissão para enviar mensagens neste chat.</p>
+                                <div class="message-bubble-wrapper">
+                                    <p class="message-content">{{ message.content|linebreaksbr }}</p>
+                                    <span class="message-timestamp-chat">{{ message.timestamp|date:"d/m, H:i" }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500 italic text-center m-auto">Nenhuma mensagem neste chat ainda. Seja o primeiro a enviar!</p>
+                    {% endif %}
+                </div>
+
+                {% if request.user.is_superuser or request.user in active_holding_for_chat.clientes.all or request.user in active_holding_for_chat.consultores.all %}
+                    <form method="post" action="{% url 'dashboard_final' %}#mensagens" class="chat-input-area">
+                        {% csrf_token %}
+                        <div class="chat-form-group">
+                            {{ chat_form.content }} 
+                            <button type="submit" name="send_chat_message">
+                                <i class="fas fa-paper-plane mr-1"></i> Enviar
+                            </button>
+                        </div>
+                        {% if chat_form.content.errors %}
+                            <div class="text-red-400 text-xs mt-1">{{ chat_form.content.errors|join:", " }}</div>
                         {% endif %}
-                    </div>
+                         {% if chat_form.non_field_errors %}
+                            <div class="text-red-400 text-xs mt-1">{{ chat_form.non_field_errors|join:", " }}</div>
+                        {% endif %}
+                    </form>
                 {% else %}
-                    <div class="content-card p-4">
-                        <p class="text-gray-400">Nenhuma holding ativa para exibir o chat. Por favor, inicie o processo de criação de uma holding para habilitar a comunicação.</p>
-                        {% if not user_holdings and latest_simulation %}
-                            <a href="{% url 'create_holding' %}" class="text-teal-400 hover:underline text-sm">Iniciar Criação da Holding</a>
-                        {% elif not latest_simulation %}
-                             <a href="{% url 'simulation' %}" class="text-teal-400 hover:underline text-sm">Fazer Simulação para Habilitar Criação</a>
-                        {% endif %}
-                    </div>
+                    <p class="text-sm text-gray-500 italic mt-3">Você não tem permissão para enviar mensagens neste chat.</p>
                 {% endif %}
             </section>
 
@@ -558,70 +800,150 @@
                 <div class="section-header"><h2><i class="fas fa-bell mr-2"></i>Notificações</h2></div>
                  <div class="content-card p-4">
                     <p class="text-gray-400 italic">Nenhuma notificação nova no momento.</p>
-                    {# Example items
-                    <ul>
-                        <li>Documento enviado - 17/05/2025 21:27</li>
-                        <li>Novo sócio adicionado - 17/05/2025 21:28</li>
-                    </ul>
-                    #}
                 </div>
             </section>
 
             <section id="simulacao" class="section">
-                <div class="section-header">
-                    <h2><svg class="title-icon" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"></rect><rect x="8" y="6" width="8" height="2"></rect><line x1="8" y1="11" x2="16" y2="11"></line><line x1="8" y1="14" x2="16" y2="14"></line><line x1="8" y1="17" x2="16" y2="17"></line></svg>Sua Última Simulação</h2>
-                         <a href="{% url 'simulation' %}" class="auth-btn"><i class="fas fa-redo"></i> Nova Simulação</a>
+    <div class="section-header">
+        <h2><svg class="title-icon" viewBox="0 0 24 24">...</svg>Sua Simulação Detalhada</h2>
+    </div>
+
+    {% if simulation_instance %} 
+
+            {% if not total_savings and not inventory_savings and not profit_savings and not rental_savings and not investment_savings %}
+                <div class="error-messages-container">
+                    <p class="error-title">Erro na Simulação</p>
+                    <p>Não foi possível calcular os benefícios com os dados fornecidos. Por favor, refaça a simulação ou entre em contato com o suporte.</p>
                 </div>
-                {% if latest_simulation %}
-                    <div class="content-card">
-                        <h3 class="progress-title text-teal-300">Resultados da Simulação de {{ latest_simulation.created_at|date:"d/m/Y H:i" }}</h3>
-                        <ul class="list-disc list-inside text-gray-300 pl-5 space-y-1 progress-description">
-                            <li>Nº Propriedades: {{ latest_simulation.number_of_properties }}</li>
-                            <li>Valor Total Imóveis: R$ {{ latest_simulation.total_property_value|floatformat:2|intcomma }}</li>
-                            {% if latest_simulation.inventory_savings > 0 %}<li>Economia Inventário: R$ {{ latest_simulation.inventory_savings|floatformat:2|intcomma }}</li>{% endif %}
-                            {% if latest_simulation.profit_savings > 0 %}<li>Economia Lucros: R$ {{ latest_simulation.profit_savings|floatformat:2|intcomma }}</li>{% endif %}
-                            {% if latest_simulation.rental_savings > 0 %}<li>Economia Aluguéis: R$ {{ latest_simulation.rental_savings|floatformat:2|intcomma }}</li>{% endif %}
-                            <li class="mt-2"><strong>Economia Total Estimada: R$ <span class="text-teal-300">{{ latest_simulation.total_savings|floatformat:2|intcomma }}</span></strong></li>
-                            {% if latest_simulation.number_of_heirs > 0 %}
-                                <li class="mt-2">Tempo Economizado (Inventário): {{ latest_simulation.inventory_time_without }} meses</li>
-                                <li>Risco de Conflito (Sem Holding): {{ latest_simulation.conflict_risk }}</li>
-                            {% endif %}
-                        </ul>
-                    </div>
-                {% else %}
-                    <div class="content-card p-4">
-                        <p class="text-gray-400">Nenhuma simulação realizada ainda. <a href="{% url 'simulation' %}" class="text-teal-400 hover:underline">Clique aqui para fazer sua primeira simulação.</a></p>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% if number_of_properties > 0 or number_of_heirs > 0 %}
+                    <div class="benefit-card">
+                        <h2><i class="fas fa-home"></i> Seus Imóveis e Sucessão ({{ property_state|default:"Estado não informado" }})</h2>
+                        <div id="property-icons-dash" class="dynamic-icons-display"></div> <p>{{ property_succession_text|safe }}</p>
+                        {% if number_of_heirs > 0 and number_of_properties > 0 %}
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-icon">🧾</span>
+                                    <div class="metric-label">Custo Inventário (S/ Holding)</div>
+                                    <div class="metric-value highlight">R$ {% localize off %}{{ inventory_cost_without|floatformat:2|intcomma }}{% endlocalize %}</div>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-icon">⏳</span>
+                                    <div class="metric-label">Tempo Médio Inventário</div>
+                                    <div class="metric-value">{% localize off %}{{ inventory_time_without }}{% endlocalize %} meses</div>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-icon">⚖️</span>
+                                    <div class="metric-label">Risco de Conflito</div>
+                                    <div class="metric-value">{{ conflict_risk }}</div>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-icon">✅</span>
+                                    <div class="metric-label">Com Holding</div>
+                                    <div class="metric-value">Planejado em Vida</div>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                 {% endif %}
-            </section>
+
+                {% if has_companies == 'yes' and number_of_companies > 0 %}
+                    <div class="benefit-card">
+                        <h2><i class="fas fa-briefcase"></i> Suas Empresas</h2>
+                        <div id="company-icons-dash" class="dynamic-icons-display"></div> <p>{{ profit_text|safe }}</p>
+                        {% if company_tax_regime != 'simples' and monthly_profit > 0 %}
+                            <table class="custom-table">
+                                <thead>
+                                    <tr><th>Regime</th><th>Lucro Anual</th><th>IRPF (S/ Holding)</th><th>IRPF (C/ Holding)</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ company_tax_regime_display }}</td>
+                                        <td>R$ {% localize off %}{{ annual_profit|floatformat:2|intcomma }}{% endlocalize %}</td>
+                                        <td>~{% localize off %}{{ PROFIT_TAX_PF_RATE|floatformat:1 }}{% endlocalize %}%</td>
+                                        <td>Isento</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            {% if profit_savings > 0 %}
+                                <canvas id="profitChartDash"></canvas> {% endif %}
+                        {% elif company_tax_regime == 'simples' %}
+                            <p>Empresas no Simples Nacional já possuem isenção na distribuição de lucros...</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if receives_rent == 'yes' and monthly_rent > 0 %}
+                    <div class="benefit-card">
+                        <h2><i class="fas fa-key"></i> Seus Aluguéis (Imóveis)</h2>
+                        <p>Seus aluguéis de R$ {% localize off %}{{ monthly_rent|floatformat:2|intcomma }}{% endlocalize %} ... {{ rental_text|safe }}</p>
+                        {% if rental_savings > 0 %}
+                            <canvas id="rentalChartDash"></canvas> {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if has_investments == 'yes' and total_investment_value > 0 %}
+                     <div class="benefit-card">
+                         <h2><i class="fas fa-chart-line"></i> Seus Investimentos</h2>
+                         <p>Seus investimentos de R$ {% localize off %}{{ total_investment_value|floatformat:2|intcomma }}{% endlocalize %} ... {{ investment_text|safe }}</p>
+                         {% if investment_savings > 0 %}
+                             <canvas id="investmentChartDash"></canvas> {% endif %}
+                     </div>
+                 {% endif %}
+            </div>
+
+            {% if total_savings <= 0 and inventory_savings <= 0 and profit_savings <= 0 and rental_savings <= 0 and investment_savings <= 0 %}
+                <div class="benefit-card">
+                    </div>
+            {% else %}
+                <div class="summary-card mt-8">
+                    <h2><i class="fas fa-piggy-bank"></i> Resumo dos Benefícios</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+                        <div class="flex flex-col justify-center gap-4">
+                            </div>
+                        <div>
+                            {% if total_savings > 0 %}
+                            <div style="max-height: 280px; min-height: 200px; margin: 1rem 0;"> <canvas id="totalSavingsChartDash"></canvas> </div>
+                            {% endif %}
+                            <p class="total-value-text mt-4">Economia Total Estimada (1º ano):</p>
+                            <p class="total-value-amount">R$ {% localize off %}{{ total_savings|floatformat:2|intcomma }}{% endlocalize %}</p>
+                        </div>
+                        <div class="flex flex-col justify-center gap-4">
+                            </div>
+                    </div>
+                    
+                </div>
+            {% endif %}
+        
+    {% endif %}
+</section>
 
             <section id="ia" class="section">
-                <div class="section-header"><h2><svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a3 3 0 1 0-3-3"></path><path d="M8 16v-5a3 3 0 0 0-6 0v1a3 3 0 1 0 3 3"></path></svg>Inteligência Artificial</h2></div>
-                
-                <div class="card shadow-sm component-card" id="gpt-chat-container" style="border: 1px solid #044048;">
-                    <div class="card-header component-header-alt d-flex justify-content-between align-items-center" style="background-color: #044048; padding: 0.75rem 1.25rem;">
-                        <h5 class="mb-0 component-title" style="font-size: 1.1rem; color: #fff; font-family: 'Cal Sans', sans-serif;">
-                            <i class="fas fa-robot me-2 text-info"></i> Assistente IA W1
-                        </h5>
-                        <small class="text-muted" style="font-size: 0.75rem; color: #adb5bd !important;">Beta</small>
-                    </div>
-                    <div class="card-body component-body" style="display: flex; flex-direction: column; height: 450px; padding: 0.75rem; background-color: #032830;">
-                        <div id="gpt-chat-messages" class="chat-messages-display mb-2 p-2 border rounded" style="flex-grow: 1; overflow-y: auto; background-color: #022028; border-color: #044048;">
-                            <div class="chat-message-gpt assistant">
-                                <div class="message-bubble">Olá, {{ request.user.first_name|default:request.user.email|capfirst }}! Sou o assistente virtual da W1 Holding. Como posso te ajudar hoje?</div>
+                <div class="section-header">
+                    <h2><svg class="title-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a3 3 0 1 0-3-3"></path><path d="M8 16v-5a3 3 0 0 0-6 0v1a3 3 0 1 0 3 3"></path></svg>Inteligência Artificial</h2>
+                </div>
+                    <div id="gpt-chat-container">
+                    <div id="gpt-chat-messages" class="chat-messages-display-area mb-2" style="flex-grow: 1; height: 330px;">
+                        <div> {# Wrapper interno para mensagens manterem a ordem correta com column-reverse #}
+                            <div class="chat-message-container other">
+                                <div class="message-sender-name">Assistente IA W1</div>
+                                <div class="message-bubble-wrapper">
+                                    <p class="message-content">Olá, {{ request.user.first_name|default:request.user.email.split|capfirst }}! Sou o assistente virtual da W1 Holding. Como posso te ajudar hoje?</p>
+                                    {# <span class="message-timestamp-chat">Agora</span> #}
+                                </div>
                             </div>
                         </div>
-                        <div id="gpt-chat-input-container" class="mt-auto">
-                            <form id="gpt-chat-form" class="d-flex">
-                                <input type="text" id="gpt-user-message" class="form-control-custom form-control-sm me-2" placeholder="Digite sua pergunta..." autocomplete="off" aria-label="Sua mensagem para o Assistente IA">
-                                <button class="btn btn-primary btn-sm submit-btn-custom !mt-0" type="submit" id="gpt-send-button" style="min-width: 80px; padding: 0.5rem 0.75rem;">
-                                    <i class="fas fa-paper-plane"></i> Enviar
-                                </button>
-                            </form>
-                            <small class="text-muted d-block mt-1 text-center" style="font-size: 0.7rem;">
-                                Assistente virtual
-                            </small>
-                        </div>
+                    </div>
+
+                    <div id="gpt-chat-input-container" class="chat-input-area">
+                        <form id="gpt-chat-form" class="chat-form-group">
+                            <textarea id="gpt-user-message" name="content" placeholder="Digite sua pergunta..." autocomplete="off" aria-label="Sua mensagem para o Assistente IA" rows="1"></textarea>
+                            <button type="submit" id="gpt-send-button">
+                                <i class="fas fa-paper-plane"></i> Enviar
+                            </button>
+                        </form>
                     </div>
                 </div>
             </section>
@@ -635,174 +957,218 @@
 {% block scripts %}
     {{ block.super }}
     <script>
+    // Função para inicializar os gráficos da simulação (definida globalmente ou em escopo acessível)
+    // Esta função só será completamente definida se simulation_instance existir no contexto do template.
+    {% if simulation_instance %}
+    function initializeSimulationCharts() {
+        if (!document.getElementById('simulacao') || !document.getElementById('simulacao').classList.contains('active')) {
+            // Não inicializa se a seção não estiver ativa (proteção extra)
+            // console.log("DEBUG: initializeSimulationCharts chamada, mas seção simulação não ativa.");
+            return;
+        }
+        console.log("DEBUG Dashboard: Executando initializeSimulationCharts()...");
+
+        // Destruir gráficos anteriores se existirem para evitar conflitos
+        ['profitChartDash', 'rentalChartDash', 'investmentChartDash', 'totalSavingsChartDash'].forEach(id => {
+            const canvas = document.getElementById(id);
+            if (canvas && Chart.getChart(canvas)) {
+                Chart.getChart(canvas).destroy();
+            }
+        });
+
+        Chart.defaults.color = '#d1d5db';
+        Chart.defaults.font.family = "'Montserrat', sans-serif";
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(5, 80, 88, 0.95)';
+        Chart.defaults.plugins.tooltip.titleFont = { size: 14, weight: 'bold', family: "'Cal Sans', sans-serif" };
+        Chart.defaults.plugins.tooltip.bodyFont = { size: 12 };
+        Chart.defaults.plugins.tooltip.padding = 10;
+        Chart.defaults.plugins.tooltip.cornerRadius = 4;
+        Chart.defaults.plugins.tooltip.usePointStyle = true;
+
+        const tooltipLabelCallback = function(context) {
+            let label = context.dataset.label || ''; if (label) { label += ': '; }
+            let value = context.parsed.y || 0;
+            label += `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            return label;
+        };
+        const pieTooltipLabelCallback = function(context) {
+            const value = context.raw;
+            return `${context.label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        };
+        function createGradient(ctx, chartArea, colorStart, colorEnd) {
+            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+            gradient.addColorStop(0, colorEnd); gradient.addColorStop(1, colorStart); return gradient;
+        }
+
+        // Ícones dinâmicos
+        const propertyIconsDivDash = document.getElementById('property-icons-dash');
+        if (propertyIconsDivDash && {{ number_of_properties|default:0 }} > 0) {
+            propertyIconsDivDash.innerHTML = '';
+            for (let i = 0; i < Math.min({{ number_of_properties|default:0 }}, 7); i++) {
+                const icon = document.createElement('span'); icon.textContent = '🏠'; propertyIconsDivDash.appendChild(icon);
+            }
+        }
+        const companyIconsDivDash = document.getElementById('company-icons-dash');
+        if (companyIconsDivDash && {{ number_of_companies|default:0 }} > 0) {
+            companyIconsDivDash.innerHTML = '';
+            for (let i = 0; i < Math.min({{ number_of_companies|default:0 }}, 7); i++) {
+                const icon = document.createElement('span'); icon.textContent = '🏢'; companyIconsDivDash.appendChild(icon);
+            }
+        }
+
+        // Gráfico de Lucros
+        const profitChartCanvasDash = document.getElementById('profitChartDash');
+        if (profitChartCanvasDash && parseFloat("{{ profit_savings|default:0|unlocalize }}") > 0 && '{{ has_companies }}' === 'yes' && '{{ company_tax_regime }}' !== 'simples') {
+            const profitCtxDash = profitChartCanvasDash.getContext('2d');
+            const profitSavingsVal = parseFloat("{{ profit_savings|default:0|unlocalize }}");
+            const years = ['Ano 1', 'Ano 2', 'Ano 3', 'Ano 4', 'Ano 5'];
+            const accumulatedProfitSavings = years.map((_, i) => profitSavingsVal * (i + 1));
+            new Chart(profitCtxDash, { type: 'line', data: { labels: years,
+                datasets: [{ label: 'Economia Acumulada Lucros (R$)', data: accumulatedProfitSavings, borderColor: '#5fded4',
+                    backgroundColor: function(context) { const chart = context.chart; const {ctx, chartArea} = chart; if (!chartArea) return null; return createGradient(ctx, chartArea, 'rgba(95, 222, 212, 0.3)', 'rgba(95, 222, 212, 0)'); },
+                    fill: true, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#5fded4', pointBorderColor: '#fff', pointBorderWidth: 2, pointHoverRadius: 8 }]
+            }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#d1d5db' } }, y: { beginAtZero: true, ticks: { color: '#d1d5db', callback: value => `R$ ${value.toLocaleString('pt-BR')}` } } },
+                plugins: { legend: { display: true, position: 'top', labels: { color: '#d1d5db', boxWidth: 20, padding: 15 } }, tooltip: { callbacks: { label: tooltipLabelCallback } } },
+                animation: { duration: 1000, easing: 'easeOutQuart' } }
+            });
+        } else { console.log("DEBUG Dashboard: Gráfico de Lucros NÃO renderizado (condições ou canvas não atendidos)."); }
+
+        // Gráfico de Aluguéis
+        const rentalChartCanvasDash = document.getElementById('rentalChartDash');
+        if (rentalChartCanvasDash && parseFloat("{{ rental_savings|default:0|unlocalize }}") > 0 && '{{ receives_rent }}' === 'yes' && parseFloat("{{ annual_rent|default:0|unlocalize }}") > 0) {
+            const rentalCtxDash = rentalChartCanvasDash.getContext('2d');
+            const rentalSavingsVal = parseFloat("{{ rental_savings|default:0|unlocalize }}");
+            const years = ['Ano 1', 'Ano 2', 'Ano 3', 'Ano 4', 'Ano 5'];
+            const accumulatedRentalSavings = years.map((_, i) => rentalSavingsVal * (i + 1));
+            new Chart(rentalCtxDash, { type: 'line', data: { labels: years,
+                datasets: [{ label: 'Economia Acumulada Aluguéis (R$)', data: accumulatedRentalSavings, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.3)', fill: true, tension: 0.2, borderWidth: 1, pointRadius: 0 }]
+            }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#d1d5db', maxRotation: 45, minRotation: 45 } }, y: { beginAtZero: true, ticks: { color: '#d1d5db', callback: value => `R$ ${value.toLocaleString('pt-BR')}` } } },
+                plugins: { legend: { display: true, position: 'top', labels: { color: '#d1d5db', boxWidth: 20, padding: 15 } }, tooltip: { callbacks: { label: tooltipLabelCallback } } },
+                animation: { duration: 1200, easing: 'easeInOutQuad' } }
+            });
+        } else { console.log("DEBUG Dashboard: Gráfico de Aluguéis NÃO renderizado."); }
+
+        // Gráfico de Investimentos
+        const investmentChartCanvasDash = document.getElementById('investmentChartDash');
+        if (investmentChartCanvasDash && parseFloat("{{ investment_savings|default:0|unlocalize }}") > 0 && '{{ has_investments }}' === 'yes' && parseFloat("{{ total_investment_value|default:0|unlocalize }}") > 0) {
+            const investmentCtxDash = investmentChartCanvasDash.getContext('2d');
+            const investmentSavingsVal = parseFloat("{{ investment_savings|default:0|unlocalize }}");
+            const years = ['Ano 1', 'Ano 2', 'Ano 3', 'Ano 4', 'Ano 5'];
+            const accumulatedInvestmentSavings = years.map((_, i) => investmentSavingsVal * (i + 1));
+            new Chart(investmentCtxDash, { type: 'bar', data: { labels: years,
+                datasets: [{ label: 'Economia Acumulada Investimentos (R$)', data: accumulatedInvestmentSavings, backgroundColor: '#f59e0b', hoverBackgroundColor: '#d97706', borderRadius: 8, borderSkipped: false }]
+            }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#d1d5db' } }, y: { beginAtZero: true, ticks: { color: '#d1d5db', callback: value => `R$ ${value.toLocaleString('pt-BR')}` } } },
+                plugins: { legend: { display: true, position: 'top', labels: { color: '#d1d5db', boxWidth: 20, padding: 15 } }, tooltip: { callbacks: { label: tooltipLabelCallback } } },
+                animation: { duration: 1500, easing: 'easeOutBounce', y: { from: 0 } } }
+            });
+        } else { console.log("DEBUG Dashboard: Gráfico de Investimentos NÃO renderizado."); }
+        
+        // Gráfico de Pizza (Economia Total)
+        const totalSavingsChartCanvasDash = document.getElementById('totalSavingsChartDash');
+        if (totalSavingsChartCanvasDash && parseFloat("{{ total_savings|default:0|unlocalize }}") > 0) {
+            const totalSavingsCtxDash = totalSavingsChartCanvasDash.getContext('2d');
+            const savingsData = []; const savingsLabels = [];
+            const savingsColors = ['#1552b3', '#5fded4', '#10b981', '#f59e0b'];
+
+            if (parseFloat("{{ inventory_savings|default:0|unlocalize }}") > 0) { savingsData.push(parseFloat("{{ inventory_savings|unlocalize }}")); savingsLabels.push('Inventário'); }
+            if (parseFloat("{{ profit_savings|default:0|unlocalize }}") > 0) { savingsData.push(parseFloat("{{ profit_savings|unlocalize }}")); savingsLabels.push('Lucros Empresa'); }
+            if (parseFloat("{{ rental_savings|default:0|unlocalize }}") > 0) { savingsData.push(parseFloat("{{ rental_savings|unlocalize }}")); savingsLabels.push('Aluguéis'); }
+            if (parseFloat("{{ investment_savings|default:0|unlocalize }}") > 0) { savingsData.push(parseFloat("{{ investment_savings|unlocalize }}")); savingsLabels.push('Investimentos'); }
+
+            if (savingsData.length > 0) {
+                new Chart(totalSavingsCtxDash, {
+                    type: 'doughnut', data: { labels: savingsLabels, datasets: [{
+                        label: 'Distribuição da Economia', data: savingsData,
+                        backgroundColor: savingsColors.slice(0, savingsData.length),
+                        borderColor: '#032830', borderWidth: 2, hoverOffset: 8 }]
+                    }, options: { responsive: true, maintainAspectRatio: false, cutout: '60%',
+                        plugins: { legend: { position: 'bottom', labels: { color: '#d1d5db', padding: 10, font: {size: 11} } },
+                            tooltip: { callbacks: { label: pieTooltipLabelCallback } },
+                            title: { display: true, text: 'Composição da Economia Total (1º Ano)', color: '#5fded4', padding: { top: 0, bottom: 15 }, font: { size: 16, family: "'Cal Sans', sans-serif" } }
+                        }, animation: { duration: 1000, easing: 'easeInOutCirc' } }
+                });
+            }
+        } else { console.log("DEBUG Dashboard: Gráfico de Pizza NÃO renderizado."); }
+    } // Fim da função initializeSimulationCharts
+    {% endif %} {# Fim do if simulation_instance para definir a função #}
+
     document.addEventListener('DOMContentLoaded', () => {
         const sidebarLinks = document.querySelectorAll('.sidebar-item a');
         const sections = document.querySelectorAll('.main-content .section');
         const notificationIcon = document.querySelector('.notification-icon');
         const switchSectionLinks = document.querySelectorAll('.switch-section-link');
-        const chatMessageArea = document.getElementById('chat-message-area'); // Chat interno da holding
+        const chatMessageArea = document.getElementById('chat-message-area'); 
+        const gptChatMessageArea = document.getElementById('gpt-chat-messages');
 
-        if (chatMessageArea) {
-            chatMessageArea.scrollTop = chatMessageArea.scrollHeight;
-        }
+        function scrollToBottom(element) { /* ... (sua função scrollToBottom) ... */ }
+        scrollToBottom(chatMessageArea); scrollToBottom(gptChatMessageArea);
 
         function showSection(targetId) {
             const cleanTargetId = targetId.startsWith('#') ? targetId.substring(1) : targetId;
+            let simChartsInitializedForThisActivation = false; // Flag para evitar múltiplas chamadas
 
             sections.forEach(section => {
-                section.classList.remove('active');
                 if (section.id === cleanTargetId) {
-                    section.classList.add('active');
-                }
-            });
-
-            sidebarLinks.forEach(link => {
-                const linkHref = link.getAttribute('href');
-                const linkDataSection = link.getAttribute('data-section');
-                const parentLi = link.closest('.sidebar-item');
-
-                if (parentLi) {
-                    parentLi.classList.remove('active');
-                    if ((linkHref && linkHref.substring(1) === cleanTargetId) || (linkDataSection && linkDataSection === cleanTargetId)) {
-                        parentLi.classList.add('active');
-                    }
-                }
-            });
-        }
-
-        sidebarLinks.forEach(link => {
-            const href = link.getAttribute('href');
-            if ((href && href.startsWith('#')) || link.hasAttribute('data-section')) {
-                link.addEventListener('click', (e) => {
-                    const targetIdFromHref = href && href.startsWith('#') ? href.substring(1) : null;
-                    const targetIdFromData = link.getAttribute('data-section');
-                    const targetId = targetIdFromData || targetIdFromHref;
-
-                    if (targetId && targetId !== 'logout') { 
-                        e.preventDefault();
-                        showSection(targetId);
-                        if (targetIdFromHref) { 
-                                history.pushState(null, null, '#' + targetId);
+                    if (!section.classList.contains('active')) {
+                        section.classList.add('active');
+                        // Se a seção de simulação está sendo ATIVADA, tente inicializar os gráficos
+                        if (cleanTargetId === 'simulacao' && typeof initializeSimulationCharts === 'function' && !simChartsInitializedForThisActivation) {
+                            console.log("DEBUG: Aba Simulação ativada via showSection, chamando initializeSimulationCharts()");
+                            initializeSimulationCharts();
+                            simChartsInitializedForThisActivation = true; 
                         }
-                    } else if (href && href.includes('logout')) { 
-                        return;
                     }
-                });
-            }
-        });
-        
-        switchSectionLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                const targetId = link.getAttribute('href').substring(1);
-                if (targetId && document.getElementById(targetId)) {
-                    e.preventDefault();
-                    showSection(targetId);
-                    history.pushState(null, null, '#' + targetId);
-                    document.getElementById(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    section.classList.remove('active');
                 }
             });
-        });
 
-        if (notificationIcon) {
-            notificationIcon.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetId = notificationIcon.getAttribute('data-section');
-                if (targetId) {
-                    showSection(targetId);
-                    history.pushState(null, null, '#' + targetId);
-                }
-            });
+            sidebarLinks.forEach(link => { /* ... (sua lógica de ativar link da sidebar) ... */ });
+            if (cleanTargetId === 'mensagens') scrollToBottom(chatMessageArea);
+            if (cleanTargetId === 'ia') scrollToBottom(gptChatMessageArea);
         }
+
+        sidebarLinks.forEach(link => { /* ... (seu listener de clique) ... */ });
+        switchSectionLinks.forEach(link => { /* ... (seu listener de clique) ... */ });
+        if (notificationIcon) { /* ... (seu listener de clique) ... */ }
 
         let initialSectionId = 'progresso'; 
         if (window.location.hash) {
             const hashId = window.location.hash.substring(1);
-            if (document.getElementById(hashId)) { 
-                initialSectionId = hashId;
-            }
+            if (document.getElementById(hashId)) { initialSectionId = hashId; }
         }
         
+        // Mostra a seção inicial e tenta carregar gráficos se for a de simulação
         if (document.getElementById(initialSectionId)) {
-            showSection(initialSectionId);
+            showSection(initialSectionId); // showSection agora chama initializeSimulationCharts se aplicável
         } else if (sections.length > 0) { 
             sections[0].classList.add('active');
             const firstSectionId = sections[0].id;
-            showSection(firstSectionId); 
+            showSection(firstSectionId); // showSection agora chama initializeSimulationCharts se aplicável
         }
     });
-    </script>
 
-    <script>
+    // Script do Chat GPT (seu script existente)
     document.addEventListener('DOMContentLoaded', function() {
         const chatGptContainer = document.getElementById('gpt-chat-container');
-        if (!chatGptContainer) return; // Só executa se o container do chat GPT existir
-
+        if (!chatGptContainer) {
+            console.warn('Container do Chat GPT (id="gpt-chat-container") não encontrado.');
+            return;
+        }
+        // ... (resto do seu script do chat GPT) ...
         const chatForm = document.getElementById('gpt-chat-form');
         const userInput = document.getElementById('gpt-user-message');
         const chatMessagesContainer = document.getElementById('gpt-chat-messages');
         const sendButton = document.getElementById('gpt-send-button');
+        
+        if (!chatForm || !userInput || !chatMessagesContainer || !sendButton) {
+            console.error('Um ou mais elementos essenciais do chat da IA não foram encontrados.');
+            return;
+        }
         const sendButtonOriginalHTML = sendButton.innerHTML;
 
-        function appendMessage(sender, text, isError = false) {
-            const messageWrapper = document.createElement('div');
-            messageWrapper.classList.add('chat-message-gpt', sender);
-            if (isError) {
-                messageWrapper.classList.add('error');
-            }
-            
-            const bubbleDiv = document.createElement('div');
-            bubbleDiv.classList.add('message-bubble');
-            bubbleDiv.innerHTML = text.replace(/\n/g, '<br>'); 
-            
-            messageWrapper.appendChild(bubbleDiv);
-            chatMessagesContainer.appendChild(messageWrapper);
-            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-        }
-
-        chatForm.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const messageText = userInput.value.trim();
-            if (!messageText) return;
-
-            appendMessage('user', messageText);
-            userInput.value = '';
-            userInput.disabled = true;
-            sendButton.disabled = true;
-            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-            try {
-                const response = await fetch("{% url 'chat_with_gpt' %}", { // Certifique-se que 'chat_with_gpt' é o nome da sua URL
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        // 'X-CSRFToken': '{{ csrf_token }}', // Removido devido ao @csrf_exempt na view.
-                                                              // Se você remover @csrf_exempt, precisará obter e enviar o token CSRF.
-                                                              // Exemplo: const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                    },
-                    body: JSON.stringify({ 
-                        message: messageText,
-                        // history: [] // Implementar envio de histórico se desejar
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.reply) {
-                    appendMessage('assistant', data.reply);
-                } else {
-                    const errorMessage = data.error || 'Erro ao processar sua mensagem com o assistente.';
-                    appendMessage('assistant', errorMessage, true);
-                }
-            } catch (error) {
-                console.error('Erro na comunicação com o chat GPT:', error);
-                appendMessage('assistant', 'Não foi possível conectar ao assistente. Verifique sua conexão e tente novamente.', true);
-            } finally {
-                userInput.disabled = false;
-                sendButton.disabled = false;
-                sendButton.innerHTML = sendButtonOriginalHTML;
-                userInput.focus();
-            }
-        });
+        function appendMessageToGPTChat(senderType, text, isError = false) { /* ... (sua função) ... */ }
+        chatForm.addEventListener('submit', async function(event) { /* ... (seu listener) ... */ });
     });
     </script>
-    {% endblock scripts %}
+{% endblock scripts %}

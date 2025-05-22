@@ -22,13 +22,30 @@ class CustomSignupForm(UserCreationForm):
         return user
 
 class SimulationForm(forms.Form):
+    BRAZIL_STATES = [
+        ('', 'Selecione um estado'),
+        ('AC', 'Acre'), ('AL', 'Alagoas'), ('AP', 'Amapá'), ('AM', 'Amazonas'),
+        ('BA', 'Bahia'), ('CE', 'Ceará'), ('DF', 'Distrito Federal'), ('ES', 'Espírito Santo'),
+        ('GO', 'Goiás'), ('MA', 'Maranhão'), ('MT', 'Mato Grosso'), ('MS', 'Mato Grosso do Sul'),
+        ('MG', 'Minas Gerais'), ('PA', 'Pará'), ('PB', 'Paraíba'), ('PR', 'Paraná'),
+        ('PE', 'Pernambuco'), ('PI', 'Piauí'), ('RJ', 'Rio de Janeiro'), ('RN', 'Rio Grande do Norte'),
+        ('RS', 'Rio Grande do Sul'), ('RO', 'Rondônia'), ('RR', 'Roraima'), ('SC', 'Santa Catarina'),
+        ('SP', 'São Paulo'), ('SE', 'Sergipe'), ('TO', 'Tocantins')
+    ]
+
     number_of_properties = forms.IntegerField(
         label="Quantos imóveis você possui?", min_value=0, required=True,
-        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao'})
+        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': 'Ex.: 2'})
     )
     total_property_value = forms.DecimalField(
-        label="Qual o valor total dos imóveis? (R$)", max_digits=15, decimal_places=2, min_value=Decimal('0.01'), required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': '0.00'})
+        label="Qual o valor estimado total dos seus imóveis? (R$)", max_digits=15, decimal_places=2, min_value=Decimal('0.01'), required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': 'Ex.: 1.500.000,00'}),
+        help_text="Inclua o valor de mercado aproximado de todos os imóveis."
+    )
+    property_state = forms.ChoiceField(
+        label="Em qual estado estão localizados a maioria dos seus imóveis?",
+        choices=BRAZIL_STATES, required=False,
+        widget=forms.Select(attrs={'class': 'form-control-simulacao'})
     )
     has_companies = forms.ChoiceField(
         label="Você possui empresas?", choices=[('no', 'Não'), ('yes', 'Sim')],
@@ -36,58 +53,71 @@ class SimulationForm(forms.Form):
     )
     number_of_companies = forms.IntegerField(
         label="Quantas empresas você possui?", min_value=0, required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao'})
+        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': 'Ex.: 1'})
     )
     company_tax_regime = forms.ChoiceField(
-        label="Qual o regime tributário da(s) empresa(s)?",
-        choices=[('', '---------'), ('simples', 'Simples Nacional'), ('presumido', 'Lucro Presumido'), ('real', 'Lucro Real')],
-        widget=forms.RadioSelect, required=False
+        label="Qual o tipo de tributação da(s) sua(s) empresa(s)?",
+        choices=[('unknown', 'Não sei informar'), ('simples', 'Simples Nacional'), ('presumido', 'Lucro Presumido'), ('real', 'Lucro Real')],
+        widget=forms.RadioSelect, required=False,
+        help_text="Se não souber, selecione 'Não sei informar'. Consulte seu contador."
     )
     monthly_profit = forms.DecimalField(
-        label="Qual o lucro mensal médio distribuído? (R$)", max_digits=15, decimal_places=2, min_value=0, required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': '0.00'})
+        label="Qual o lucro mensal médio que você retira da(s) empresa(s)? (R$)", max_digits=15, decimal_places=2, min_value=0, required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': 'Ex.: 10.000,00'})
+    )
+    has_investments = forms.ChoiceField(
+        label="Você possui outros investimentos financeiros relevantes (ex.: ações, fundos, CDBs)?",
+        choices=[('no', 'Não'), ('yes', 'Sim')],
+        widget=forms.RadioSelect, required=True, initial='no'
+    )
+    total_investment_value = forms.DecimalField(
+        label="Qual o valor total aproximado desses investimentos? (R$)",
+        max_digits=15, decimal_places=2, min_value=Decimal('0.01'), required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': 'Ex.: 500.000,00'})
     )
     receives_rent = forms.ChoiceField(
         label="Você recebe aluguéis de imóveis?", choices=[('no', 'Não'), ('yes', 'Sim')],
         widget=forms.RadioSelect, required=True, initial='no'
     )
     monthly_rent = forms.DecimalField(
-        label="Qual o valor mensal total dos aluguéis? (R$)", max_digits=15, decimal_places=2, min_value=Decimal('0.01'), required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': '0.00'})
+        label="Qual o valor mensal total recebido de aluguéis? (R$)", max_digits=15, decimal_places=2, min_value=Decimal('0.01'), required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': 'Ex.: 5.000,00'}),
+        help_text="Informe o valor líquido recebido, antes de impostos."
     )
     number_of_heirs = forms.IntegerField(
-        label="Quantos herdeiros você tem (filhos, cônjuge, etc.)?", min_value=0, required=True,
-        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao'})
-    )
-    avoid_conflicts = forms.ChoiceField(
-        label="Você gostaria de evitar conflitos familiares e deixar tudo organizado?",
-        choices=[('no', 'Não'), ('yes', 'Sim')],
-        widget=forms.RadioSelect, required=True, initial='no'
+        label="Quantas pessoas seriam suas herdeiras (filhos, cônjuge, etc.)?", min_value=0, required=True,
+        widget=forms.NumberInput(attrs={'class': 'form-control-simulacao', 'placeholder': 'Ex.: 3'}),
+        help_text="Inclua todas as pessoas que herdariam seus bens, como filhos, cônjuge ou outros."
     )
 
     def clean(self):
         cleaned_data = super().clean()
         number_of_properties = cleaned_data.get('number_of_properties')
         total_property_value = cleaned_data.get('total_property_value')
+        property_state = cleaned_data.get('property_state')
         has_companies = cleaned_data.get('has_companies')
         number_of_companies = cleaned_data.get('number_of_companies')
         company_tax_regime = cleaned_data.get('company_tax_regime')
         monthly_profit = cleaned_data.get('monthly_profit')
+        has_investments = cleaned_data.get('has_investments')
+        total_investment_value = cleaned_data.get('total_investment_value')
         receives_rent = cleaned_data.get('receives_rent')
         monthly_rent = cleaned_data.get('monthly_rent')
 
         if number_of_properties is not None and number_of_properties > 0:
             if not total_property_value or total_property_value <= 0:
-                self.add_error('total_property_value', "Com imóveis, o valor total deve ser informado e maior que zero.")
+                self.add_error('total_property_value', "Com imóveis, o valor estimado deve ser informado e maior que zero.")
+            if not property_state:
+                self.add_error('property_state', "Se possui imóveis, informe o estado principal.")
         else:
             cleaned_data['total_property_value'] = Decimal('0')
-
+            cleaned_data['property_state'] = ''
 
         if has_companies == 'yes':
             if number_of_companies is None or number_of_companies <= 0:
                 self.add_error('number_of_companies', "Se possui empresas, informe a quantidade.")
             if not company_tax_regime:
-                self.add_error('company_tax_regime', "Se possui empresas, informe o regime tributário.")
+                self.add_error('company_tax_regime', "Se possui empresas, informe o tipo de tributação.")
             if monthly_profit is None:
                 self.add_error('monthly_profit', "Se possui empresas, informe o lucro mensal (pode ser 0).")
             elif monthly_profit < 0:
@@ -96,6 +126,11 @@ class SimulationForm(forms.Form):
             cleaned_data['number_of_companies'] = 0
             cleaned_data['company_tax_regime'] = ''
             cleaned_data['monthly_profit'] = Decimal('0')
+
+        if has_investments == 'yes' and (not total_investment_value or total_investment_value <= 0):
+            self.add_error('total_investment_value', "Se possui investimentos, informe o valor total.")
+        elif has_investments == 'no':
+            cleaned_data['total_investment_value'] = Decimal('0')
 
         if receives_rent == 'yes':
             if not monthly_rent or monthly_rent <= 0:

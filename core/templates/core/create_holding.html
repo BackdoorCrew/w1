@@ -2,7 +2,8 @@
 {% load static %}
 
 {% block title %}Iniciar Criação de Holding - W1 Holding Platform{% endblock %}
-
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
 {% block head_extra_styles %}
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
@@ -24,6 +25,11 @@
             font-size: 1.75rem;
             margin-bottom: 1rem;
         }
+
+        /* Adicione esta regra para colorir os textos em negrito (strong) */
+.content-card strong {
+    color: #5fded4;
+}
         .content-card p, .content-card li {
             color: #adb5bd;
             font-size: 1rem;
@@ -123,6 +129,19 @@
             </div>
         {% endif %}
 
+        <div class="content-card mt-10">
+            <h2>Como Funciona o Processo?</h2>
+            <p>Ao registrar seu interesse, você dará início ao processo de criação da sua holding conosco. Veja as próximas etapas:</p>
+            <ul class="list-disc">
+                <li><strong>Contato Inicial:</strong> Um de nossos consultores especializados entrará em contato para entender suas necessidades específicas e objetivos.</li>
+                <li><strong>Coleta de Informações:</strong> Nesta conversa, detalharemos as informações necessárias sobre seu patrimônio, herdeiros, empresas e outras particularidades.</li>
+                <li><strong>Estruturação Personalizada:</strong> Com base no seu perfil, elaboraremos a melhor estrutura para sua holding, visando proteção patrimonial, economia tributária e planejamento sucessório.</li>
+                <li><strong>Documentação e Registro:</strong> Cuidaremos de toda a parte burocrática, desde a elaboração dos contratos até o registro da sua holding.</li>
+                <li><strong>Acompanhamento Contínuo:</strong> Mesmo após a criação, oferecemos suporte para garantir que sua holding continue atendendo aos seus objetivos.</li>
+            </ul>
+            <p class="mt-6 font-semibold text-gray-100">Nossa equipe está pronta para guiá-lo em cada passo, tornando o processo simples e seguro.</p>
+        </div>
+
         <div class="content-card">
             <form method="post" action="{% url 'create_holding' %}" id="holding-form">
                 {% csrf_token %}
@@ -137,23 +156,6 @@
                     <button type="submit" class="submit-btn-custom">Registrar interesse e iniciar processo</button>
                 </div>
             </form>
-        </div>
-
-        <div class="content-card mt-10">
-            <h2>Como Funciona o Processo?</h2>
-            <p>Ao registrar seu interesse, você dará início ao processo de criação da sua holding conosco. Veja as próximas etapas:</p>
-            <ul class="list-disc">
-                <li><strong>Contato Inicial:</strong> Um de nossos consultores especializados entrará em contato para entender suas necessidades específicas e objetivos.</li>
-                <li><strong>Coleta de Informações:</strong> Nesta conversa, detalharemos as informações necessárias sobre seu patrimônio, herdeiros, empresas e outras particularidades.</li>
-                <li><strong>Estruturação Personalizada:</strong> Com base no seu perfil, elaboraremos a melhor estrutura para sua holding, visando proteção patrimonial, economia tributária e planejamento sucessório.</li>
-                <li><strong>Documentação e Registro:</strong> Cuidaremos de toda a parte burocrática, desde a elaboração dos contratos até o registro da sua holding.</li>
-                <li><strong>Acompanhamento Contínuo:</strong> Mesmo após a criação, oferecemos suporte para garantir que sua holding continue atendendo aos seus objetivos.</li>
-            </ul>
-            <p class="mt-6 font-semibold text-gray-100">Nossa equipe está pronta para guiá-lo em cada passo, tornando o processo simples e seguro.</p>
-        </div>
-
-        <div class="text-center mt-8">
-            <a href="{% url 'dashboard_final' %}" class="back-link-custom"><i class="fas fa-arrow-left mr-2"></i>Voltar ao Painel</a>
         </div>
     </div>
 </div>

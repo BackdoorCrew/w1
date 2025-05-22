@@ -309,29 +309,47 @@ class AnaliseEconomia(models.Model):
 class SimulationResult(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='simulation_results')
     created_at = models.DateTimeField(auto_now_add=True)
-    number_of_properties = models.IntegerField(default=0)
-    total_property_value = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    inventory_cost_without = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    inventory_cost_with = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    inventory_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    has_companies = models.BooleanField(default=False)
-    number_of_companies = models.IntegerField(default=0)
-    company_tax_regime = models.CharField(max_length=50, blank=True, null=True)
-    monthly_profit = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    annual_profit = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    profit_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    receives_rent = models.BooleanField(default=False)
-    monthly_rent = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    annual_rent = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    rental_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
-    number_of_heirs = models.IntegerField(default=0)
-    inventory_time_without = models.IntegerField(default=0)
-    inventory_time_with = models.IntegerField(default=0)
-    conflict_risk = models.CharField(max_length=50, default='Não Aplicável')
-    total_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'))
+    
+    # Campos existentes
+    number_of_properties = models.IntegerField(default=0, verbose_name="Número de Imóveis")
+    total_property_value = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Valor Total dos Imóveis")
+    
+    # ADICIONAR ESTE CAMPO:
+    property_state = models.CharField(max_length=2, blank=True, null=True, verbose_name="Estado dos Imóveis")
+
+    inventory_cost_without = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Custo de Inventário (Sem Holding)")
+    inventory_cost_with = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Custo de Inventário (Com Holding)")
+    inventory_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Economia no Inventário")
+    
+    has_companies = models.BooleanField(default=False, verbose_name="Possui Empresas?")
+    number_of_companies = models.IntegerField(default=0, verbose_name="Número de Empresas")
+    company_tax_regime = models.CharField(max_length=50, blank=True, null=True, verbose_name="Regime Tributário das Empresas")
+    monthly_profit = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Lucro Mensal (Empresas)")
+    annual_profit = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Lucro Anual (Empresas)")
+    profit_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Economia sobre Lucros (Empresas)")
+    
+    receives_rent = models.BooleanField(default=False, verbose_name="Recebe Aluguéis?")
+    monthly_rent = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Renda Mensal de Aluguéis")
+    annual_rent = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Renda Anual de Aluguéis")
+    rental_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Economia sobre Aluguéis")
+
+    # ADICIONAR ESTES CAMPOS:
+    has_investments = models.BooleanField(default=False, verbose_name="Possui Investimentos?")
+    total_investment_value = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Valor Total dos Investimentos")
+    investment_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Economia sobre Ganhos de Capital (Investimentos)")
+
+    number_of_heirs = models.IntegerField(default=0, verbose_name="Número de Herdeiros")
+    inventory_time_without = models.IntegerField(default=0, verbose_name="Tempo de Inventário sem Holding (meses)")
+    inventory_time_with = models.IntegerField(default=0, verbose_name="Tempo de Inventário com Holding (meses)")
+    conflict_risk = models.CharField(max_length=50, default='Não Aplicável', verbose_name="Risco de Conflito Familiar")
+    
+    total_savings = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal('0.00'), verbose_name="Economia Total Estimada")
+
+    updated_at = models.DateTimeField(auto_now=True) # Adicionado para rastrear atualizações
 
     def __str__(self):
-        return f"Simulação de {self.user.email} em {self.created_at.strftime('%d/%m/%Y %H:%M')}"
+        user_identifier = self.user.get_full_name() if self.user.get_full_name() else self.user.email
+        return f"Simulação de {user_identifier} em {self.created_at.strftime('%d/%m/%Y %H:%M')}"
 
     class Meta:
         verbose_name = "Resultado da Simulação"
