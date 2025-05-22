@@ -175,8 +175,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+
 ZAPI_INSTANCE_ID = config('ZAPI_INSTANCE_ID', default=None)
 ZAPI_CLIENT_TOKEN = config('ZAPI_CLIENT_TOKEN', default=None)
+ZAPI_SECURITY_TOKEN = config('ZAPI_SECURITY_TOKEN', default=None)  # Adicione esta linha
 ZAPI_BASE_URL = config('ZAPI_BASE_URL', default='https://api.z-api.io/instances')
 
 if not ZAPI_INSTANCE_ID or not ZAPI_CLIENT_TOKEN:
