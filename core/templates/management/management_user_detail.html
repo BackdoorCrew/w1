@@ -65,7 +65,7 @@
                                     <div class="action-links">
                                         <a href="{% url 'management_holding_detail' holding.id %}" class="btn btn-primary btn-sm"><i class="fas fa-cogs"></i> Ver Detalhes/Gerenciar</a>
                                         {% if request.user.is_superuser %}
-                                            <a href="{% url 'management_assign_consultant_to_holding' holding.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> Editar Dados</a>
+                                            <a href="{% url 'management_manage_holding_details_and_consultants' holding.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> Editar Dados</a>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -107,7 +107,7 @@
                                     <div class="action-links">
                                         <a href="{% url 'management_holding_detail' holding.id %}" class="btn btn-primary btn-sm"><i class="fas fa-cogs"></i> Ver Detalhes/Gerenciar</a>
                                         {% if request.user.is_superuser %}
-                                            <a href="{% url 'management_assign_consultant_to_holding' holding.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> Editar Dados</a>
+                                            <a href="{% url 'management_manage_holding_details_and_consultants' holding.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> Editar Dados</a>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -233,16 +233,20 @@
 }
 
 .btn-outline-primary {
-    border-color: #5fded4;
-    color: #5fded4;
-    padding: 8px 16px;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+    background-color: transparent; /* MUITO IMPORTANTE: Torna o fundo transparente */
+    border: 1px solid #5fded4;    /* Define a borda completa (cor, espessura, estilo) */
+    color: #5fded4;               /* Cor do texto (azul-piscina claro) */
+    padding: 8px 16px;            /* Mantém o padding que você definiu */
+    border-radius: 4px;           /* Mantém o border-radius */
+    transition: all 0.3s ease;    /* Mantém a transição */
+    text-decoration: none;        /* Garante que não haja sublinhado de link */
+    display: inline-block;        /* Para que padding e outras propriedades de bloco funcionem bem */
 }
 
 .btn-outline-primary:hover {
-    background-color: #5fded4;
-    color: #022028;
+    background-color: #5fded4;    /* Fundo azul-piscina claro no hover */
+    color: #022028;               /* Texto escuro no hover */
+    border-color: #5fded4;        /* Pode manter a cor da borda ou ajustar se necessário */
 }
 
 .action-links {

@@ -43,7 +43,13 @@ class User(AbstractUser):
         default='cliente',
         verbose_name='Tipo de Usuário'
     )
-
+    whatsapp_number = models.CharField(
+        max_length=20,  # Adjust max_length as needed (e.g., for E.164 format like +55119XXXXXXXX)
+        blank=True,
+        null=True,
+        verbose_name='Número WhatsApp',
+        help_text='Número de WhatsApp no formato internacional (ex: 5511999999999).'
+    )
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'

@@ -9,10 +9,18 @@ from django.utils import timezone
 class CustomSignupForm(UserCreationForm):
     first_name = forms.CharField(max_length=150, required=True, label="Nome")
     last_name = forms.CharField(max_length=150, required=False, label="Sobrenome")
+    whatsapp_number = forms.CharField(
+        max_length=20,
+        required=True, # Make it optional during signup, users can add it later
+        label="Número ",
+        help_text="Ex: 5511999999999. Inclua o código do país (55 para Brasil).",
+        widget=forms.TextInput(attrs={'placeholder': '5511987654321'})
+    )
+
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("email", "first_name", "last_name")
+        fields = ("email", "first_name", "last_name", "whatsapp_number") # Add whatsapp_number here
 
     def save(self, commit=True):
         user = super().save(commit=False)

@@ -4,11 +4,17 @@ from .models import User, ClienteProfile, Holding, ProcessoHolding, Documento, A
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['email', 'first_name', 'last_name', 'user_type', 'is_active', 'is_staff', 'is_superuser']
+    list_display = ['email', 'first_name', 'last_name', 'user_type', 'whatsapp_number', 'is_active', 'is_staff', 'is_superuser'] # Added whatsapp_number
     list_filter = ['user_type', 'is_active', 'is_staff', 'is_superuser']
-    search_fields = ['email', 'first_name', 'last_name']
+    search_fields = ['email', 'first_name', 'last_name', 'whatsapp_number'] # Added whatsapp_number
     ordering = ['email']
     readonly_fields = ['date_joined', 'last_login']
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Informações Pessoais', {'fields': ('first_name', 'last_name', 'whatsapp_number')}), # Added whatsapp_number
+        ('Permissões', {'fields': ('is_active', 'is_staff', 'is_superuser', 'user_type', 'groups', 'user_permissions')}),
+        ('Datas Importantes', {'fields': ('last_login', 'date_joined')}),
+    )
 
 @admin.register(ClienteProfile)
 class ClienteProfileAdmin(admin.ModelAdmin):

@@ -110,7 +110,39 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module}:{lineno:d} {message}', # Added lineno for better tracing
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO', # Or DEBUG for even more
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'core': { # Your app's logger
+            'handlers': ['console'],
+            'level': 'INFO', # Set to INFO or DEBUG
+            'propagate': False,
+        },
+    },
+}
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
@@ -142,6 +174,13 @@ SOCIALACCOUNT_PROVIDERS = {
         # 'AUTH_PARAMS': {'access_type': 'online', 'prompt': 'select_account'}
     }
 }
+
+ZAPI_INSTANCE_ID = config('ZAPI_INSTANCE_ID', default=None)
+ZAPI_CLIENT_TOKEN = config('ZAPI_CLIENT_TOKEN', default=None)
+ZAPI_BASE_URL = config('ZAPI_BASE_URL', default='https://api.z-api.io/instances')
+
+if not ZAPI_INSTANCE_ID or not ZAPI_CLIENT_TOKEN:
+    print("AVISO DE CONFIGURAÇÃO: Credenciais Z-API (ZAPI_INSTANCE_ID, ZAPI_CLIENT_TOKEN) não estão definidas no .env.")
 
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='localhost')
