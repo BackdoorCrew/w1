@@ -1,94 +1,110 @@
-# docker_entrypoint.py
+# w1/docker_entrypoint.py
 import os
 import subprocess
 import sys
-import time
 
 def execute_command(cmd_list, step_name, exit_on_error=True, working_directory=None):
     """
-    Executa um comando e lida com o resultado, imprimindo stdout/stderr.
+    Executes a command and handles the result, printing stdout/stderr.
     """
-    final_cmd_list = [str(c) for c in cmd_list] # Garante que todos os args são strings
-    print(f"INFO: Executando {step_name}: {' '.join(final_cmd_list)}")
+    final_cmd_list = [str(c) for c in cmd_list]
+    print(f"INFO: docker_entrypoint.py: Attempting to execute {step_name}: {' '.join(final_cmd_list)}")
     try:
-        # Executa o comando. stdout e stderr do processo filho serão impressos no console do Docker.
-        # Usar Popen para ter mais controle, mas run também funcionaria.
-        process = subprocess.Popen(final_cmd_list, cwd=working_directory) 
-        process.wait() # Espera o comando terminar
+        # Using Popen and communicating can help capture output for debugging if needed,
+        # but for simple execution and relying on direct stdout/stderr, wait() is fine.
+        process = subprocess.Popen(final_cmd_list, cwd=working_directory, stdout=sys.stdout, stderr=sys.stderr)
+        process.wait()
 
         if process.returncode != 0:
-            print(f"ERRO: Falha ao executar {step_name} (código de saída: {process.returncode}).", file=sys.stderr)
+            print(f"ERROR: docker_entrypoint.py: Failed to execute {step_name} (exit code: {process.returncode}).", file=sys.stderr)
             if exit_on_error:
+                print(f"ERROR: docker_entrypoint.py: Exiting due to error in {step_name}.", file=sys.stderr)
                 sys.exit(process.returncode)
-            return False # Indica falha
-        print(f"INFO: {step_name} executado com sucesso.")
-        return True # Indica sucesso
+            return False
+        print(f"INFO: docker_entrypoint.py: {step_name} executed successfully.")
+        return True
     except FileNotFoundError:
-        print(f"ERRO: Comando '{final_cmd_list[0]}' não encontrado. Verifique o PATH e a existência do arquivo.", file=sys.stderr)
+        print(f"ERROR: docker_entrypoint.py: Command '{final_cmd_list[0]}' not found for step {step_name}.", file=sys.stderr)
         if exit_on_error:
             sys.exit(1)
         return False
     except Exception as e:
-        print(f"ERRO: Erro inesperado ao executar {step_name}: {e}", file=sys.stderr)
+        print(f"ERROR: docker_entrypoint.py: Unexpected error during {step_name}: {e}", file=sys.stderr)
         if exit_on_error:
             sys.exit(1)
         return False
 
 if __name__ == "__main__":
-    print("INFO: Iniciando entrypoint Python (docker_entrypoint.py)...")
-    
-    # O WORKDIR /app já está definido no Dockerfile, então os comandos devem encontrar manage.py
-    # e create_dev_admin.py se estiverem na raiz do /app.
+    print("INFO: docker_entrypoint.py: Python entrypoint script started.")
+    sys.stdout.flush() # Ensure immediate output
 
-    # 1. Aplicar migrações do banco de dados.
-    # A condição 'service_healthy' no docker-compose.yml para o serviço 'db'
-    # deve garantir que o banco de dados esteja pronto antes que este contêiner inicie
-    # completamente e execute este script.
-    execute_command(
+    # --- Debug: Print critical environment variables at runtime ---
+    print("INFO: docker_entrypoint.py: Runtime Environment Variables Check:")
+    critical_env_vars = [
+        'DJANGO_SETTINGS_MODULE', 'DATABASE_URL', 'SECRET_KEY', 'PORT',
+        'GOOGLE_CLIENT_ID', 'OPENAI_API_KEY', 'DEBUG', 'ALLOWED_HOSTS'
+    ]
+    for var_name in critical_env_vars:
+        var_value = os.environ.get(var_name)
+        if var_name in ['SECRET_KEY', 'DATABASE_URL', 'GOOGLE_CLIENT_SECRET', 'OPENAI_API_KEY'] and var_value:
+            # Print only a portion of sensitive variables for confirmation
+            print(f"INFO: docker_entrypoint.py:   {var_name}=<{var_value[:5]}...>")
+        else:
+            print(f"INFO: docker_entrypoint.py:   {var_name}={var_value}")
+    sys.stdout.flush()
+    # --- End Debug ---
+
+    print("INFO: docker_entrypoint.py: Proceeding with database migrations...")
+    sys.stdout.flush()
+    if not execute_command(
         ['python', 'manage.py', 'migrate', '--noinput'],
-        step_name="migrações do banco de dados"
-    )
+        step_name="database migrations"
+    ):
+        print("ERROR: docker_entrypoint.py: Database migrations failed. Exiting.", file=sys.stderr)
+        sys.exit(1) # Exit if migrations fail
 
-    # 2. Executar o script para criar o superusuário de desenvolvimento.
-    # O script create_dev_admin.py já verifica se o usuário existe, então é seguro executá-lo.
-    # Não sair em caso de erro aqui, pois o script create_dev_admin pode apenas avisar que o usuário já existe.
+    print("INFO: docker_entrypoint.py: Proceeding with superuser creation/verification...")
+    sys.stdout.flush()
     execute_command(
         ['python', 'create_dev_admin.py'],
-        step_name="criação/verificação de superusuário",
-        exit_on_error=False 
+        step_name="superuser creation/verification",
+        exit_on_error=False # Don't exit if superuser already exists or script has non-fatal issue
     )
     
-    # 3. (Opcional) Coletar arquivos estáticos.
-    # Você pode controlar isso com uma variável de ambiente se desejar.
-    # Exemplo: if os.environ.get('DJANGO_COLLECTSTATIC') == 'true':
-    # execute_command(
-    # ['python', 'manage.py', 'collectstatic', '--noinput', '--clear'],
-    # step_name="coleta de arquivos estáticos"
-    # )
+    # Static files are collected during Docker build (RUN python manage.py collectstatic...)
+    print("INFO: docker_entrypoint.py: Static files should have been collected during build.")
+    sys.stdout.flush()
 
-    # 4. Executar o comando principal que foi passado para o container
-    # (originalmente definido pelo CMD no Dockerfile).
-    # sys.argv[0] é o nome do script (docker_entrypoint.py).
-    # sys.argv[1:] são os argumentos passados após o nome do script.
-    # Estes argumentos vêm do CMD do Dockerfile.
-    main_command_args = sys.argv[1:] 
+    # --- Prepare and Execute Gunicorn Command ---
+    gunicorn_base_cmd_args = sys.argv[1:] # Get CMD from Dockerfile
     
-    if main_command_args:
-        print(f"INFO: Executando comando principal: {' '.join(main_command_args)}")
-        try:
-            # os.execvp substitui o processo atual (o script Python) pelo novo comando.
-            # Isso é importante para que o processo do servidor Django (ou Gunicorn/Uvicorn em produção)
-            # se torne o processo principal (PID 1) no container, se possível, ou pelo menos
-            # receba sinais do Docker (como SIGTERM para um shutdown gracioso) corretamente.
-            os.execvp(main_command_args[0], main_command_args)
-        except FileNotFoundError:
-            print(f"ERRO: Comando principal '{main_command_args[0]}' não encontrado.", file=sys.stderr)
-            sys.exit(127) # Código de saída comum para "comando não encontrado"
-        except Exception as e:
-            print(f"ERRO: Falha ao tentar executar o comando principal '{' '.join(main_command_args)}': {e}", file=sys.stderr)
-            sys.exit(1) # Código de erro genérico
-    else:
-        print("ERRO: Nenhum comando principal (CMD) especificado no Dockerfile para o entrypoint executar.", file=sys.stderr)
-        print("INFO: Por favor, defina um CMD no seu Dockerfile, como por exemplo:", file=sys.stderr)
-        print("INFO: CMD [\"python\", \"manage.py\", \"runserver\", \"0.0.0.0:8000\"]", file=sys.stderr)
-        sys.exit(1) # Sai com erro se nenhum CMD for fornecido.
+    if not gunicorn_base_cmd_args:
+        print("ERROR: docker_entrypoint.py: No Gunicorn command (CMD) provided from Dockerfile.", file=sys.stderr)
+        sys.exit(1)
+
+    # Get PORT from environment, default to 8000 if not set (Render WILL set $PORT)
+    port = os.environ.get("PORT", "8000")
+    
+    # Substitute $PORT in the Gunicorn command arguments
+    # Example CMD: ["gunicorn", "w1.wsgi:application", "--bind", "0.0.0.0:$PORT", ...]
+    final_gunicorn_cmd_args = []
+    for arg in gunicorn_base_cmd_args:
+        final_gunicorn_cmd_args.append(arg.replace("$PORT", port))
+
+    print(f"INFO: docker_entrypoint.py: Preparing to execute main Gunicorn command: {' '.join(final_gunicorn_cmd_args)}")
+    sys.stdout.flush()
+    
+    try:
+        # os.execvp replaces the current process (this script) with Gunicorn.
+        # This is important for Gunicorn to be the main process and handle signals correctly.
+        os.execvp(final_gunicorn_cmd_args[0], final_gunicorn_cmd_args)
+    except FileNotFoundError:
+        print(f"ERROR: docker_entrypoint.py: Gunicorn command '{final_gunicorn_cmd_args[0]}' not found. Ensure Gunicorn is installed in the Docker image.", file=sys.stderr)
+        sys.exit(127)
+    except Exception as e:
+        print(f"ERROR: docker_entrypoint.py: Failed to execute Gunicorn command '{' '.join(final_gunicorn_cmd_args)}': {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # This part should not be reached if os.execvp is successful
+    print("ERROR: docker_entrypoint.py: os.execvp failed to replace the current process. This should not happen.", file=sys.stderr)
+    sys.exit(1)
