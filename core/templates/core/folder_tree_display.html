@@ -10,20 +10,11 @@
 
 {% load static %}
 
-<ul class="list-unstyled folder-tree {% if depth > 0 %}folder-tree-nested{% endif %}" style="padding-left: {% if depth == 0 %}0px{% else %}0px{% endif %};">
+<ul class="list-unstyled folder-tree {% if depth > 0 %}folder-tree-nested{% endif %}" style="padding-left: {% if depth > 0 %}25px{% else %}0{% endif %};">
     {# Display Subfolders First #}
     {% for folder_item in folders %}
-    <li class="folder-tree-item folder-item mb-2">
-        <div class="d-flex align-items-center p-2 rounded {% if user_is_management %}bg-light border{% else %}management-folder-item-bg{% endif %} folder-toggle"
-             style="background-color: {% if user_is_management %}#e9ecef{% else %}#045058{% endif %}; cursor: pointer; padding-left: {{ depth|default:0|add:1|multiply:20 }}px !important;"
-             data-folder-id="folder-{{ folder_item.id }}-{{ depth }}">
-            
-            {% if folder_item.subpastas or folder_item.documentos_contidos or folder_item.doc_count|default:folder_item.documentos_contidos|length > 0 %}
-                <i class="fas fa-caret-right me-2 folder-caret"></i>
-            {% else %}
-                <span style="width: 1.25em;" class="me-2"></span> {# Espaçador para alinhar com pastas que têm caret #}
-            {% endif %}
-
+    <li class="folder-tree-item folder-item mb-3">
+        <div class="d-flex align-items-center p-3 rounded {% if user_is_management %}bg-light border{% else %}management-folder-item-bg{% endif %}" style="background-color: {% if user_is_management %}#e9ecef{% else %}#045058{% endif %};">
             <i class="fas fa-folder me-2 {% if user_is_management %}text-primary{% else %}text-warning{% endif %}"></i>
             <strong class="me-auto {% if user_is_management %}text-dark{% else %}text-white{% endif %}">{{ folder_item.nome }}</strong>
             <span class="badge rounded-pill {% if user_is_management %}bg-secondary{% else %}bg-info text-dark{% endif %}">
@@ -31,48 +22,44 @@
             </span>
         </div>
 
-        {# Conteúdo da pasta (subpastas e documentos) - inicialmente oculto se tiver conteúdo #}
-        <div class="folder-content {% if folder_item.subpastas or folder_item.documentos_contidos or folder_item.doc_count|default:folder_item.documentos_contidos|length > 0 %}d-none{% endif %}" id="folder-{{ folder_item.id }}-{{ depth }}-content">
-            {% if folder_item.subpastas or folder_item.documentos_contidos %}
-                {% with folders=folder_item.subpastas documents=folder_item.documentos_contidos depth=depth|default:0|add:1 user_is_management=user_is_management target_processo_id=target_processo_id pasta_creation_form=pasta_creation_form %}
-                    {% include "core/folder_tree_display.html" %}
-                {% endwith %}
-            {% elif not folder_item.subpastas and not folder_item.documentos_contidos %}
-                 <ul class="list-unstyled folder-tree-nested" style="padding-left: {{ depth|default:0|add:1|add:1|multiply:20 }}px;">
-                    <li class="folder-tree-item text-muted small fst-italic py-1 ps-2">
-                        <i class="fas fa-info-circle fa-xs me-1"></i> Esta pasta está vazia.
-                    </li>
-                </ul>
-            {% endif %}
-        </div>
+        {# Recursive call for subfolders and documents within this folder_item #}
+        {% if folder_item.subpastas or folder_item.documentos_contidos %}
+            {% with folders=folder_item.subpastas documents=folder_item.documentos_contidos depth=depth|default:0|add:1 user_is_management=user_is_management target_processo_id=target_processo_id pasta_creation_form=pasta_creation_form %}
+                {% include "core/folder_tree_display.html" %}
+            {% endwith %}
+        {% elif not folder_item.subpastas and not folder_item.documentos_contidos %}
+            <ul class="list-unstyled folder-tree-nested" style="padding-left: 25px;">
+                <li class="folder-tree-item text-muted small fst-italic py-2 ps-3">
+                    <i class="fas fa-info-circle fa-xs me-1"></i> Esta pasta está vazia.
+                </li>
+            </ul>
+        {% endif %}
     </li>
     {% endfor %}
 
-    {# Display Documents at the Current Level, com indentação correta #}
+    {# Display Documents at the Current Level #}
     {% for doc in documents %}
-    <li class="folder-tree-item document-item mb-1" style="padding-left: {{ depth|default:0|add:1|multiply:20 }}px;">
-        <div class="d-flex align-items-center p-2 rounded {% if user_is_management %}bg-white border hover-bg-light-gray{% else %}management-doc-item-bg{% endif %}" 
+    <li class="folder-tree-item document-item mb-2">
+        <div class="d-flex align-items-start p-3 rounded {% if user_is_management %}bg-white border hover-bg-light-gray{% else %}management-doc-item-bg{% endif %}"  {# MODIFICADO DE align-items-center PARA align-items-start #}
              style="background-color: {% if user_is_management %}#f8f9fa{% else %}#034048{% endif %}; transition: background-color 0.2s ease;">
-            <span style="width: 1.25em;" class="me-2"></span> {# Espaçador para alinhar com pastas #}
             <i class="fas fa-file-alt me-2 {% if user_is_management %}text-secondary{% else %}text-light{% endif %}"></i>
             <div class="flex-grow-1 overflow-hidden">
-                <a href="{{ doc.arquivo.url }}" target="_blank" 
-                   class="text-decoration-none {% if user_is_management %}text-dark{% else %}text-info{% endif %} hover-text-primary" 
+                <a href="{{ doc.arquivo.url }}" target="_blank"
+                   class="text-decoration-none {% if user_is_management %}text-dark{% else %}text-info{% endif %} hover-text-primary"
                    title="Ver/Baixar: {{ doc.nome_original_arquivo|default:doc.arquivo.name }}">
                     {{ doc.nome_documento_logico|default:doc.nome_original_arquivo|truncatechars:40 }}
                     <span class="fw-normal {% if user_is_management %}text-muted{% else %}text-light{% endif %}">(v{{ doc.versao }})</span>
                 </a>
-                <small class="d-block text-muted" style="font-size: 0.75rem;">
+                <small class="d-block text-muted" style="font-size: 0.8rem;">
                     Cat: {{ doc.get_categoria_display }} | Por: {{ doc.enviado_por.first_name|default:"Usuário" }} | {{ doc.data_upload|date:"d/m/y" }}
                     {% if doc.descricao_adicional %}| Obs: {{ doc.descricao_adicional|truncatewords:5 }}{% endif %}
                 </small>
             </div>
-            <a href="{{ doc.arquivo.url }}" target="_blank" 
-               class="btn btn-sm {% if user_is_management %}btn-outline-primary{% else %}btn-outline-info{% endif %} py-0 px-1 ms-2" 
+            <a href="{{ doc.arquivo.url }}" target="_blank"
+               class="btn btn-sm {% if user_is_management %}btn-outline-primary{% else %}btn-outline-info{% endif %} py-1 px-2 ms-2"
                title="Ver/Baixar v{{doc.versao}}">
-                <i class="fas fa-download fa-xs"></i>
+                <i class="fas fa-download"></i>
             </a>
-            {# Placeholder for more actions #}
         </div>
     </li>
     {% endfor %}
@@ -80,50 +67,99 @@
 
 {% if not folders and not documents and depth|default:0 == 0 %}
     <div class="p-3 text-center text-muted {% if user_is_management %}bg-light rounded border mt-2{% else %}mt-4{% endif %}">
-        <i class="fas fa-folder-open fa-lg mb-2"></i>
-        <p class="mb-0">Nenhum documento ou pasta encontrado neste nível.</p>
+        <i class="fas fa-folder-open fa-2x mb-3"></i>
+        <p class="mb-0" style="font-size: 1rem;">Nenhum documento ou pasta encontrado neste nível.</p>
     </div>
 {% endif %}
 
 <style>
-    .folder-tree-item.folder-item > div.folder-toggle {
+    /* --- Folder Item Enhancements --- */
+    .folder-tree-item.folder-item > div {
+        font-size: 1.05rem;
+    }
+    .folder-tree-item.folder-item .fas.fa-folder {
+        font-size: 1.3em;
+        margin-right: 0.75rem !important;
+    }
+    .folder-tree-item.folder-item .badge {
+        font-size: 0.8em;
+        padding: 0.4em 0.65em;
+    }
+
+    /* --- Document Item Enhancements --- */
+    .folder-tree-item.document-item > div { /* Este é o container flex para o item do documento */
+        font-size: 0.9rem;
+    }
+    .folder-tree-item.document-item .fas.fa-file-alt {
+        font-size: 1.2em;
+        margin-right: 0.75rem !important;
+    }
+    .folder-tree-item.document-item .flex-grow-1 a {
         font-size: 0.95rem;
-        /* padding-left é agora inline style para profundidade */
+        font-weight: 500;
     }
-    .folder-tree-item.document-item > div {
+    .folder-tree-item.document-item .flex-grow-1 a .fw-normal {
         font-size: 0.85rem;
-         /* padding-left é agora no li para profundidade */
     }
+    .folder-tree-item.document-item small.d-block {
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+
+    /* --- Empty Folder Message (inside a folder) --- */
+    .folder-tree-nested li.text-muted.small.fst-italic {
+        font-size: 0.9rem;
+    }
+     .folder-tree-nested li.text-muted.small.fst-italic i.fa-info-circle {
+        font-size: 0.9em;
+     }
+
+    /* --- Add space between parent folder bar and its children list --- */
+    .folder-tree-item > ul.folder-tree-nested {
+        margin-top: 1rem; /* Equivalent to Bootstrap's mt-3 */
+    }
+
+    /* --- General Hover Styles --- */
     .hover-bg-light-gray:hover {
-        background-color: #f1f3f5 !important; /* A slightly different shade for hover on management docs */
+        background-color: #f1f3f5 !important;
     }
     .hover-text-primary:hover {
-        color: #0056b3 !important; /* Darker blue on hover for links */
+        color: #0056b3 !important;
     }
 
-    .folder-caret {
-        transition: transform 0.2s ease-in-out;
-        width: 1em; /* Garante que o ícone ocupe espaço e não cause reflow ao mudar */
-        text-align: center;
-    }
-    .folder-caret.open {
-        transform: rotate(90deg);
-    }
-
-    /* Estilos para tema escuro/cliente */
+    /* --- Conditional Styles for Non-Management View --- */
     {% if not user_is_management %}
-    .management-folder-item-bg { background-color: #045058 !important; color: #e0f2f1;}
-    .management-folder-item-bg .badge { background-color: #148a99 !important; color: #fff;}
-    .management-folder-item-bg strong { color: #a7ffeb !important;}
-    .management-folder-item-bg .folder-caret { color: #a7ffeb !important; } /* Cor do caret para tema escuro */
+    .management-folder-item-bg {
+        background-color: #045058 !important;
+        color: #e0f2f1 !important;
+    }
+    .management-folder-item-bg .badge {
+        background-color: #148a99 !important;
+        color: #ffffff !important;
+    }
+    .management-folder-item-bg strong {
+        color: #a7ffeb !important;
+    }
+    .management-folder-item-bg .fas.fa-folder.text-warning {
+        color: #ffd54f !important;
+    }
 
-    .management-doc-item-bg { background-color: #034048 !important; color: #b2dfdb;}
-    .management-doc-item-bg a { color: #80cbc4 !important;}
-    .management-doc-item-bg a:hover { color: #4db6ac !important;}
-    .management-doc-item-bg .text-muted { color: #80cbc4 !important;}
-    .management-doc-item-bg i.text-light {color: #e0f2f1 !important;}
-    {% else %}
-    /* Estilos para tema claro/gerenciamento (se precisar de ajuste específico no caret) */
-    .folder-caret { color: #0d6efd; } /* Cor do caret para tema claro (ex: text-primary) */
+    .management-doc-item-bg {
+        background-color: #034048 !important;
+        color: #b2dfdb !important;
+    }
+    .management-doc-item-bg a {
+        color: #80cbc4 !important;
+    }
+    .management-doc-item-bg a:hover {
+        color: #4db6ac !important;
+    }
+    .management-doc-item-bg .text-muted {
+        color: #9ad8d2 !important;
+    }
+    .management-doc-item-bg i.text-light,
+    .management-doc-item-bg .fas.fa-file-alt.text-light {
+        color: #e0f2f1 !important;
+    }
     {% endif %}
 </style>
