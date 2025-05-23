@@ -172,7 +172,7 @@ class ProcessoHolding(models.Model):
     )
     holding_associada = models.OneToOneField(
         Holding,
-        on_delete=models.SET_NULL, # Or models.CASCADE if process is deleted when holding is
+        on_delete=models.CASCADE, # ALTERADO DE SET_NULL PARA CASCADE
         null=True,
         blank=True,
         related_name='processo_criacao',

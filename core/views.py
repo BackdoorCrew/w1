@@ -289,21 +289,24 @@ def dashboard(request):
 
     if user.user_type == 'cliente':
         fez_simulacao = SimulationResult.objects.filter(user=user).exists()
-        tem_intencao_holding = ProcessoHolding.objects.filter(cliente_principal=user).exists()
-        print(f"[DEBUG] DASHBOARD: Usuário '{user.email}' - fez_simulacao: {fez_simulacao}, tem_intencao_holding: {tem_intencao_holding}")
+        
+        # ALTERADO: Verifica se o usuário é membro (cliente) de ALGUMA holding.
+        is_member_of_any_holding = Holding.objects.filter(clientes=user).exists()
+        
+        print(f"[DEBUG] DASHBOARD: Usuário '{user.email}' - fez_simulacao: {fez_simulacao}, is_member_of_any_holding: {is_member_of_any_holding}")
 
-        if tem_intencao_holding:
+        if is_member_of_any_holding: # Se é membro de alguma holding, vai para o dashboard detalhado.
             print(f"[DEBUG] DASHBOARD: Redirecionando '{user.email}' para 'dashboard_final'.")
             return redirect('dashboard_final')
-        elif fez_simulacao:
+        elif fez_simulacao: # Se não é membro de holding mas já fez simulação, pode criar uma.
             print(f"[DEBUG] DASHBOARD: Redirecionando '{user.email}' para 'create_holding'.")
             return redirect('create_holding')
-        else:
+        else: # Senão, começa pela simulação.
             print(f"[DEBUG] DASHBOARD: Redirecionando '{user.email}' para 'simulation' (input).")
             return redirect('simulation')
     
+    # Fallback para outros tipos de usuário ou situações inesperadas
     return redirect('index')
-
 
 @login_required
 def simulation(request):
@@ -701,118 +704,123 @@ def get_folder_structure_with_documents(processo_holding, parent_folder=None):
 
 @login_required
 def dashboard_final(request):
-    if request.user.is_superuser:
+    if request.user.is_superuser or request.user.user_type in ['admin', 'consultor']: # Simplificado
         return redirect('management_dashboard')
 
-    user_has_holding_intention = ProcessoHolding.objects.filter(cliente_principal=request.user).exists()
-    if not user_has_holding_intention:
-        messages.info(request, "Por favor, complete o registro de interesse na holding para acessar este painel.")
-        return redirect('dashboard')
+    # Verifica se o usuário é cliente de alguma holding. Se não, não deveria estar aqui.
+    user_holdings_qs = Holding.objects.filter(clientes=request.user).prefetch_related(
+        'consultores', 
+        'processo_criacao__pastas_documentos__documentos_contidos__enviado_por', # Prefetch otimizado
+        'processo_criacao__documentos_processo__enviado_por'
+    ).select_related('processo_criacao') # select_related para OneToOne
+
+    if not user_holdings_qs.exists():
+        messages.info(request, "Você não está associado a nenhuma holding no momento. Considere criar uma ou aguarde ser adicionado por um administrador.")
+        return redirect('dashboard') # Volta para o fluxo normal do dashboard
 
     latest_simulation_obj = SimulationResult.objects.filter(user=request.user).order_by('-created_at').first()
-    user_holdings_qs = Holding.objects.filter(clientes=request.user).prefetch_related('consultores', 'processo_criacao')
     
     active_holding = None
-    target_processo = None
-    # Prioriza a holding que tem um processo de criação associado
+    target_processo = None # Para documentos
+    
+    # Lógica para determinar a holding ativa:
+    # Prioriza a holding que tem um processo_criacao E da qual o usuário é cliente.
+    # Se houver várias, pode ser necessário um seletor no futuro. Por ora, pega a primeira.
     for h_obj in user_holdings_qs:
-        if hasattr(h_obj, 'processo_criacao') and h_obj.processo_criacao:
+        if h_obj.processo_criacao: # Se esta holding (da qual o user é cliente) tem um processo
             active_holding = h_obj
             target_processo = h_obj.processo_criacao
-            break
-    # Se nenhuma holding com processo foi encontrada, mas o usuário tem holdings, pega a primeira
-    if not active_holding and user_holdings_qs.exists():
+            break 
+    
+    if not active_holding and user_holdings_qs.exists(): # Se nenhuma com processo foi achada, pega a primeira da lista
         active_holding = user_holdings_qs.first()
-        if hasattr(active_holding, 'processo_criacao') and active_holding.processo_criacao:
+        if active_holding and active_holding.processo_criacao: # Tenta pegar o processo dela
             target_processo = active_holding.processo_criacao
+            
+    if not active_holding: # Fallback, deveria ter sido pego pelo user_holdings_qs.exists() no início
+        messages.error(request, "Não foi possível determinar a holding ativa para visualização.")
+        return redirect('dashboard')
 
-    # Inicializa os formulários que podem ser usados no GET ou atualizados no POST
-    # Estes serão as instâncias "padrão" para um GET ou se o POST for para outro formulário.
-    # Se um POST específico para estes formulários ocorrer e falhar, eles serão substituídos pela instância com erro.
+    # Inicialização de formulários
     document_form = DocumentUploadForm(processo_holding=target_processo) if target_processo else DocumentUploadForm()
     pasta_form = PastaDocumentoForm(processo_holding=target_processo) if target_processo else PastaDocumentoForm()
-    chat_form_to_render = ChatMessageForm() 
+    chat_form_to_render = ChatMessageForm()  
 
     if request.method == 'POST':
-        if 'upload_document_cliente' in request.POST and target_processo:
-            # Processa o formulário de upload de documento
-            document_form = DocumentUploadForm(request.POST, request.FILES, processo_holding=target_processo)
-            if document_form.is_valid():
-                doc = document_form.save(commit=False)
-                doc.processo_holding = target_processo
-                doc.enviado_por = request.user
-                doc.nome_original_arquivo = doc.arquivo.name # Salva o nome original
-
-                # Lógica de versionamento (similar à da área de gestão)
-                latest_version_data = Documento.objects.filter(
-                    processo_holding=target_processo,
-                    nome_documento_logico=doc.nome_documento_logico,
-                    categoria=doc.categoria,
-                    pasta=doc.pasta # Considera a pasta para o versionamento
-                ).aggregate(max_versao=Max('versao'))
-                current_max_version = latest_version_data.get('max_versao')
-                doc.versao = (current_max_version + 1) if current_max_version is not None else 1
-                
-                try:
-                    doc.save()
-                    messages.success(request, f"Documento '{doc.nome_documento_logico}' (v{doc.versao}) enviado com sucesso!")
-                except IntegrityError: # Caso haja uma colisão de unique_together que não foi pega pela lógica de versão
-                    messages.error(request, "Erro de integridade ao salvar o documento. Verifique se um documento similar já existe.")
-                return redirect(request.path_info + '#documentos')
+        # Lógica de POST para upload_document_cliente, create_folder, send_chat_message
+        # Certifique-se que 'target_processo' é usado para operações de documento/pasta
+        # e 'active_holding' para operações de chat.
+        if 'upload_document_cliente' in request.POST:
+            if not target_processo:
+                messages.error(request, "Não há um processo de holding ativo para anexar documentos.")
             else:
-                messages.error(request, "Erro ao enviar documento. Verifique os campos.")
-                # document_form já é a instância com erros, será passada ao contexto.
+                document_form = DocumentUploadForm(request.POST, request.FILES, processo_holding=target_processo)
+                if document_form.is_valid():
+                    # ... (lógica de salvar documento como antes) ...
+                    doc = document_form.save(commit=False)
+                    doc.processo_holding = target_processo
+                    doc.enviado_por = request.user
+                    doc.nome_original_arquivo = doc.arquivo.name 
+                    # Lógica de versionamento ...
+                    latest_version_data = Documento.objects.filter(
+                        processo_holding=target_processo,
+                        nome_documento_logico=doc.nome_documento_logico,
+                        categoria=doc.categoria,
+                        pasta=doc.pasta
+                    ).aggregate(max_versao=Max('versao'))
+                    current_max_version = latest_version_data.get('max_versao')
+                    doc.versao = (current_max_version + 1) if current_max_version is not None else 1
+                    try:
+                        doc.save()
+                        messages.success(request, f"Documento '{doc.nome_documento_logico}' (v{doc.versao}) enviado!")
+                    except IntegrityError:
+                        messages.error(request, "Erro de integridade ao salvar o documento.")
+                    return redirect(request.path_info + '#documentos')
+                else:
+                    messages.error(request, "Erro ao enviar documento. Verifique os campos.")
         
-        elif 'create_folder' in request.POST and target_processo:
-            # Processa o formulário de criação de pasta
-            pasta_form = PastaDocumentoForm(request.POST, processo_holding=target_processo)
-            if pasta_form.is_valid():
-                new_folder = pasta_form.save(commit=False)
-                new_folder.processo_holding = target_processo
-                new_folder.created_by = request.user
-                try:
-                    new_folder.save()
-                    messages.success(request, f"Pasta '{new_folder.nome}' criada com sucesso.")
-                except IntegrityError:
-                    messages.error(request, f"Já existe uma pasta com o nome '{new_folder.nome}' neste local para este processo.")
-                return redirect(request.path_info + '#documentos')
+        elif 'create_folder' in request.POST:
+            if not target_processo:
+                messages.error(request, "Não há um processo de holding ativo para criar pastas.")
             else:
-                messages.error(request, "Erro ao criar pasta. Verifique os dados.")
-                # pasta_form já é a instância com erros.
+                pasta_form = PastaDocumentoForm(request.POST, processo_holding=target_processo)
+                if pasta_form.is_valid():
+                    # ... (lógica de salvar pasta como antes) ...
+                    new_folder = pasta_form.save(commit=False)
+                    new_folder.processo_holding = target_processo
+                    new_folder.created_by = request.user
+                    try:
+                        new_folder.save()
+                        messages.success(request, f"Pasta '{new_folder.nome}' criada.")
+                    except IntegrityError:
+                        messages.error(request, f"Já existe uma pasta com o nome '{new_folder.nome}'.")
+                    return redirect(request.path_info + '#documentos')
+                else:
+                    messages.error(request, "Erro ao criar pasta.")
 
         elif 'send_chat_message' in request.POST:
-            # Processa o formulário de chat
-            if not active_holding:
-                messages.error(request, "Nenhuma holding ativa encontrada para enviar a mensagem.")
+            if not active_holding: # Chat é associado diretamente à Holding
+                messages.error(request, "Nenhuma holding ativa para enviar a mensagem.")
             else:
-                can_send_message = (
-                    request.user.is_superuser or # Superuser sempre pode
-                    (active_holding.clientes.filter(id=request.user.id).exists()) or # Cliente da holding
-                    (active_holding.consultores.filter(id=request.user.id).exists()) # Consultor da holding
-                )
-                if not can_send_message:
-                    messages.error(request, "Você não tem permissão para enviar mensagens neste chat.")
+                # ... (lógica de enviar chat como antes, usando 'active_holding') ...
+                # Validação de permissão já existente parece correta
+                posted_chat_form = ChatMessageForm(request.POST)
+                if posted_chat_form.is_valid():
+                    new_message = posted_chat_form.save(commit=False)
+                    new_message.holding = active_holding
+                    new_message.sender = request.user
+                    new_message.save()
+                    return redirect(request.path_info + '#mensagens')
                 else:
-                    posted_chat_form = ChatMessageForm(request.POST)
-                    if posted_chat_form.is_valid():
-                        new_message = posted_chat_form.save(commit=False)
-                        new_message.holding = active_holding
-                        new_message.sender = request.user
-                        new_message.save()
-                        return redirect(request.path_info + '#mensagens')
-                    else:
-                        chat_form_to_render = posted_chat_form # Usa o formulário com erros para re-renderizar
-                        messages.error(request, "Não foi possível enviar sua mensagem. Verifique o conteúdo.")
-        
-        # Outros formulários POST podem ser tratados aqui com 'elif'
-
-    # Coleta de dados para o contexto (para GET ou para re-renderizar após POST falho)
+                    chat_form_to_render = posted_chat_form 
+                    messages.error(request, "Não foi possível enviar sua mensagem.")
+    
+    # Coleta de dados para o contexto
     folder_structure = []
     root_documents = []
-    chat_messages_list = [] 
+    chat_messages_list = []  
 
-    if active_holding:
-        # Permissões para carregar mensagens existentes (apenas para visualização)
+    if active_holding: # Para o chat
         can_access_chat_display = (
             request.user.is_superuser or
             (active_holding.clientes.filter(id=request.user.id).exists()) or
@@ -821,36 +829,34 @@ def dashboard_final(request):
         if can_access_chat_display:
             chat_messages_list = ChatMessage.objects.filter(holding=active_holding).select_related('sender').order_by('timestamp')
 
-        if target_processo:
-            # Supondo que get_folder_structure_with_documents está definida em algum lugar (views.py ou utils.py)
-            try:
-                folder_structure, root_documents = get_folder_structure_with_documents(target_processo)
-            except NameError: # Se a função não estiver definida/importada
-                pass # Lidar com isso, talvez logar um erro ou deixar as listas vazias
+    if target_processo: # Para documentos e pastas
+        try:
+            folder_structure, root_documents = get_folder_structure_with_documents(target_processo)
+        except NameError:
+            pass 
 
     context = {
         'user': request.user,
-        'user_holdings': user_holdings_qs,
+        'user_holdings': user_holdings_qs, # Lista de todas as holdings do usuário
         
-        'active_holding_for_docs': active_holding if target_processo else None,
+        'active_holding_for_docs': active_holding if target_processo else None, # Holding ativa para contexto de documentos
         'target_processo_id': target_processo.id if target_processo else None,
-        'document_form': document_form, 
-        'pasta_form': pasta_form,       
+        'document_form': document_form,  
+        'pasta_form': pasta_form,      
         'folder_structure': folder_structure,
         'root_documents': root_documents,
         
-        'active_holding_for_chat': active_holding,
-        'chat_form': chat_form_to_render, 
-        'chat_messages': chat_messages_list, 
+        'active_holding_for_chat': active_holding, # Holding ativa para o chat
+        'chat_form': chat_form_to_render,  
+        'chat_messages': chat_messages_list,  
     }
 
     if latest_simulation_obj:
-        # Supondo que _get_simulation_presentation_context está definida
         try:
             simulation_details_context = _get_simulation_presentation_context(latest_simulation_obj, request.user)
             context.update(simulation_details_context)
-        except NameError: # Se a função não estiver definida/importada
-            context['simulation_instance'] = None # Garante que a chave existe
+        except NameError: 
+            context['simulation_instance'] = None 
     else:
         context['simulation_instance'] = None
 
@@ -1225,7 +1231,19 @@ def management_holding_detail(request, holding_id):
 
 
     if request.method == 'POST':
-        if 'create_folder_management' in request.POST and processo_criacao:
+        if 'delete_holding' in request.POST and request.user.is_superuser:
+            try:
+                nome_holding_deletada = holding.nome_holding
+                holding.delete() # Isso irá acionar o CASCADE para ProcessoHolding (e seus Documentos/Pastas)
+                                 # e para AnaliseEconomia, ChatMessage.
+                messages.success(request, f"A holding '{nome_holding_deletada}' e todos os seus dados associados foram removidos com sucesso.")
+                return redirect('management_list_holdings') 
+            except Exception as e:
+                messages.error(request, f"Ocorreu um erro ao tentar deletar a holding: {e}")
+                # Permanecer na página de detalhes se houver erro
+                return redirect('management_holding_detail', holding_id=holding_id)
+            
+        elif 'create_folder_management' in request.POST and processo_criacao:
             posted_pasta_form_mgmt = PastaDocumentoForm(request.POST, processo_holding=processo_criacao)
             if posted_pasta_form_mgmt.is_valid():
                 new_folder = posted_pasta_form_mgmt.save(commit=False)
@@ -1326,7 +1344,8 @@ def management_holding_detail(request, holding_id):
         'folder_structure_management': folder_structure_mgmt,
         'root_documents_management': root_documents_mgmt,
         'documentos_holding_count': documentos_holding_count,
-        'page_title': f'Detalhes da Holding: {holding.nome_holding}'
+        'page_title': f'Detalhes da Holding: {holding.nome_holding}',
+        'can_delete_holding': request.user.is_superuser
     }
     return render(request, 'management/management_holding_details.html', context)
 
@@ -1379,24 +1398,23 @@ def management_holding_documents(request, holding_id):
 @login_required
 @consultant_or_superuser_required
 def management_holding_manage_clients(request, holding_id):
-    holding_base_qs = Holding.objects.prefetch_related('clientes') # Para buscar clientes eficientemente
+    holding_base_qs = Holding.objects.prefetch_related('clientes', 'processo_criacao') # Adicionado processo_criacao
     
     if request.user.is_superuser:
         holding = get_object_or_404(holding_base_qs, pk=holding_id)
     elif request.user.user_type == 'consultor':
-        # Consultor só pode gerenciar clientes de holdings às quais ele está associado
         holding = get_object_or_404(holding_base_qs, pk=holding_id, consultores=request.user)
     else:
         messages.error(request, "Acesso negado.")
         return redirect('login')
 
-    add_client_form = AddClientToHoldingForm() 
+    add_client_form = AddClientToHoldingForm()  
 
     if request.method == 'POST':
         if 'add_client' in request.POST:
             add_client_form = AddClientToHoldingForm(request.POST)
             if add_client_form.is_valid():
-                client_to_add = add_client_form.cleaned_data['email'] 
+                client_to_add = add_client_form.cleaned_data['email']  
                 if client_to_add not in holding.clientes.all():
                     holding.clientes.add(client_to_add)
                     messages.success(request, f"Cliente {client_to_add.email} adicionado à holding '{holding.nome_holding}'.")
@@ -1409,11 +1427,19 @@ def management_holding_manage_clients(request, holding_id):
             if client_id_to_remove:
                 try:
                     client_to_remove = User.objects.get(pk=client_id_to_remove, user_type='cliente')
-                    if holding.processo_criacao and holding.processo_criacao.cliente_principal == client_to_remove:
-                        messages.error(request, "Não é possível remover o cliente principal do processo da holding.")
-                    elif client_to_remove in holding.clientes.all():
+                    
+                    # LÓGICA DE REMOÇÃO AJUSTADA:
+                    # O cliente pode ser removido da lista de 'clientes' da holding.
+                    # O campo 'cliente_principal' no ProcessoHolding permanece para fins históricos.
+                    if client_to_remove in holding.clientes.all():
                         holding.clientes.remove(client_to_remove)
                         messages.success(request, f"Cliente {client_to_remove.email} removido da holding '{holding.nome_holding}'.")
+                        
+                        # Opcional: Se o ProcessoHolding.cliente_principal for este usuário
+                        # e a holding não tiver mais clientes ou precisar ser reatribuída,
+                        # podem ser necessárias lógicas adicionais aqui ou na interface.
+                        # Por agora, a remoção da lista de clientes é o foco.
+
                     else:
                         messages.warning(request, "Cliente não encontrado nesta holding para remoção.")
                 except User.DoesNotExist:
@@ -1421,10 +1447,16 @@ def management_holding_manage_clients(request, holding_id):
                 return redirect('management_holding_manage_clients', holding_id=holding.id)
                 
     current_clients = holding.clientes.all().order_by('first_name', 'last_name', 'email')
+    # Adicionar cliente_principal ao contexto para informação, se necessário
+    cliente_principal_do_processo = None
+    if holding.processo_criacao:
+        cliente_principal_do_processo = holding.processo_criacao.cliente_principal
+
     context = {
-        'holding': holding, 
+        'holding': holding,  
         'current_clients': current_clients,
-        'add_client_form': add_client_form, 
+        'add_client_form': add_client_form,  
+        'cliente_principal_do_processo': cliente_principal_do_processo, # Para exibir no template, se útil
         'page_title': f"Gerenciar Clientes da Holding: {holding.nome_holding}"
     }
     return render(request, 'management/management_holding_manage_clients.html', context)

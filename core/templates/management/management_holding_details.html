@@ -9,7 +9,7 @@
     <div class="page-header mb-4">
         <div class="d-flex justify-content-between align-items-start"> 
             <h1 class="h2 page-title mb-0 cal-sans-regular">{{ holding.nome_holding }}</h1>
-            <div class="ms-3 text-end"> {# Movido para a direita e alinhado à direita #}
+            <div class="ms-3 text-end">
                 {% if holding.is_legally_official %}
                     <span class="badge bg-success-soft">
                         <i class="fas fa-check-circle me-1"></i>Oficializada em {{ holding.data_oficializacao|date:"d/m/Y"|default:"Data não informada" }}
@@ -76,10 +76,10 @@
                 <div class="card-header">
                     <h5 class="mb-0 card-title-strong"><i class="fas fa-list-alt"></i>Características da Holding <small class="text-muted fw-normal">(Informadas pelo Cliente)</small></h5>
                 </div>
-                <div class="card-body p-lg-4 p-3"> {# Aumentado padding #}
+                <div class="card-body p-lg-4 p-3">
                     <div class="row g-3">
                         {% for field_name, field_label, field_value, field_details in holding_characteristics %}
-                        <div class="col-md-6 mb-3"> {# Aumentado mb para mais espaço vertical #}
+                        <div class="col-md-6 mb-3">
                             <strong class="d-block mb-1">{{ field_label }}:</strong>
                             <span>
                                 {% if field_name == "has_bank_savings" %}
@@ -125,7 +125,7 @@
                     <p class="mb-2"><strong class="text-muted-strong">Início do Processo:</strong> {{ processo_criacao.data_inicio_processo|date:"d/m/Y H:i" }}</p>
                     <p class="mb-3"><strong class="text-muted-strong">Última Atualização:</strong> {{ processo_criacao.data_ultima_atualizacao|date:"d/m/Y H:i" }}</p>
                     {% if processo_criacao.observacoes %}
-                        <div class="mb-3"> {# Envolvendo em div para melhor controle de margem #}
+                        <div class="mb-3">
                             <strong class="text-muted-strong d-block mb-1">Observações Internas:</strong>
                             <pre class="form-text p-2 border rounded">{{ processo_criacao.observacoes }}</pre>
                         </div>
@@ -145,7 +145,7 @@
                             {{ process_status_form.observacoes }}
                             {% if process_status_form.observacoes.errors %}<div class="invalid-feedback d-block text-danger-soft">{{ process_status_form.observacoes.errors|join:", " }}</div>{% endif %}
                         </div>
-                        <button type="submit" name="update_status" class="btn btn-primary w-100"><i class="fas fa-sync-alt me-1"></i>Atualizar Status</button> {# Botão com largura total #}
+                        <button type="submit" name="update_status" class="btn btn-primary w-100"><i class="fas fa-sync-alt me-1"></i>Atualizar Status</button>
                     </form>
                     {% elif holding.is_legally_official %}
                     <p class="mt-3 text-success"><i class="fas fa-info-circle me-1"></i>O processo é considerado finalizado pois a holding foi oficializada.</p>
@@ -158,9 +158,9 @@
 
             {% if not holding.is_legally_official and officialize_form %}
             <div class="card shadow-sm mt-4">
-                 <div class="card-header">
-                    <h5 class="mb-0 card-title-strong"><i class="fas fa-gavel"></i>Oficializar Holding Legalmente</h5>
-                </div>
+                    <div class="card-header">
+                        <h5 class="mb-0 card-title-strong"><i class="fas fa-gavel"></i>Oficializar Holding Legalmente</h5>
+                    </div>
                 <div class="card-body p-lg-4 p-3">
                     <p class="form-text mb-3">Ao marcar como oficializada, você confirma que a holding foi constituída conforme as leis e está pronta para operar.</p>
                     <form method="post" novalidate class="needs-validation">
@@ -170,7 +170,7 @@
                             {{ officialize_form.data_oficializacao }}
                             {% if officialize_form.data_oficializacao.errors %}<div class="invalid-feedback d-block text-danger-soft">{{ officialize_form.data_oficializacao.errors|join:", " }}</div>{% endif %}
                         </div>
-                        <button type="submit" name="officialize_holding" class="btn btn-success w-100"><i class="fas fa-gavel me-1"></i>Marcar como Oficializada</button> {# Botão com largura total #}
+                        <button type="submit" name="officialize_holding" class="btn btn-success w-100"><i class="fas fa-gavel me-1"></i>Marcar como Oficializada</button>
                     </form>
                 </div>
             </div>
@@ -190,7 +190,24 @@
                 </div>
             </div>
             {% endif %}
-        </div>
+
+            {% if can_delete_holding %}
+            <div class="card shadow-sm mt-4 border-danger-soft">
+                <div class="card-header bg-danger-soft border-danger-soft">
+                    <h5 class="mb-0 card-title-strong text-danger-emphasis"><i class="fas fa-exclamation-triangle"></i>Opções de Administrador</h5>
+                </div>
+                <div class="card-body p-lg-4 p-3">
+                    <p class="text-danger-emphasis mb-3"><strong>Atenção:</strong> A exclusão de uma holding é uma ação irreversível e removerá todos os dados associados, incluindo o processo de criação, documentos, pastas e mensagens de chat.</p>
+                    <form method="POST" action="{% url 'management_holding_detail' holding.id %}" onsubmit="return confirm('CONFIRMAÇÃO FINAL: Tem certeza absoluta que deseja deletar permanentemente esta holding e todos os seus dados? Esta ação NÃO PODE SER DESFEITA.');">
+                        {% csrf_token %}
+                        <button type="submit" name="delete_holding" class="btn btn-danger w-100">
+                            <i class="fas fa-trash-alt me-1"></i> Deletar Holding Permanentemente
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            </div>
 
         <div class="col-lg-5 mb-4">
             <div class="card shadow-sm">
@@ -228,7 +245,7 @@
                                     </form>
                                 </div>
                                 <div class="col-md-6">
-                                     <h6 class="text-muted-strong mb-2"><i class="fas fa-folder-plus text-primary"></i>Nova Pasta</h6>
+                                        <h6 class="text-muted-strong mb-2"><i class="fas fa-folder-plus text-primary"></i>Nova Pasta</h6>
                                     <form method="post" action="{% url 'management_holding_detail' holding.id %}">
                                         {% csrf_token %}
                                         {{ pasta_form_management.as_p }}
@@ -244,8 +261,8 @@
                             {% endif %}
                         </div>
                         
-                        <h6 class="text-muted-strong mb-2 mt-4">Documentos e Pastas Existentes:</h6> {# Aumentada margem superior #}
-                        <div class="folder-tree-container p-3 border rounded" style="max-height: 400px; overflow-y: auto;"> {# Aumentado padding #}
+                        <h6 class="text-muted-strong mb-2 mt-4">Documentos e Pastas Existentes:</h6>
+                        <div class="folder-tree-container p-3 border rounded" style="max-height: 400px; overflow-y: auto;">
                             {% if folder_structure_management or root_documents_management %}
                                 {% with folders=folder_structure_management documents=root_documents_management user_is_management=True target_processo_id=processo_criacao.id pasta_creation_form=pasta_form_management depth=0 %}
                                     {% include "core/folder_tree_display.html" %}
@@ -267,7 +284,7 @@
                 <div class="card-header">
                     <h5 class="mb-0 card-title-strong"><i class="fas fa-chart-line"></i>Análise Econômica</h5>
                 </div>
-                <div class="card-body p-4"> {# Aumentado padding #}
+                <div class="card-body p-4">
                     <p class="mb-2"><strong class="text-muted-strong">Ano de Referência:</strong> {{ analise.ano_referencia }}</p>
                     <p class="mb-2"><strong class="text-muted-strong">Economia Estimada:</strong> R$ {{ analise.economia_tributaria_estimada|default_if_none:"N/A"|intcomma }}</p>
                     <p class="mb-2"><strong class="text-muted-strong">Patrimônio Projetado:</strong> R$ {{ analise.patrimonio_liquido_projetado|default_if_none:"N/A"|intcomma }}</p>
@@ -425,7 +442,8 @@
     .holding-details-page .btn-primary:hover { background-color: #4acbc1; color: #011A21; transform: translateY(-1px); }
     .holding-details-page .btn-success { background-color: #198754; color: #fff; }
     .holding-details-page .btn-success:hover { background-color: #157347; color: #fff;}
-    /* ... (outros estilos de botão .btn-danger, .btn-outline-*) ... */
+    .holding-details-page .btn-danger { background-color: #dc3545; color: #fff; } /* Adicionado estilo base para btn-danger */
+    .holding-details-page .btn-danger:hover { background-color: #c82333; color: #fff; }
     .holding-details-page .btn-outline-secondary { color: #adb5bd; border: 1px solid #adb5bd; background-color:transparent; padding: 0.4rem 0.8rem; font-size:0.8rem;}
     .holding-details-page .btn-outline-secondary:hover { color: #011a21; background-color: #adb5bd; border-color: #adb5bd; }
     .holding-details-page .btn-outline-primary { color: #5fded4; border: 1px solid #5fded4; background-color:transparent; padding: 0.4rem 0.8rem; font-size:0.8rem;}
@@ -452,17 +470,23 @@
     .holding-details-page .list-group-item a { color: #5fded4; }
     .holding-details-page .list-group-item a:hover { color: #7aded5; text-decoration: underline;}
 
-    .holding-details-page .text-danger-soft { color: #fca5a5; } /* Ajustado para contraste */
-    .holding-details-page .alert { font-size: 0.95rem; padding: 1rem 1.25rem;} /* Aumentado fonte e padding dos alertas */
+    .holding-details-page .text-danger-soft { color: #fca5a5; } 
+    .holding-details-page .text-danger-emphasis { color: #f87171 !important; } /* Para o texto de aviso da exclusão */
+    .holding-details-page .alert { font-size: 0.95rem; padding: 1rem 1.25rem;} 
     .holding-details-page .alert.text-warning-emphasis { color: #fde047 !important; }
-    .holding-details-page .alert.text-danger-emphasis { color: #fca5a5 !important; }
     
+    /* Estilos para o Card de Opções de Administrador */
+    .holding-details-page .card.border-danger-soft { border: 1px solid rgba(248, 113, 113, 0.35); }
+    .holding-details-page .card-header.bg-danger-soft { background-color: rgba(248, 113, 113, 0.2); border-bottom: 1px solid rgba(248, 113, 113, 0.35); }
+    .holding-details-page .card-header.bg-danger-soft .card-title-strong.text-danger-emphasis { color: #ef4444 !important; }
+
+
     /* Para formulários renderizados com .as_p, centralizar o label que vem antes de um textarea */
     .holding-details-page .card-body form > p > label[for*="id_observacoes"], 
-    .holding-details-page .card-body form > div.mb-3 > label[for*="id_observacoes"] { /* Para cobrir o form de status */
+    .holding-details-page .card-body form > div.mb-3 > label[for*="id_observacoes"] { 
         text-align: center;
-        margin-bottom: 0.75rem; /* Espaço acima do textarea */
-        font-size: 1rem; /* Maior para destaque */
+        margin-bottom: 0.75rem; 
+        font-size: 1rem; 
         color: #cbd5e1;
     }
     .holding-details-page .document-forms-container form p { margin-bottom: 0.85rem; }
