@@ -710,80 +710,149 @@ def dashboard_final(request):
         return redirect('dashboard')
 
     latest_simulation_obj = SimulationResult.objects.filter(user=request.user).order_by('-created_at').first()
-    # (O resto da sua lógica para user_holdings_qs, active_holding, target_processo, forms, chat, etc., permanece aqui)
-    # ...
     user_holdings_qs = Holding.objects.filter(clientes=request.user).prefetch_related('consultores', 'processo_criacao')
     
     active_holding = None
     target_processo = None
+    # Prioriza a holding que tem um processo de criação associado
     for h_obj in user_holdings_qs:
         if hasattr(h_obj, 'processo_criacao') and h_obj.processo_criacao:
             active_holding = h_obj
             target_processo = h_obj.processo_criacao
             break
+    # Se nenhuma holding com processo foi encontrada, mas o usuário tem holdings, pega a primeira
     if not active_holding and user_holdings_qs.exists():
         active_holding = user_holdings_qs.first()
         if hasattr(active_holding, 'processo_criacao') and active_holding.processo_criacao:
             target_processo = active_holding.processo_criacao
 
+    # Inicializa os formulários que podem ser usados no GET ou atualizados no POST
+    # Estes serão as instâncias "padrão" para um GET ou se o POST for para outro formulário.
+    # Se um POST específico para estes formulários ocorrer e falhar, eles serão substituídos pela instância com erro.
     document_form = DocumentUploadForm(processo_holding=target_processo) if target_processo else DocumentUploadForm()
     pasta_form = PastaDocumentoForm(processo_holding=target_processo) if target_processo else PastaDocumentoForm()
-    chat_form = ChatMessageForm()
-    
-    folder_structure = []
-    root_documents = []
-    chat_messages = []
-
-    if active_holding:
-        can_access_chat = (
-            request.user.is_superuser or
-            request.user in active_holding.clientes.all() or
-            (hasattr(active_holding, 'consultores') and active_holding.consultores and request.user in active_holding.consultores.all())
-        )
-        if can_access_chat:
-            chat_messages = ChatMessage.objects.filter(holding=active_holding).select_related('sender').order_by('timestamp')
-
-        if target_processo:
-            folder_structure, root_documents = get_folder_structure_with_documents(target_processo)
+    chat_form_to_render = ChatMessageForm() 
 
     if request.method == 'POST':
-        # ... (SUA LÓGICA POST EXISTENTE PARA DOCUMENTOS, CHAT, PASTAS, ETC., VEM AQUI)
-        # Exemplo:
-        if 'create_folder' in request.POST and target_processo:
-            # ... (lógica de criar pasta) ...
-            return redirect(request.path_info + '#documentos')
-        elif 'upload_document_cliente' in request.POST and target_processo:
-            # ... (lógica de upload de documento) ...
-            return redirect(request.path_info + '#documentos')
-        elif 'send_chat_message' in request.POST and active_holding:
-            # ... (lógica de enviar mensagem no chat) ...
-            return redirect(request.path_info + '#mensagens') # ou '#consultor'
+        if 'upload_document_cliente' in request.POST and target_processo:
+            # Processa o formulário de upload de documento
+            document_form = DocumentUploadForm(request.POST, request.FILES, processo_holding=target_processo)
+            if document_form.is_valid():
+                doc = document_form.save(commit=False)
+                doc.processo_holding = target_processo
+                doc.enviado_por = request.user
+                doc.nome_original_arquivo = doc.arquivo.name # Salva o nome original
+
+                # Lógica de versionamento (similar à da área de gestão)
+                latest_version_data = Documento.objects.filter(
+                    processo_holding=target_processo,
+                    nome_documento_logico=doc.nome_documento_logico,
+                    categoria=doc.categoria,
+                    pasta=doc.pasta # Considera a pasta para o versionamento
+                ).aggregate(max_versao=Max('versao'))
+                current_max_version = latest_version_data.get('max_versao')
+                doc.versao = (current_max_version + 1) if current_max_version is not None else 1
+                
+                try:
+                    doc.save()
+                    messages.success(request, f"Documento '{doc.nome_documento_logico}' (v{doc.versao}) enviado com sucesso!")
+                except IntegrityError: # Caso haja uma colisão de unique_together que não foi pega pela lógica de versão
+                    messages.error(request, "Erro de integridade ao salvar o documento. Verifique se um documento similar já existe.")
+                return redirect(request.path_info + '#documentos')
+            else:
+                messages.error(request, "Erro ao enviar documento. Verifique os campos.")
+                # document_form já é a instância com erros, será passada ao contexto.
+        
+        elif 'create_folder' in request.POST and target_processo:
+            # Processa o formulário de criação de pasta
+            pasta_form = PastaDocumentoForm(request.POST, processo_holding=target_processo)
+            if pasta_form.is_valid():
+                new_folder = pasta_form.save(commit=False)
+                new_folder.processo_holding = target_processo
+                new_folder.created_by = request.user
+                try:
+                    new_folder.save()
+                    messages.success(request, f"Pasta '{new_folder.nome}' criada com sucesso.")
+                except IntegrityError:
+                    messages.error(request, f"Já existe uma pasta com o nome '{new_folder.nome}' neste local para este processo.")
+                return redirect(request.path_info + '#documentos')
+            else:
+                messages.error(request, "Erro ao criar pasta. Verifique os dados.")
+                # pasta_form já é a instância com erros.
+
+        elif 'send_chat_message' in request.POST:
+            # Processa o formulário de chat
+            if not active_holding:
+                messages.error(request, "Nenhuma holding ativa encontrada para enviar a mensagem.")
+            else:
+                can_send_message = (
+                    request.user.is_superuser or # Superuser sempre pode
+                    (active_holding.clientes.filter(id=request.user.id).exists()) or # Cliente da holding
+                    (active_holding.consultores.filter(id=request.user.id).exists()) # Consultor da holding
+                )
+                if not can_send_message:
+                    messages.error(request, "Você não tem permissão para enviar mensagens neste chat.")
+                else:
+                    posted_chat_form = ChatMessageForm(request.POST)
+                    if posted_chat_form.is_valid():
+                        new_message = posted_chat_form.save(commit=False)
+                        new_message.holding = active_holding
+                        new_message.sender = request.user
+                        new_message.save()
+                        return redirect(request.path_info + '#mensagens')
+                    else:
+                        chat_form_to_render = posted_chat_form # Usa o formulário com erros para re-renderizar
+                        messages.error(request, "Não foi possível enviar sua mensagem. Verifique o conteúdo.")
+        
+        # Outros formulários POST podem ser tratados aqui com 'elif'
+
+    # Coleta de dados para o contexto (para GET ou para re-renderizar após POST falho)
+    folder_structure = []
+    root_documents = []
+    chat_messages_list = [] 
+
+    if active_holding:
+        # Permissões para carregar mensagens existentes (apenas para visualização)
+        can_access_chat_display = (
+            request.user.is_superuser or
+            (active_holding.clientes.filter(id=request.user.id).exists()) or
+            (active_holding.consultores.filter(id=request.user.id).exists())
+        )
+        if can_access_chat_display:
+            chat_messages_list = ChatMessage.objects.filter(holding=active_holding).select_related('sender').order_by('timestamp')
+
+        if target_processo:
+            # Supondo que get_folder_structure_with_documents está definida em algum lugar (views.py ou utils.py)
+            try:
+                folder_structure, root_documents = get_folder_structure_with_documents(target_processo)
+            except NameError: # Se a função não estiver definida/importada
+                pass # Lidar com isso, talvez logar um erro ou deixar as listas vazias
 
     context = {
-        'user': request.user, # User é usado para saudação e checagens
+        'user': request.user,
         'user_holdings': user_holdings_qs,
-        # Removido 'latest_simulation': latest_simulation_obj, pois os dados estarão no contexto expandido
         
         'active_holding_for_docs': active_holding if target_processo else None,
         'target_processo_id': target_processo.id if target_processo else None,
-        'document_form': document_form,
-        'pasta_form': pasta_form,
+        'document_form': document_form, 
+        'pasta_form': pasta_form,       
         'folder_structure': folder_structure,
         'root_documents': root_documents,
         
         'active_holding_for_chat': active_holding,
-        'chat_form': chat_form,
-        'chat_messages': chat_messages,
+        'chat_form': chat_form_to_render, 
+        'chat_messages': chat_messages_list, 
     }
 
-    # Obter detalhes da simulação e adicionar/atualizar o contexto
     if latest_simulation_obj:
-        simulation_details_context = _get_simulation_presentation_context(latest_simulation_obj, request.user)
-        context.update(simulation_details_context)
+        # Supondo que _get_simulation_presentation_context está definida
+        try:
+            simulation_details_context = _get_simulation_presentation_context(latest_simulation_obj, request.user)
+            context.update(simulation_details_context)
+        except NameError: # Se a função não estiver definida/importada
+            context['simulation_instance'] = None # Garante que a chave existe
     else:
-        # Se não houver simulação, você pode querer passar algumas chaves vazias ou padrões
-        # para evitar erros de template, ou o template já lida com `{% if simulation_instance %}`
-        context['simulation_instance'] = None # Garante que a chave existe para o if no template
+        context['simulation_instance'] = None
 
     return render(request, 'core/dashboard.html', context)
 
