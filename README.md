@@ -1,5 +1,5 @@
 # Plataforma de Gestão de Holdings W1
-
+https://w1-production-f1be.up.railway.app/management/
 Este projeto é uma plataforma web desenvolvida para facilitar a criação, gestão e acompanhamento de Holdings patrimoniais. O sistema visa oferecer ferramentas para otimizar o planejamento sucessório, proteger o patrimônio e melhorar a gestão financeira dos usuários.
 
 ## Tecnologias Utilizadas
@@ -85,3 +85,7 @@ Este projeto é uma plataforma web desenvolvida para facilitar a criação, gest
     * A plataforma estará acessível em: `http://localhost:8000/`
     * O painel administrativo do Django estará em: `http://localhost:8000/admin/`
         * As credenciais do superusuário padrão são definidas pelas variáveis `DJANGO_SUPERUSER_EMAIL` e `DJANGO_SUPERUSER_PASSWORD` no seu arquivo `.env` (ou pelos defaults em `create_dev_admin.py` caso as variáveis não sejam definidas).
+
+https://w1-production-f1be.up.railway.app/management/
+Para acessar a página de editar holding, clica em cima do nome da holding
+
