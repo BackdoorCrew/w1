@@ -11,97 +11,84 @@
     {# <link rel="stylesheet" href="{% static 'css/management_styles.css' %}"> #}
     <style>
         body {
-            background-color: #022028; /* Fundo escuro para toda a página */
-            color: #333;
-            min-height: 100vh; /* Garante altura mínima da viewport */
-            margin: 0; /* Remove margens padrão */
+            background-color: #022028; 
+            color: #e5e7eb; /* << ALTERADO para cor clara padrão */
+            min-height: 100vh; 
+            margin: 0; 
             display: flex;
             flex-direction: column;
+            font-family: 'Montserrat', sans-serif;
         }
         .management-nav {
-            background-color: #022028;
-            padding: 1rem;
+            background-color: #011A21; 
+            padding: 1rem 1.5rem; 
+            border-bottom: 1px solid #044048; 
         }
         .management-nav a {
-            color: #fff;
-            margin-right: 1rem;
+            color: #adb5bd; 
+            margin-right: 1.5rem;
             text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
         }
-        .management-nav a:hover {
-            color: #5fded4;
+        .management-nav a:hover { color: #5fded4; }
+        .management-nav i.fas { margin-right: 0.5rem; }
+        .management-nav span[style*="float: right"] { color: #adb5bd; }
+        .management-nav span[style*="float: right"] a { color: #5fded4; margin-left: 0.3rem; }
+
+        .container-fluid, .container { /* Aplicar a ambos os containers se usados */
+            flex: 1;
+            width: 100%; /* .container-fluid já é, .container pode ser ajustado */
+            max-width: 1200px; 
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 15px; /* Padding padrão para o container */
+            padding-right: 15px;
         }
-        .container {
-            flex: 1; /* Faz o container crescer para ocupar o espaço disponível */
-            width: 1100px;
-            margin: 0 auto;
-            padding: 0px;
+        .container { /* Para o container do management_base.html */
+             padding-top: 20px;
+             padding-bottom: 20px;
         }
+        
         table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1rem;
+            width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;
+            color: #d1d5db; 
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 0.75rem;
-            text-align: left;
-        }
-        th {
-            background-color: #e9ecef;
-        }
-        .btn {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background-color: #5fded4;
-            color: #022028;
-            text-decoration: none;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-        .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="password"], .form-group select {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
+        th, td { border: 1px solid #055058; padding: 0.75rem 1rem; text-align: left; }
+        th { background-color: #033038; color: #5fded4; font-weight: 500; }
+        
         .page-header {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #eee;
+            margin-bottom: 2rem; padding-bottom: 1rem;
+            border-bottom: 1px solid #044048; 
         }
-        .page-header h1 {
-            margin: 0;
-            font-family: "Cal Sans", sans-serif;
-            color: #022028;
+        .page-header h1, .page-header .h2 {
+            margin: 0; font-family: "Cal Sans", sans-serif;
+            color: #ffffff; /* Cor dos títulos principais da página */
         }
-        .action-links a {
-            margin-right: 10px;
+        
+        /* Removendo estilos genéricos de form-group para evitar conflito,
+           eles serão definidos mais especificamente no extra_css ou inline.
+           Se você precisar deles em outras páginas de management, defina-os com
+           um seletor mais específico para aquelas páginas, ou use classes customizadas.
+        */
+        /* .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        .form-group input[type="text"], .form-group input[type="email"], 
+        .form-group input[type="password"], .form-group select {
+            width: 100%; padding: 0.5rem; border: 1px solid #ccc;
+            border-radius: 4px; box-sizing: border-box;
         }
-        .filter-form {
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-        }
+        */
+        .alert { border-radius: 6px; padding: 1rem 1.25rem; font-size: 0.95rem; margin-bottom: 1.5rem;}
+        .alert-success { background-color: rgba(40,167,69,.15); color: #4ade80; border: 1px solid rgba(40,167,69,.3);}
+        .alert-warning { background-color: rgba(255,193,7,.15); color: #fde047; border: 1px solid rgba(255,193,7,.3);}
+        .alert-danger { background-color: rgba(220,53,69,.15); color: #fca5a5; border: 1px solid rgba(220,53,69,.3);}
+        .alert-info { background-color: rgba(13,202,240,.15); color: #67e8f9; border: 1px solid rgba(13,202,240,.3);}
+        .btn-close { background: none; border: none; color: inherit; font-size: 1.25rem; float: right; line-height: 1; padding: 0.25rem 0.5rem; opacity: 0.7;}
+        .btn-close:hover { opacity: 1;}
+
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <nav class="management-nav">
@@ -109,17 +96,25 @@
         <a href="{% url 'management_list_users' %}"><i class="fas fa-users"></i> Usuários</a>
         <a href="{% url 'management_list_holdings' %}"><i class="fas fa-building"></i> Holdings</a>
         <a href="{% url 'management_create_consultant' %}"><i class="fas fa-user-plus"></i> Criar Consultor</a>
-        <span style="float: right; color: #fff;">Olá, {{ request.user.get_full_name|default:request.user.email }} (<a href="{% url 'account_logout' %}" style="color: #5fded4;">Sair</a>)</span>
+        <span style="float: right; color: #adb5bd; font-size: 0.9rem; display: flex; align-items: center;">Olá, {{ request.user.get_full_name|default:request.user.email }} 
+            (<a href="{% url 'account_logout' %}" style="color: #5fded4; margin-left: 0.3rem;">Sair <i class="fas fa-sign-out-alt fa-xs"></i></a>)
+        </span>
     </nav>
-    <div class="container">
+    <div class="container py-4">
         {% if messages %}
+            <div class="mb-3">
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">&times;</button>
+                </div>
             {% endfor %}
+            </div>
         {% endif %}
         {% block content %}
         {% endblock %}
     </div>
-    <script src="{% static 'js/scripts.js' %}"></script> {# Seus scripts globais, se necessário #}
+    <script src="{% static 'js/scripts.js' %}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
