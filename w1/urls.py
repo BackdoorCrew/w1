@@ -34,7 +34,12 @@ urlpatterns = [
     path('management/holding/<int:holding_id>/manage-details-consultants/', views.management_manage_holding_details_and_consultants, name='management_manage_holding_details_and_consultants'),
     # Se você preferir manter o nome da URL antigo por consistência com os templates atuais:
     # path('management/holding/<int:holding_id>/assign-consultant/', views.management_manage_holding_details_and_consultants, name='management_assign_consultant_to_holding'),
-    
+    path('dashboard/docs/folder/<int:current_folder_id>/', views.dashboard_final, name='dashboard_final_docs_folder'),
+
+    # Standalone explorer URLs (if you're keeping it, otherwise these can be removed)
+    path('documents/explorer/', views.view_documents_standalone, name='view_documents_standalone_root'),
+    path('documents/explorer/<int:parent_folder_id>/', views.view_documents_standalone, name='view_documents_standalone_folder'),
+    path('management/holding/<int:holding_id>/details/folder/<int:current_folder_id_management>/', views.management_holding_detail, name='management_holding_detail_folder'),
     path('management/holding/<int:holding_id>/documents/', views.management_holding_documents, name='management_holding_documents'), # Esta view redireciona
     path('management/holding/<int:holding_id>/manage-clients/', views.management_holding_manage_clients, name='management_holding_manage_clients'),
     path('management/holding/<int:holding_id>/chat/', views.management_holding_chat, name='management_holding_chat'), # <-- ADD THIS LINE

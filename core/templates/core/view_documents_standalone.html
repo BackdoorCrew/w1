@@ -1,0 +1,271 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+    Explorador de Documentos - {{ active_holding.nome_holding|default:"Sua Holding" }}
+{% endblock %}
+
+{% block head_extra_styles %}
+    {{ block.super }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #022028 !important;
+            color: #e5e7eb;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .file-explorer-container {
+            padding: 25px;
+            max-width: 1000px;
+            margin: 30px auto;
+            background-color: #011a21;
+            border-radius: 8px;
+            border: 1px solid #044048;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .explorer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px; /* Reduced margin */
+            padding-bottom: 10px;
+            border-bottom: 1px solid #044048;
+        }
+        .explorer-header h1 {
+            font-family: "Cal Sans", sans-serif;
+            font-size: 1.8rem; /* Adjusted size */
+            color: #fff;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+        .explorer-header h1 .fas {
+            color: #5fded4;
+            margin-right: 10px;
+        }
+        .back-to-dashboard-btn-explorer {
+            padding: 8px 15px;
+            background-color: #5fded4;
+            color: #022028;
+            border-radius: 5px;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 0.85rem; /* Adjusted size */
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+        .back-to-dashboard-btn-explorer:hover {
+            background-color: #4acbc1;
+            transform: translateY(-1px);
+        }
+        .back-to-dashboard-btn-explorer .fas {
+            margin-right: 6px;
+        }
+
+        .breadcrumbs-bar {
+            background-color: #032830;
+            padding: 10px 15px; /* Increased padding */
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #adb5bd; /* Base color for breadcrumbs text */
+        }
+        .breadcrumbs-bar a {
+            color: #5fded4; /* Link color */
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .breadcrumbs-bar a:hover {
+            text-decoration: underline;
+            color: #7aded5;
+        }
+        .breadcrumbs-bar .separator {
+            color: #4b5563; /* Darker separator */
+            margin: 0 8px; /* Increased spacing */
+        }
+        .breadcrumbs-bar .current-crumb {
+            color: #e5e7eb; /* Brighter for current */
+            font-weight: 600;
+        }
+
+        .file-list-table {
+            width: 100%;
+            border-collapse: collapse; /* Ensure borders connect cleanly */
+        }
+        .file-list-table th, .file-list-table td {
+            padding: 12px 10px; /* Increased padding */
+            text-align: left;
+            font-size: 0.9rem;
+            color: #d1d5db;
+            border-bottom: 1px solid #044048; /* Border for all rows */
+        }
+        .file-list-table thead th { /* Specific styling for header */
+            background-color: #055058;
+            color: #5fded4;
+            font-weight: 600;
+            font-size: 0.85rem; /* Smaller font for header */
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+             border-bottom: 2px solid #076068; /* Thicker bottom border for header */
+        }
+        .file-list-table tbody tr:hover td {
+            background-color: #033038; /* Hover effect for rows */
+        }
+        .file-list-table .item-icon {
+            width: 18px; /* Fixed width for icons */
+            text-align: center;
+            margin-right: 12px; /* More space after icon */
+            font-size: 1.1rem; /* Slightly larger icons */
+        }
+        .file-list-table .folder .item-icon { color: #fcd34d; } /* Font Awesome yellow */
+        .file-list-table .file .item-icon { color: #80cbc4; }   /* Font Awesome teal */
+        .file-list-table .up-folder .item-icon { color: #9ca3af; } /* Grey for up arrow */
+
+        .file-list-table .item-name-link {
+            color: #e5e7eb;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex; /* Align icon and text */
+            align-items: center;
+        }
+        .file-list-table .item-name-link:hover {
+            color: #5fded4;
+        }
+        .file-list-table .item-details,
+        .file-list-table .item-metadata {
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+        .empty-folder-message {
+            padding: 30px 20px; /* More padding */
+            text-align: center;
+            color: #9ca3af;
+            background-color: #032830;
+            border-radius: 6px; /* Slightly more rounded */
+            margin-top: 20px;
+            border: 1px dashed #044048; /* Dashed border for emphasis */
+        }
+        .empty-folder-message .fas {
+            font-size: 2.5rem; /* Larger icon */
+            margin-bottom: 15px;
+            color: #4b5563;
+        }
+
+    </style>
+{% endblock %}
+
+{% block header %}
+    {{ block.super }}
+{% endblock header %}
+
+{% block content %}
+<div class="file-explorer-container">
+    <div class="explorer-header">
+        <h1><i class="fas fa-folder-open"></i>Explorador de Documentos</h1>
+        <a href="{% url 'dashboard_final' %}#documentos" class="back-to-dashboard-btn-explorer">
+            <i class="fas fa-arrow-left"></i> Voltar ao Painel
+        </a>
+    </div>
+
+    <div class="breadcrumbs-bar">
+        {% for crumb in breadcrumbs %}
+            {% if crumb.id is None and crumb.url_name == 'view_documents_standalone_root' %} {# Root case #}
+                {% if not forloop.last %}
+                    <a href="{% url crumb.url_name %}">{{ crumb.name }}</a>
+                    <span class="separator">&gt;</span>
+                {% else %}
+                    <span class="current-crumb">{{ crumb.name }}</span>
+                {% endif %}
+            {% elif crumb.id %} {# Folder case #}
+                 {% if not forloop.last %}
+                    <a href="{% url crumb.url_name parent_folder_id=crumb.id %}">{{ crumb.name }}</a>
+                    <span class="separator">&gt;</span>
+                {% else %}
+                    <span class="current-crumb">{{ crumb.name }}</span>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    {% if not subfolders and not documents %}
+        <div class="empty-folder-message">
+            {% if current_folder %}
+                <i class="fas fa-box-open"></i>
+                <p>Esta pasta ({{ current_folder.nome }}) está vazia.</p>
+            {% else %}
+                <i class="fas fa-folder-open"></i>
+                <p>Nenhum documento ou pasta encontrado na raiz para {{ active_holding.nome_holding }}.</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <table class="file-list-table">
+            <thead>
+                <tr>
+                    <th style="width: 50%;">Nome</th>
+                    <th style="width: 25%;">Tipo / Categoria</th>
+                    <th style="width: 25%;">Data / Versão</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if current_folder %} {# Show "Up" link if inside any folder #}
+                <tr class="up-folder">
+                    <td>
+                        <a href="{% if parent_for_up_button %}{% url 'view_documents_standalone_folder' parent_folder_id=parent_for_up_button.id %}{% else %}{% url 'view_documents_standalone_root' %}{% endif %}" class="item-name-link">
+                            <i class="fas fa-level-up-alt item-icon"></i> .. (Voltar)
+                        </a>
+                    </td>
+                    <td class="item-details"></td>
+                    <td class="item-details"></td>
+                </tr>
+                {% endif %}
+
+                {% for folder in subfolders %}
+                <tr class="folder">
+                    <td>
+                        <a href="{% url 'view_documents_standalone_folder' parent_folder_id=folder.id %}" class="item-name-link">
+                            <i class="fas fa-folder item-icon"></i> {{ folder.nome }}
+                        </a>
+                    </td>
+                    <td class="item-details">Pasta</td>
+                    <td class="item-metadata">
+                        {% if folder.created_at %}
+                            {{ folder.created_at|date:"d/m/Y" }}
+                            {% if folder.created_by %} por {{ folder.created_by.first_name|truncatechars:10 }}{% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% for doc in documents %}
+                <tr class="file">
+                    <td>
+                        <a href="{{ doc.arquivo.url }}" target="_blank" class="item-name-link" title="Ver/Baixar: {{ doc.nome_original_arquivo|default:doc.arquivo.name }}">
+                            <i class="fas fa-file-alt item-icon"></i>
+                            {{ doc.nome_documento_logico|default:doc.nome_original_arquivo|truncatechars:45 }}
+                        </a>
+                    </td>
+                    <td class="item-details">
+                        {{ doc.get_categoria_display|default:"Arquivo" }}
+                        {% if doc.descricao_adicional %}<br><small title="{{doc.descricao_adicional}}">Obs: {{ doc.descricao_adicional|truncatewords:4 }}</small>{% endif %}
+                    </td>
+                    <td class="item-metadata">
+                        {{ doc.data_upload|date:"d/m/Y" }} (v{{ doc.versao }})<br>
+                        <small>Por: {{ doc.enviado_por.first_name|truncatechars:10|default:"Usuário" }}</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block footer %}
+    <footer style="margin-top: 50px;">
+        <p class="copyright">© {% now "Y" %} W1 Holding Platform. Todos os direitos reservados.</p>
+        <p class="production">Uma produção de <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Diogo Coutinho</a> e <a href="https://dids1901.github.io" target="_blank" style="color: #ddd;">Guilherme Stern</a></p>
+    </footer>
+{% endblock footer %}

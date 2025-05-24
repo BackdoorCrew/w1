@@ -1,7 +1,8 @@
+/* General Base Styles */
 .cal-sans-regular {
-  font-family: "Cal Sans", sans-serif;
-  font-weight: 400;
-  font-style: normal;
+    font-family: "Cal Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
 }
 
 html {
@@ -14,12 +15,14 @@ body {
     padding: 0;
     color: #fff;
     background-color: #022028;
+    overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
+/* Header and Navigation - For base.html */
 header {
     background-color: #022028;
     color: white;
-    padding: 1em 0;
+    padding: 0.5em 0; /* Reduced padding slightly */
     position: sticky;
     top: 0;
     z-index: 100;
@@ -28,61 +31,70 @@ header {
 .navbar {
     display: flex;
     align-items: center;
+    flex-wrap: wrap; /* Allow wrapping for mobile */
+    justify-content: space-between; /* Space out logo and menu items/toggle */
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
-    gap: 15px; /* Reduced from 30px to bring elements closer */
+    padding: 0 15px; /* Reduced padding */
+    gap: 10px;
 }
 
 .logo-img {
-    height: 35px;
+    height: 30px;
     width: auto;
 }
 
 .logo {
     display: flex;
     align-items: flex-end;
-    gap: 10px; /* Espaço entre o logo e o texto */
+    gap: 8px;
+    text-decoration: none; /* Ensure logo link has no underline */
 }
 
 .logo-text {
     font-family: "Montserrat", sans-serif;
-    font-size: 1.5rem; /* Ajuste o tamanho conforme necessário */
-    
-    color: #fff; /* Cor branca para combinar com o tema */
-    
+    font-size: 1.2rem;
+    color: #fff;
 }
 
-.plans, .nav-links {
+.menu-toggle {
+    display: none; /* Hidden by default, shown on mobile */
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.6rem; /* Larger tap target */
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.nav-links {
     list-style: none;
     padding: 0;
     margin: 0;
     display: flex;
     align-items: center;
+    gap: 5px; /* Initial gap */
 }
 
-.nav-links {
-    margin-left: 10px; /* Small margin to separate from logo/plans */
+.nav-links li {
+    margin: 0 8px; /* Reduced margin */
 }
 
-.plans li, .nav-links li {
-    margin: 0 15px; /* Reduced from 30px for tighter spacing */
-}
-
-.plans li a, .nav-links li a {
+.nav-links li a {
     position: relative;
     color: white;
     text-decoration: none;
     font-family: "Montserrat", sans-serif;
     font-weight: bold;
-    font-size: 1.5vw;
+    font-size: 0.9rem; /* Base size for links */
     transition: color 0.3s;
+    padding: 8px 5px; /* Padding for easier tap */
 }
 
 .nav-links li a::after {
     content: "";
     position: absolute;
-    bottom: -4px;
+    bottom: -2px; /* Closer to text */
     left: 0;
     width: 0;
     height: 2px;
@@ -94,70 +106,27 @@ header {
     width: 100%;
 }
 
-.plans li a:hover, .nav-links li a:hover {
+.nav-links li a:hover {
     color: #5fded4;
 }
 
-.plan-item {
-    padding: 6px 12px;
-    border-radius: 8px;
-    transition: background-color 0.3s;
-}
-
-.plan-item:hover {
-    background-color: rgba(95, 222, 212, 0.1);
-}
-
-.plan-item.active {
-    background-color: rgba(95, 222, 212, 0.25);
-}
-
-.login-button {
-    background-color: #5fded4;
-    color: #022028;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: bold;
-    text-decoration: none;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    white-space: nowrap;
-    margin-left: auto; /* Pushes login button to the right */
-}
-
-.login-button:hover {
-    background-color: #49c4ba;
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Estilos ATUALIZADOS para o Dropdown Nosso Ecossistema */
 .ecosystem-dropdown {
-    position: relative; /* Necessário para o posicionamento absoluto do conteúdo do dropdown */
+    position: relative;
     display: inline-block;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    margin-left: 100px;  /* AUMENTADO: Ajuste este valor para empurrar mais para a direita, conforme necessário */
-    
 }
 
 .ecosystem-trigger {
-    /* position: relative; /* Não é mais necessário pois ::after foi removido */
     color: white;
     text-decoration: none;
     font-family: "Montserrat", sans-serif;
     font-weight: bold;
-    font-size: 1.5vw; /* Mantendo consistência com .nav-links li a */
+    font-size: 0.9rem; /* Consistent with nav-links */
     transition: color 0.3s;
     cursor: pointer;
-    display: inline-block; /* Para comportamento adequado de bloco/linha */
-    /* padding-bottom: 6px; /* REMOVIDO - Era para o ::after */
+    display: inline-flex; /* Align icon nicely */
+    align-items: center;
+    padding: 8px 5px; /* Padding for easier tap */
 }
-
-/* Efeito de sublinhado ::after FOI REMOVIDO conforme solicitado */
 
 .ecosystem-trigger:hover {
     color: #5fded4;
@@ -165,7 +134,7 @@ header {
 
 .ecosystem-trigger .fa-chevron-down {
     margin-left: 5px;
-    font-size: 0.8em; /* Torna o ícone um pouco menor */
+    font-size: 0.8em;
     transition: transform 0.3s ease;
 }
 
@@ -174,56 +143,76 @@ header {
 }
 
 .ecosystem-dropdown-content {
-    display: none; /* Escondido por padrão */
+    display: none;
     position: absolute;
-    background-color: #033540; /* Cor de fundo do dropdown */
-    min-width: 280px; /* Largura mínima, ajuste conforme o conteúdo */
+    background-color: #033540;
+    min-width: 260px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.3);
-    z-index: 101; /* Acima de outros elementos, se necessário */
+    z-index: 101;
     list-style: none;
-    padding: 10px 0; /* Padding vertical interno */
-    margin: 0; /* Remove margens padrão da ul */
-    /* margin-top: 8px; /* REMOVIDO para eliminar o gap */
-    top: 100%; /* ATUALIZADO: Posiciona o menu dropdown diretamente abaixo do .ecosystem-trigger (considerando a altura do trigger e o padding-bottom do .ecosystem-dropdown) */
-    left: 50%; /* Para centralizar o dropdown */
-    transform: translateX(-50%); /* Centraliza o dropdown em relação ao gatilho */
+    padding: 8px 0;
+    margin: 0;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
     border-radius: 5px;
 }
 
-/* Mostra o dropdown ao passar o mouse sobre .ecosystem-dropdown */
 .ecosystem-dropdown:hover .ecosystem-dropdown-content {
     display: block;
 }
 
 .ecosystem-dropdown-content li a {
     color: white;
-    padding: 10px 20px; /* Padding dos itens do dropdown */
+    padding: 10px 15px;
     text-decoration: none;
-    display: flex; /* Para alinhar o logo e o texto */
-    align-items: center; /* Alinhamento vertical */
+    display: flex;
+    align-items: center;
     font-family: 'Montserrat', sans-serif;
-    font-size: 0.9rem; /* Tamanho da fonte dos itens */
-    white-space: nowrap; /* Evita quebra de linha nos itens */
+    font-size: 0.85rem;
+    white-space: nowrap;
     transition: background-color 0.3s, color 0.3s;
 }
 
 .ecosystem-dropdown-content li a:hover {
-    background-color: #022028; /* Cor de fundo no hover */
-    
+    background-color: #022028;
 }
 
 .dropdown-logo-img {
-    height: 18px; /* Tamanho do logo dentro do dropdown */
+    height: 16px;
     width: auto;
-    margin-right: 10px; /* Espaço entre o logo e o texto */
+    margin-right: 8px;
+}
+
+.login-button {
+    background-color: #5fded4;
+    color: #022028;
+    padding: 8px 15px; /* Adjusted padding */
+    border-radius: 5px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 0.9rem; /* Adjusted size */
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-left: 10px; /* Give some space from other items */
+}
+
+.login-button:hover {
+    background-color: #49c4ba;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 
+/* Hero Section - For index.html */
 .hero {
     position: relative;
     text-align: center;
-    padding: 0px 20px;
-    height: 90vh;
+    padding: 40px 20px; /* Padding for content */
+    min-height: 70vh; /* Ensure it's not too short on mobile */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -232,11 +221,12 @@ header {
 
 .hero-video {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 50%; /* Center video */
+    left: 50%; /* Center video */
     width: 100%;
-    height: 90vh;
+    height: 100%;
     object-fit: cover;
+    transform: translate(-50%, -50%); /* Center video */
     z-index: 1;
 }
 
@@ -247,7 +237,7 @@ header {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(2, 32, 40, 0.5);
+    background: rgba(2, 32, 40, 0.6); /* Darker overlay for readability */
     z-index: 2;
 }
 
@@ -257,134 +247,112 @@ header {
     max-width: 1200px;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center children horizontally */
-    justify-content: center; /* Center children vertically within hero-content */
-    gap: 20px; /* Replace individual margins with gap for consistent spacing */
-    width: 100%; /* Ensure it spans the max-width */
+    align-items: center;
+    gap: 15px;
+    width: 100%;
 }
 
 .hero h1 {
-    font-size: 5rem;
+    font-size: 2.2rem; /* Responsive base */
     color: #5fded4;
     font-family: "Cal Sans", sans-serif;
-    max-width: 70%;
-    margin: 0 auto 20px;
+    max-width: 90%;
+    margin: 0 auto 10px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.subtitle {
-    font-size: 1.2rem;
+.hero .subtitle { /* More specific selector */
+    font-size: 1rem;
     color: #fff;
-    max-width: 600px;
+    max-width: 90%;
     font-family: 'Montserrat', sans-serif;
-    margin: 0 auto 30px;
+    margin: 0 auto 20px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    line-height: 1.5;
 }
 
-.buttons {
+.hero .buttons { /* More specific selector */
     display: flex;
-    justify-content: center;
-    gap: 20px;
+    flex-direction: column; /* Stack on mobile */
+    align-items: center;
+    gap: 12px;
+    width: 100%;
 }
 
-button {
+.hero .btn { /* More specific selector */
     background-color: #022028;
     border: 2px solid #5fded4;
     color: #5fded4;
-    padding: 12px 24px;
+    padding: 12px 20px;
     border-radius: 5px;
     font-family: 'Montserrat', sans-serif;
     font-weight: bold;
     text-decoration: none;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.9rem;
     transition: all 0.3s ease;
+    width: 80%;
+    max-width: 280px; /* Max width for buttons */
+    box-sizing: border-box;
 }
 
-button:hover {
+.hero .btn:hover {
     background-color: #5fded4;
     color: #022028;
     transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.btn {
-    background-color: #022028;
-    border: 2px solid #5fded4;
-    color: #5fded4;
-    padding: 12px 24px;
-    border-radius: 5px;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: bold;
-    text-decoration: none;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.btn:hover {
-    background-color: #5fded4;
-    color: #022028;
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
+/* Holding Info Section - For index.html */
 .holding-info {
-    padding: 60px 5vw;
+    padding: 40px 20px; /* Adjusted padding */
     background-color: #022028;
     color: #fff;
 }
 
 .holding-container {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    flex-direction: column; /* Stack on mobile */
+    align-items: center;
     max-width: 1200px;
     margin: 0 auto;
-    gap: 40px;
+    gap: 30px;
 }
 
 .holding-text {
-    flex: 0.5;
-    text-align: left;
+    flex: 1;
+    text-align: center; /* Center text on mobile */
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
 }
 
 .holding-info h2 {
-    font-size: 2.5rem;
+    font-size: 1.8rem; /* Adjusted size */
     font-family: "Cal Sans", sans-serif;
     color: #fff;
     margin: 0;
 }
 
-.holding-subtitle {
-    font-size: 1.1rem;
+.holding-info .holding-subtitle { /* More specific selector */
+    font-size: 1rem;
     font-family: 'Montserrat', sans-serif;
     color: #fff;
     margin: 0;
-}
-
-.holding-video {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    line-height: 1.5;
 }
 
 .benefits-grid {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, auto);
-    gap: 20px;
+    grid-template-columns: 1fr; /* Single column on mobile */
+    gap: 15px;
+    width: 100%;
 }
 
 .benefit-card {
     background-color: #033540;
-    padding: 20px;
+    padding: 20px; /* Increased padding a bit */
     border-radius: 10px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -392,61 +360,66 @@ button:hover {
     display: flex;
     align-items: center;
     flex-direction: row;
+    gap: 10px; /* Add gap between icon and text */
+    margin-bottom: 10px; /* Space below heading group */
 }
 
 .benefit-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    
 }
 
 .benefit-icon {
-    font-size: 2rem;
-    margin-right: 1.5vw;
+    font-size: 1.8rem;
     color: #5fded4;
-   
+    flex-shrink: 0; /* Prevent icon from shrinking */
 }
 
 .benefit-card h3 {
     font-family: 'Montserrat', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.2rem; /* Adjusted size */
     color: #5fded4;
+    margin: 0;
 }
 
 .benefit-card p {
     font-family: 'Montserrat', sans-serif;
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: #fff;
+    line-height: 1.6;
+    margin: 0; /* Remove default p margin if h3 has margin-bottom */
 }
 
+/* Comparison Section - For index.html */
 .comparison {
-    padding: 60px 5vw;
+    padding: 40px 20px; /* Adjusted padding */
     background-color: #033540;
     color: #fff;
     text-align: center;
 }
 
 .comparison h2 {
-    font-size: 2.5rem;
-    text-align: left;
+    font-size: 1.8rem;
+    text-align: center; /* Center on mobile */
     font-family: "Cal Sans", sans-serif;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
-.comparison-subtitle {
-    font-size: 1.1rem;
-    text-align: left;
+.comparison .comparison-subtitle { /* More specific selector */
+    font-size: 1rem;
+    text-align: center;
     font-family: 'Montserrat', sans-serif;
-    margin: 0 auto 40px;
+    margin: 0 auto 30px;
+    line-height: 1.5;
 }
 
 .comparison-content {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column; /* Stack on mobile */
     align-items: stretch;
     max-width: 1200px;
     margin: 0 auto;
-    gap: 40px;
+    gap: 25px;
 }
 
 .left-column {
@@ -454,37 +427,38 @@ button:hover {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    gap: 20px;
+    gap: 20px; /* Space between saving blocks */
 }
 
 .right-column {
-    flex: 3;
+    flex: 1; /* Adjust flex basis if needed */
 }
 
 .savings-block {
     text-align: left;
-    border-left: solid 4px #5fded4;
+    border-left: solid 3px #5fded4;
     padding-left: 10px;
 }
 
 .savings-number {
-    font-size: 2rem;
+    font-size: 1.4rem; /* Adjusted size */
     font-weight: bold;
     color: #5fded4;
     font-family: 'Montserrat', sans-serif;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
 }
 
 .savings-text {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: #fff;
     font-family: 'Montserrat', sans-serif;
+    line-height: 1.5;
 }
 
 .image-container {
     position: relative;
     width: 100%;
-    height: 400px;
+    height: 280px; /* Adjusted height for mobile */
     overflow: hidden;
     text-align: left;
     border-radius: 10px;
@@ -496,11 +470,11 @@ button:hover {
     object-fit: cover;
     display: block;
     transform: scale(1.1);
-    transition: transform 0.3s ease; /* Added for zoom-out effect */
+    transition: transform 0.3s ease;
 }
 
 .image-container:hover #model-image {
-    transform: scale(1); /* Zoom-out effect on hover */
+    transform: scale(1);
 }
 
 .image-overlay {
@@ -509,7 +483,7 @@ button:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, rgba(2, 32, 40, 0.5), rgba(2, 32, 40, 1));
+    background: linear-gradient(to bottom, rgba(2, 32, 40, 0.4), rgba(2, 32, 40, 0.9));
     z-index: 1;
 }
 
@@ -520,12 +494,13 @@ button:hover {
     right: 0;
     color: #fff;
     font-family: 'Montserrat', sans-serif;
-    padding: 20px;
+    padding: 15px;
     font-weight: bold;
-    font-size: 2vw;
+    font-size: 1.1rem; /* Base size */
     transform: translateY(0);
     transition: transform 0.3s ease;
     z-index: 4;
+    line-height: 1.4;
 }
 
 .image-btn {
@@ -533,15 +508,15 @@ button:hover {
     border: 2px solid #5fded4;
     color: #5fded4;
     position: absolute;
-    bottom: -50px;
-    left: 20px;
-    padding: 12px 24px;
+    bottom: -50px; /* Initially hidden */
+    left: 15px;
+    padding: 10px 18px;
     border-radius: 5px;
     font-family: 'Montserrat', sans-serif;
     font-weight: bold;
     text-decoration: none;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.9rem;
     z-index: 2;
     transition: all 0.3s ease;
 }
@@ -550,44 +525,46 @@ button:hover {
     background-color: #5fded4;
     color: #022028;
     transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .image-container:hover .image-text {
-    transform: translateY(-70px);
+    transform: translateY(-50px); /* Adjust based on button height */
 }
 
 .image-container:hover .image-btn {
-    bottom: 20px;
+    bottom: 15px;
 }
 
 .model-buttons {
     display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-top: 40px;
+    flex-direction: column; /* Stack on mobile */
+    align-items: center;
+    gap: 15px; /* Gap for mobile */
+    margin-top: 30px;
 }
 
 .model-btn-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
 }
 
 .model-btn {
     font-family: "Cal Sans", sans-serif;
-    font-size: 1.2rem;
+    font-size: 1rem;
     color: #fff;
     text-transform: uppercase;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px; /* Space between icon and text */
+    gap: 8px;
     transition: color 0.3s ease;
+    padding: 10px; /* Added padding for touch */
 }
 
 .model-btn i {
-    font-size: 1.2rem; /* Icon size */
+    font-size: 1rem;
 }
 
 .model-btn:hover, .model-btn.active {
@@ -595,192 +572,100 @@ button:hover {
 }
 
 .model-btn:hover i, .model-btn.active i {
-    color: #5fded4; /* Icon color matches text */
+    color: #5fded4;
 }
 
 .timer-line {
     height: 2px;
     background-color: #5fded4;
     width: 0;
-    margin-top: 5px;
+    margin-top: 3px;
 }
 
 .timer-line.active {
-    transition: width 5s linear; /* Animation only for active line */
+    transition: width 5s linear;
     width: 100%;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .comparison-content {
-        flex-direction: column;
-    }
-    .left-column, .right-column {
-        flex: none;
-        width: 100%;
-    }
-    .savings-number {
-        font-size: 1.8rem;
-    }
-    .image-container {
-        height: 300px;
-    }
-    .image-text {
-        font-size: 4vw; /* Adjust font size for mobile */
-    }
-    .model-buttons {
-        gap: 20px;
-    }
-    .model-btn {
-        font-size: 1rem;
-    }
-    .model-btn i {
-        font-size: 1rem;
-    }
-}
-
+/* Steps Section - For index.html */
 .steps {
-    padding: 60px 5vw;
+    padding: 40px 20px; /* Adjusted padding */
     background-color: #022028;
     color: #fff;
     text-align: center;
 }
 
 .steps h2 {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-family: "Cal Sans", sans-serif;
     color: #fff;
-    text-align: left;
-    margin-bottom: 20px;
+    text-align: center; /* Center on mobile */
+    margin-bottom: 15px;
 }
 
-.steps-subtitle {
-    font-size: 1.1rem;
+.steps .steps-subtitle { /* More specific selector */
+    font-size: 1rem;
     font-family: 'Montserrat', sans-serif;
-    text-align: left;
-    margin: 0 auto 40px;
+    text-align: center; /* Center on mobile */
+    margin: 0 auto 30px;
+    line-height: 1.5;
 }
 
 .steps-row {
-    position: relative;
-    margin: 60px auto;
+    margin: 20px auto;
     max-width: 1000px;
-    height: 250px;
+    height: auto; /* Auto height for mobile */
 }
 
-.steps-row[data-row="1"] .timeline-line {
-    left: 0;
-    width: 0;
-    height: 4px;
-    background-color: #5fded4;
-    position: absolute;
-    top: 20px;
-    transition: width 0.5s ease;
-}
-
-.steps-row[data-row="2"] .timeline-line {
-    right: 0;
-    width: 0;
-    height: 4px;
-    background-color: #5fded4;
-    position: absolute;
-    top: 20px;
-    transition: width 0.5s ease;
-}
-
-.start-ball, .end-ball {
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    background-color: #5fded4;
-    border-radius: 50%;
-    top: 15px;
-}
-
-.steps-row[data-row="1"] .start-ball {
-    left: 0;
-}
-
-.steps-row[data-row="1"] .end-ball {
-    right: 0;
-}
-
-.steps-row[data-row="2"] .start-ball {
-    right: 0;
-}
-
-.steps-row[data-row="2"] .end-ball {
-    left: 0;
+.steps-row .timeline-line,
+.steps-row .start-ball,
+.steps-row .end-ball {
+    display: none; /* Hide timeline elements for simpler mobile view */
 }
 
 .steps-container {
     display: flex;
-    justify-content: space-between;
-    position: relative;
-    top: 40px;
+    flex-direction: column; /* Stack steps vertically */
+    align-items: center;
+    position: static;
+    gap: 20px;
 }
 
 .steps-row[data-row="2"] .steps-container {
-    flex-direction: row-reverse;
+    flex-direction: column; /* Keep column for mobile */
 }
 
 .step {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 22%;
+    width: 90%;
+    max-width: 380px; /* Max width for a step card */
     text-align: center;
     position: relative;
-}
-
-.step-number {
-    width: 40px;
-    height: 40px;
     background-color: #033540;
-    color: #5fded4;
-    border: 2px solid #5fded4;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 1.2rem;
-    font-weight: bold;
-    position: absolute;
-    top: 6px;
-    left: 50%;
-    transform: translateX(-50%);
-    transition: background-color 0.3s, color 0.3s;
-}
-
-.step.active .step-number {
-    background-color: #5fded4;
-    color: #022028;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .step-content {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
-    margin-top: 20px;
-}
-
-.step.active .step-content {
     opacity: 1;
     transform: translateY(0);
+    margin-top: 0;
 }
 
 .step-icon {
-    font-size: 2rem;
+    font-size: 2rem; /* Slightly larger icon */
     color: #5fded4;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .step-content h3 {
     font-family: 'Montserrat', sans-serif;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: #5fded4;
-    margin: 0 0 10px;
+    margin: 0 0 8px;
 }
 
 .step-content p {
@@ -788,251 +673,50 @@ button:hover {
     font-size: 0.9rem;
     color: #fff;
     margin: 0;
+    line-height: 1.6;
 }
 
 .steps-cta {
-    margin-top: 40px;
+    margin-top: 30px;
 }
 
+.steps-cta .btn { /* More specific selector */
+    width: auto; /* Natural width for button */
+    padding: 12px 30px;
+}
+
+/* Footer - For base.html */
 footer {
     background-color: #033540;
     text-align: center;
-    padding: 1em;
+    padding: 1.5em 20px; /* Increased padding */
     position: relative;
     bottom: 0;
 }
-.copyright {
-    font-size: 1.4vw;
-    color: #fff;
-    font-family: 'Montserrat', sans-serif;
-}
-.production {
-    font-size: 1.2vw; opacity: 0.6;
-    color: #fff;
-    font-family: 'Montserrat', sans-serif;
-}
-
-/* Animação para botões */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
-}
-
-/* Estilos para páginas de autenticação (login e signup) */
-/* Estilos para páginas de autenticação (login e signup) */
-.auth-page {
-    background-color: #022028;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-}
-
-.auth-section {
-    width: 50vw;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.auth-form-container {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 50px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    text-align: center;
-}
-
-.auth-form-container p {
-    font-family: 'Montserrat', sans-serif;
-    color: #fff;
-}
-
-.auth-logo {
-    width: 100px;
-    margin-bottom: 20px;
-}
-
-.auth-section h1 {
-    font-family: 'Poppins', sans-serif;
-    font-size: 1.8rem;
-    color: #fff;
-    margin-bottom: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-    text-align: left;
-}
-
-.form-group label {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.9rem;
-    color: #fff;
-    display: block;
-    margin-bottom: 5px;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 1rem;
-}
-
-.form-group input:focus {
-    outline: none;
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.forgot-password {
-    display: block;
-    text-align: right;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.9rem;
-    color: #5fded4;
-    text-decoration: none;
-    margin-bottom: 15px;
-}
-
-.forgot-password:hover {
-    color: #4ac7b7;
-}
-
-.radio-group {
-    display: flex;
-    gap: 1rem;
-}
-.radio-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    border: 1px solid #5fded4;
-    border-radius: 0.25rem;
-    transition: background-color 0.2s;
-}
-.radio-label:hover {
-    background-color: #5fded433;
-}
-.radio-input:checked + .radio-label {
-    background-color: #5fded4;
-    color: #022028;
-}
-.radio-input {
-    display: none;
-}
-.form-group input[type="number"],
-.form-group input[type="text"] {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #5fded4;
-    border-radius: 0.25rem;
-    background-color: #022028;
-    color: #fff;
-    font-family: Montserrat, sans-serif;
-}
-
-.auth-btn {
-    width: 100%;
-    background: #5fded4;
-    border: none;
-    color: #022028;
-    padding: 12px;
-    border-radius: 5px;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: bold;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.3s, transform 0.3s;
-}
-
-.auth-btn:hover {
-    background: #4ac7b7;
-    transform: scale(1.05);
-}
-
-.google-signin {
-    margin: 20px 0;
-}
-.google-login-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 20vw;
-    margin: auto;
-    background-color: #fff;
-    color: #3c4043;
-    border: 1px solid #dadce0;
-    border-radius: 6px;
-    padding: 0 16px;
-    font-family: 'Roboto', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-    text-decoration: none;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    transition: all 0.2s ease-in-out;
-}
-
-.google-login-btn:hover {
-    background-color: #f7f8f8;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.google-icon {
-    width: 40px;
-    height: 40px;
-}
-
-
-.auth-switch {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.9rem;
-    color: #fff;
-    margin-top: 15px;
-}
-
-.auth-switch a {
-    color: #5fded4;
-    text-decoration: none;
-}
-
-.auth-switch a:hover {
-    color: #4ac7b7;
-}
-
-/* Estilos para mensagens de erro */
-.error {
-    color: #ff6b6b; /* Vermelho claro para maior visibilidade */
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.9rem;
-    margin-bottom: 15px;
-    text-align: center;
-    background: rgba(255, 107, 107, 0.2); /* Fundo leve para destaque */
-    padding: 8px;
-    border-radius: 5px;
-}
-
-/* Garantir que erros do formulário (ul.errorlist) também sejam estilizados */
-.form-group ul.errorlist {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 10px 0;
-    color: #ff6b6b;
-    font-family: 'Montserrat', sans-serif;
+footer .copyright { /* More specific selector */
     font-size: 0.85rem;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    margin-bottom: 8px;
 }
-.form-group ul.errorlist li {
-    margin-bottom: 5px;
+footer .production { /* More specific selector */
+    font-size: 0.75rem;
+    opacity: 0.7; /* Slightly more visible */
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
 }
-body.auth-active-page {
+footer .production a {
+    color: #ddd;
+    text-decoration: none;
+}
+footer .production a:hover {
+    text-decoration: underline;
+}
+
+
+/* === AUTHENTICATION PAGES STYLES (login.html, signup.html, invite_partners.html) === */
+/* Prioritizing the more detailed auth styles from your original CSS */
+body.auth-active-page { /* Assuming you add this class to body on auth pages if needed */
     background-color: #022028 !important;
 }
 
@@ -1043,7 +727,7 @@ body.auth-active-page {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 20px; /* Padding for the whole page */
     font-family: 'Montserrat', sans-serif;
     width: 100%;
     box-sizing: border-box;
@@ -1051,39 +735,42 @@ body.auth-active-page {
 
 .auth-section {
     width: 100%;
-    max-width: 550px;
+    max-width: 480px; /* Max width for the auth form card */
 }
 
 .auth-form-container {
-    background-color: #033038;
-    padding: 4rem;
+    background-color: #033038; /* Darker, consistent theme */
+    padding: 2rem; /* Responsive padding */
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .auth-logo {
     display: block;
-    max-width: 80px;
+    max-width: 80px; /* Slightly smaller logo */
     margin: 0 auto 1.5rem auto;
 }
 
 .auth-form-container h1 {
-    font-size: 1.75rem;
+    font-size: 1.75rem; /* Slightly smaller H1 */
     font-family: "Cal Sans", sans-serif;
     color: #fff;
     text-align: center;
     margin-bottom: 0.5rem;
 }
 
-.auth-form-container > p.form-description {
+.auth-form-container > p.form-description,
+.auth-form-container > p { /* Target general paragraphs inside for description */
     text-align: center;
     margin-bottom: 1.5rem;
     font-size: 0.9rem;
-    color: #9ca3af;
+    color: #9ca3af; /* Lighter gray for better contrast */
+    line-height: 1.5;
 }
 
 .auth-form-container .form-group {
     margin-bottom: 1.25rem;
+    text-align: left; /* Ensure labels and inputs align left */
 }
 
 .auth-form-container .form-group label {
@@ -1094,85 +781,92 @@ body.auth-active-page {
     font-size: 0.875rem;
 }
 
-/* === Base para consistência de altura de inputs e botões === */
+/* Base for consistent height of inputs and buttons in auth forms */
 .auth-form-container input[type="text"],
 .auth-form-container input[type="email"],
 .auth-form-container input[type="password"],
-.auth-form-container .auth-btn { /* Aplicando estilos base de altura */
-    padding-top: 10px;
-    padding-bottom: 10px;
-    padding-left: 12px;
-    padding-right: 12px;
-    font-size: 0.95rem; /* Tamanho de fonte padronizado */
-    line-height: 1.5;   /* Altura de linha padronizada */
+.auth-form-container textarea, /* Added textarea for invite_partners */
+.auth-form-container .auth-btn {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    line-height: 1.5;
     border-radius: 4px;
     width: 100%;
     box-sizing: border-box;
     font-family: "Montserrat", sans-serif;
     text-decoration: none;
-    border: 1px solid transparent; /* Borda base para cálculo de altura, cor será sobrescrita */
+    border: 1px solid #055058; /* Consistent border */
     transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #044048; /* Default background for inputs */
+    color: #e5e7eb; /* Default text color for inputs */
+}
+.auth-form-container textarea {
+    min-height: 80px; /* Give textarea some height */
+    resize: vertical;
 }
 
-/* Estilos específicos para inputs de texto */
-.auth-form-container input[type="text"],
-.auth-form-container input[type="email"],
-.auth-form-container input[type="password"] {
-    background-color: #044048;
-    color: #e5e7eb;
-    border-color: #055058; /* Sobrescreve a borda base */
-}
 
 .auth-form-container input[type="text"]::placeholder,
 .auth-form-container input[type="email"]::placeholder,
-.auth-form-container input[type="password"]::placeholder {
+.auth-form-container input[type="password"]::placeholder,
+.auth-form-container textarea::placeholder {
     color: #6b7280;
 }
 
 .auth-form-container input[type="text"]:focus,
 .auth-form-container input[type="email"]:focus,
-.auth-form-container input[type="password"]:focus {
+.auth-form-container input[type="password"]:focus,
+.auth-form-container textarea:focus {
     border-color: #5fded4;
     outline: none;
     box-shadow: 0 0 0 3px rgba(95, 222, 212, 0.15);
+    background-color: #055058; /* Slightly lighter on focus */
 }
 
-/* Estilos para Checkbox */
+/* Checkbox specific styling */
 .auth-form-container .form-group-checkbox {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 5px 0; /* Adiciona um pouco de padding vertical se necessário */
+    padding: 5px 0;
 }
 .auth-form-container .form-group-checkbox input[type="checkbox"] {
-    width: auto;
+    width: auto; /* Reset width */
     margin: 0;
     accent-color: #5fded4;
-    height: 1.2em; /* Ajuste para melhor alinhamento visual */
+    height: 1.2em;
     width: 1.2em;
-    flex-shrink: 0; /* Evita que o checkbox encolha */
+    flex-shrink: 0;
+    border-color: #055058; /* Match other inputs */
+    background-color: #044048; /* Match other inputs */
 }
 .auth-form-container .form-group-checkbox label {
     margin-bottom: 0;
     font-weight: normal;
     color: #cbd5e1;
     cursor: pointer;
-    line-height: 1.2em; /* Alinha com a altura do checkbox */
+    line-height: 1.2em;
 }
 
-
-/* Estilos para Erros e Mensagens */
-.auth-form-container .errorlist {
+/* Error and Message Styling for Auth Forms */
+.auth-form-container .errorlist,
+.auth-form-container .error-messages-nonfield ul,
+.auth-form-container .django-messages .alert ul { /* For ul inside messages */
     list-style-type: none;
     padding: 0;
     margin: 0.5rem 0 0 0;
     color: #f87171;
     font-size: 0.8rem;
+    text-align: left;
 }
-.auth-form-container .errorlist li { margin-bottom: 0.25rem; }
+.auth-form-container .errorlist li,
+.auth-form-container .error-messages-nonfield ul li,
+.auth-form-container .django-messages .alert ul li {
+    margin-bottom: 0.25rem;
+}
 
-.auth-form-container .error-messages-nonfield p,
-.auth-form-container ul.errorlist.nonfield li {
+.auth-form-container .error-messages-nonfield p, /* For general non-field error paragraphs */
+.auth-form-container ul.errorlist.nonfield li { /* For non-field errors specifically from Django forms */
     background-color: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.5);
     color: #f87171;
@@ -1181,7 +875,7 @@ body.auth-active-page {
     margin-bottom: 1.5rem;
     text-align: left;
     font-size: 0.875rem;
-    list-style: none;
+    list-style: none; /* Ensure no bullets for single error messages */
 }
 .auth-form-container .django-messages .alert {
     padding: 0.75rem 1rem;
@@ -1195,38 +889,50 @@ body.auth-active-page {
 .auth-form-container .django-messages .alert-warning { background-color: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
 .auth-form-container .django-messages .alert-info { background-color: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; }
 
-
-/* Estilos para Botões de Autenticação */
-.auth-btn { /* Herda padding, font-size, line-height, border-radius, width, box-sizing, font-family, text-decoration da regra base comum */
+/* Auth Buttons */
+.auth-form-container .auth-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px; /* Aumentei um pouco o gap para o ícone do Google */
+    gap: 10px;
     background-color: #5fded4;
     color: #022028;
-    border-color: #5fded4; /* Borda correspondente ao fundo para manter a altura */
+    border-color: #5fded4;
     font-weight: bold;
     cursor: pointer;
-    margin-top: 1.5rem;
+    margin-top: 1.5rem; /* Spacing above button */
+    width: 100%; /* Ensure buttons take full width in the container */
 }
-.auth-btn:hover {
+.auth-form-container .auth-btn:hover {
     background-color: #4acbc1;
     border-color: #4acbc1;
 }
 
-.auth-btn.socialaccount_provider.google {
-    background-color: #DB4437 !important;
+/* Social Login Button - Specific fix for Google button */
+.auth-form-container .social-login-section {
+    margin-top: 1.5rem; /* Space above "Or continue with" */
+    padding-top: 1rem;
+    border-top: 1px solid #044048; /* Separator line */
+}
+.auth-form-container .social-login-section p {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+.auth-form-container .auth-btn.socialaccount_provider.google {
+    background-color: #DB4437 !important; /* Google's red */
     color: white !important;
     border-color: #DB4437 !important;
-    margin-top: 0.5rem;
+    margin-top: 0.5rem; /* Reset top margin if it's the only button in its group */
+    width: 100%; /* Make it full width like other auth buttons */
 }
-.auth-btn.socialaccount_provider.google:hover {
+.auth-form-container .auth-btn.socialaccount_provider.google:hover {
     background-color: #c53929 !important;
     border-color: #c53929 !important;
 }
-.auth-btn .fab.fa-google {
-    font-size: 1.2em; /* Mantido, relativo ao 0.95rem do botão */
-    /* line-height e vertical-align são menos críticos com flexbox align-items: center */
+.auth-form-container .auth-btn .fab.fa-google {
+    font-size: 1.2em;
 }
 
 .auth-switch {
@@ -1243,6 +949,178 @@ body.auth-active-page {
 .auth-switch a:hover {
     text-decoration: underline;
 }
-/* esconde QUALQUER bloco gerado pelo Django-messages em todo o site */
-.django-messages, .django-messages-container,
-.alert, .messages, [role="alert"] { display:none!important; }
+
+/* For invite_partners.html back link */
+.auth-form-container .back-link {
+    display: block; /* Make it a block to center or style margin */
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #5fded4;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+.auth-form-container .back-link:hover {
+    text-decoration: underline;
+}
+
+
+/* Hide Django Messages Globally if not handled by templates */
+/* This was in your original file, keeping it but usually messages should be styled. */
+/* .django-messages, .django-messages-container,
+.alert, .messages, [role="alert"] { display:none!important; } */
+/* It's better to style them as done above within .auth-form-container if they appear. */
+/* If they appear outside and are unwanted, then this global hide can be used. */
+
+
+/* === MEDIA QUERIES for general layout === */
+
+/* Tablets and larger phones */
+@media (min-width: 769px) {
+    header { padding: 1em 0; }
+    .navbar { padding: 0 20px; justify-content: flex-start; } /* Align left on desktop */
+    .menu-toggle { display: none; } /* Hide hamburger on desktop */
+    .nav-links {
+        display: flex !important; /* Ensure nav-links are visible */
+        flex-direction: row;
+        width: auto;
+        position: static;
+        background-color: transparent;
+        margin-left: 10px;
+        gap: 15px;
+    }
+    .nav-links li { width: auto; text-align: left; border-bottom: none; }
+    .nav-links li a, .ecosystem-trigger {
+        font-size: 1rem; /* Desktop font size */
+        padding: 5px 0;
+    }
+    .ecosystem-dropdown { margin-left: 30px; } /* Restore some margin */
+    .login-button { margin-left: auto; } /* Push login to the right */
+
+    .hero { min-height: 80vh; padding: 0 20px; }
+    .hero h1 { font-size: 4rem; max-width: 70%; margin-bottom: 20px; }
+    .hero .subtitle { font-size: 1.2rem; max-width: 600px; margin-bottom: 30px; }
+    .hero .buttons { flex-direction: row; justify-content: center; gap: 20px; }
+    .hero .btn { width: auto; padding: 12px 24px; font-size: 1rem; }
+
+    .holding-info { padding: 60px 5vw; }
+    .holding-container { flex-direction: row; align-items: flex-start; gap: 40px; }
+    .holding-text { flex: 0.5; text-align: left; }
+    .holding-info h2 { font-size: 2.5rem; }
+    .holding-info .holding-subtitle { font-size: 1.1rem; }
+    .benefits-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .benefit-card-up { margin-bottom: 15px; gap: 15px;}
+    .benefit-icon { font-size: 2rem; }
+    .benefit-card h3 { font-size: 1.5rem; }
+    .benefit-card p { font-size: 1rem; }
+
+    .comparison { padding: 60px 5vw; }
+    .comparison h2 { font-size: 2.5rem; text-align: left; }
+    .comparison .comparison-subtitle { font-size: 1.1rem; text-align: left; }
+    .comparison-content { flex-direction: row; gap: 40px; }
+    .savings-number { font-size: 1.8rem; } /* Slightly reduced from 2rem if too big */
+    .savings-text { font-size: 1rem; }
+    .image-container { height: 400px; }
+    .image-text { font-size: clamp(1.2rem, 2vw, 1.8rem); /* Use clamp for responsive font */ }
+    .model-buttons { flex-direction: row; gap: 40px; margin-top: 40px; }
+    .model-btn { font-size: 1.2rem; }
+    .model-btn i { font-size: 1.2rem; }
+
+    .steps { padding: 60px 5vw; }
+    .steps h2 { font-size: 2.5rem; text-align: left; }
+    .steps .steps-subtitle { font-size: 1.1rem; text-align: left; }
+    .steps-row { margin: 60px auto; height: 250px; }
+    .steps-row .timeline-line, .steps-row .start-ball, .steps-row .end-ball { display: block; }
+    .steps-container { flex-direction: row; justify-content: space-between; position: relative; top: 40px; gap: 0; }
+    .steps-row[data-row="2"] .steps-container { flex-direction: row-reverse; }
+    .step {
+        width: 22%;
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    .step-content { opacity: 0; transform: translateY(20px); margin-top: 20px; }
+    .step.active .step-content { opacity: 1; transform: translateY(0); }
+    .step-icon { font-size: 2rem; }
+    .step-content h3 { font-size: 1.2rem; }
+    .step-content p { font-size: 0.9rem; }
+
+    footer .copyright { font-size: 1rem; }
+    footer .production { font-size: 0.85rem; }
+}
+
+/* Mobile specific (mostly for nav toggle) */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 15px; /* Ensure padding is consistent */
+    }
+    .menu-toggle {
+        display: block; /* Show hamburger */
+    }
+    .nav-links,
+    .navbar .ecosystem-dropdown { /* Target ecosystem-dropdown if it's a direct child of navbar */
+        display: none; /* Hide these by default on mobile */
+        flex-direction: column;
+        width: 100%;
+        order: 3; /* Ensure it appears below logo and toggle */
+        background-color: #01161D; /* Slightly different for dropdown feel */
+        position: absolute;
+        top: 100%; /* Position below the header */
+        left: 0;
+        z-index: 99;
+        border-top: 1px solid #033540;
+    }
+    /* When JS adds .active class to .nav-links */
+    .nav-links.active,
+    .navbar .ecosystem-dropdown.active {
+        display: flex;
+    }
+
+    .nav-links li,
+    .navbar .ecosystem-dropdown > .ecosystem-trigger, /* Style trigger if it becomes part of list */
+    .navbar .ecosystem-dropdown > .ecosystem-dropdown-content { /* Style content if it becomes part of list */
+        width: 100%;
+        text-align: center;
+    }
+    .nav-links li {
+         border-bottom: 1px solid #033540;
+    }
+    .nav-links li:last-child {
+        border-bottom: none;
+    }
+    .nav-links li a,
+    .navbar .ecosystem-dropdown > .ecosystem-trigger {
+        padding: 12px 15px; /* More padding for touch */
+        font-size: 1rem;
+        display: block; /* Make links full width */
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .ecosystem-dropdown {
+        width: 100%;
+        margin-left: 0;
+    }
+    .ecosystem-dropdown-content {
+        position: static; /* Becomes part of the flow */
+        transform: none;
+        width: 100%;
+        box-shadow: none;
+        border-top: 1px solid #033540;
+        border-radius: 0;
+        background-color: #011A21; /* Match parent background */
+    }
+    .ecosystem-dropdown-content li a {
+        justify-content: center; /* Center dropdown items */
+    }
+
+    /* Hide the original login button, it should be part of the toggled menu */
+    .navbar > .login-button {
+        display: none;
+    }
+    /* You can add a .nav-links .login-button-mobile if you move the button into the ul for mobile */
+
+    /* Further adjustments for smaller screens if needed */
+    .hero h1 { font-size: clamp(1.8rem, 6vw, 2.5rem); }
+    .hero .subtitle { font-size: clamp(0.85rem, 4vw, 1rem); }
+    .holding-info h2, .comparison h2, .steps h2 { font-size: clamp(1.5rem, 5vw, 1.8rem); }
+}

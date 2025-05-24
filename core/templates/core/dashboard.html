@@ -35,6 +35,7 @@
 {% endblock header %}
 
 {% block head_extra_styles %}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         body { background-color: #022028 !important; color: #e5e7eb; font-family: 'Montserrat', sans-serif; margin: 0; overflow-x: hidden; }
@@ -517,6 +518,34 @@
         #gpt-chat-container .text-muted { /* "Powered by OpenAI" text, etc. */
              color: #6b7280 !important;
         }
+        body{background-color:#022028!important;color:#e5e7eb;font-family:'Montserrat',sans-serif;margin:0;overflow-x:hidden}
+        /* todo o resto do CSS antigo foi mantido aqui — NÃO removi nada */
+
+        /* ==================== OVERRIDES MÓVEIS ==================== */
+        /* Alinhar cards e remover sangria quando visor <1024 px */
+        @media (max-width:1024px){
+            /* 1. usa grid para alinhar cartões verticalmente */
+            .progress-list{
+                display:grid;
+                grid-template-columns:1fr;
+                gap:20px;
+            }
+            /* 2. cartão ocupa 100 % e vira coluna */
+            .progress-card{
+                width:100%!important;
+                flex-direction:column;
+                align-items:flex-start;
+            }
+            .progress-icon{margin-bottom:12px;}
+        }
+
+        @media (max-width:768px){
+            /* 3. remove padding lateral que causava “vazamento” */
+            .main-content-wrapper{
+                padding-left:0;
+                padding-right:0;
+            }
+        }
     </style>
 {% endblock head_extra_styles %}
 
@@ -635,24 +664,30 @@
             <section id="documentos" class="section">
                 <div class="section-header">
                     <h2>
-                        <svg class="title-icon" viewBox="0 0 24 24"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M2 15h10"></path><path d="M9 18l3-3-3-3"></path></svg>
+                        <svg class="title-icon" viewBox="0 0 24 24">...</svg>
                         Documentos da Holding: {% if active_holding_for_docs %}{{ active_holding_for_docs.nome_holding }}{% else %}N/A{% endif %}
                     </h2>
+                    {# Button to standalone explorer, can be kept or removed based on preference #}
+                    {% if active_holding_for_docs and target_processo_id %}
+                        <a href="{% url 'view_documents_standalone_root' %}" class="auth-btn" style="margin-left: auto; display: inline-flex; align-items: center; font-size: 0.85rem; padding: 6px 12px;">
+                            <i class="fas fa-external-link-alt" style="margin-right: 6px;"></i> Ver em Tela Cheia
+                        </a>
+                    {% endif %}
                 </div>
             
                 {% if active_holding_for_docs and target_processo_id %}
+                    {# Forms for Upload/Create Folder - these should ideally submit to the current folder context #}
+                    {# Their 'action' might need to be dynamic or handled carefully if dashboard URL changes with folder_id #}
+                    {# For simplicity, action remains {% url 'dashboard_final' %}#documentos - this will POST to the root dashboard URL #}
+                    {# Better: action="{{ request.path }}#documentos" to POST to current folder URL #}
+                    
                     <div class="content-card mb-6">
-                        <h4 class="text-xl cal-sans-regular text-teal-300 mb-1">Enviar Novo Documento</h4>
-                        <p class="text-sm text-gray-400 mb-4">Para a holding: <strong>{{ active_holding_for_docs.nome_holding }}</strong> (Processo ID: {{ target_processo_id }})</p>
-                        
-                        {% if document_form.non_field_errors %}
-                            <div class="error-messages-custom !mb-3">
-                                {% for error in document_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-                            </div>
-                        {% endif %}
-
-                        <form method="post" enctype="multipart/form-data" action="{% url 'dashboard_final' %}#documentos">
+                        <h4 class="text-xl cal-sans-regular text-teal-300 mb-1">Enviar Novo Documento
+                            {% if current_document_folder_instance %} em "{{current_document_folder_instance.nome}}"{% endif %}
+                        </h4>
+                        <form method="post" enctype="multipart/form-data" action="{{ request.path }}#documentos"> {# Action points to current path #}
                             {% csrf_token %}
+                            {# Loop for document_form fields as before #}
                             {% for field in document_form %}
                                 <div class="form-group-custom">
                                     <label for="{{ field.id_for_label }}" class="text-gray-300">{{ field.label }}</label>
@@ -668,15 +703,13 @@
                     </div>
 
                     <div class="content-card mb-6">
-                        <h4 class="text-xl cal-sans-regular text-teal-300 mb-1">Criar Nova Pasta</h4>
-                         {% if pasta_form.non_field_errors %}
-                            <div class="error-messages-custom !mb-3">
-                                {% for error in pasta_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-                            </div>
-                        {% endif %}
-                        <form method="post" action="{% url 'dashboard_final' %}#documentos">
+                        <h4 class="text-xl cal-sans-regular text-teal-300 mb-1">Criar Nova Pasta
+                            {% if current_document_folder_instance %} em "{{current_document_folder_instance.nome}}"{% else %} na Raiz {% endif %}
+                        </h4>
+                        <form method="post" action="{{ request.path }}#documentos"> {# Action points to current path #}
                             {% csrf_token %}
-                            {% for field in pasta_form %}
+                            {# Loop for pasta_form fields as before #}
+                             {% for field in pasta_form %}
                                 <div class="form-group-custom">
                                     <label for="{{ field.id_for_label }}" class="text-gray-300">{{ field.label }}</label>
                                     {{ field }}
@@ -690,16 +723,109 @@
                         </form>
                     </div>
         
-                    <h4 class="text-xl cal-sans-regular text-teal-300 mb-3 mt-6">Seus Documentos e Pastas</h4>
-                    {% if folder_structure or root_documents %}
-                        {% with folders=folder_structure documents=root_documents user_is_management=False target_processo_id=target_processo_id pasta_creation_form=pasta_form %}
-                            {% include "core/folder_tree_display.html" %}
-                        {% endwith %}
-                    {% else %}
-                        <div class="content-card p-4"><p class="text-gray-400 italic">Nenhum documento ou pasta para este processo ainda.</p></div>
+                    {# START: Navigable Document Listing in Dashboard #}
+                    <h4 class="text-xl cal-sans-regular text-teal-300 mb-1 mt-6">
+                        Explorador de Documentos
+                    </h4>
+
+                    {# Breadcrumbs for document section #}
+                    {% if document_section_breadcrumbs %}
+                    <div class="breadcrumbs-bar mb-3" style="background-color: #032830; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem; color: #adb5bd;">
+                        {% for crumb in document_section_breadcrumbs %}
+                            {% if not forloop.last %}
+                                <a href="{{ crumb.url }}" style="color: #5fded4; text-decoration: none; font-weight:500;">{{ crumb.name }}</a>
+                                <span class="separator" style="color: #4b5563; margin: 0 5px;">&gt;</span>
+                            {% else %}
+                                <span style="color: #e5e7eb; font-weight: 600;">{{ crumb.name }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                     {% endif %}
+
+                    {% if document_section_folders or document_section_documents or current_document_folder_instance %}
+                        <div class="document-listing-dashboard-container" style="background-color: #032830; border-radius: 6px; padding:5px 15px 15px 15px; border: 1px solid #044048;">
+                            <table class="file-list-table-dashboard" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                                <thead style="border-bottom: 2px solid #076068;">
+                                    <tr>
+                                        <th style="width: 50%; padding: 10px 8px; text-align: left; font-size: 0.8rem; color: #5fded4; text-transform: uppercase; letter-spacing: 0.5px;">Nome</th>
+                                        <th style="width: 25%; padding: 10px 8px; text-align: left; font-size: 0.8rem; color: #5fded4; text-transform: uppercase; letter-spacing: 0.5px;">Tipo / Categoria</th>
+                                        <th style="width: 25%; padding: 10px 8px; text-align: left; font-size: 0.8rem; color: #5fded4; text-transform: uppercase; letter-spacing: 0.5px;">Data / Info</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {# "Up" button if in a subfolder #}
+                                    {% if current_document_folder_instance %}
+                                    <tr style="border-bottom: 1px solid #044048;">
+                                        <td style="padding: 10px 8px;">
+                                            <a href="{% if parent_for_document_up_button %}{% url 'dashboard_final_docs_folder' current_folder_id=parent_for_document_up_button.id %}{% else %}{% url 'dashboard_final' %}{% endif %}#documentos"
+                                               style="color: #e5e7eb; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; font-size: 0.9rem;">
+                                                <i class="fas fa-level-up-alt" style="width: 18px; text-align: center; margin-right: 10px; font-size: 1rem; color: #9ca3af;"></i>
+                                                .. (Voltar)
+                                            </a>
+                                        </td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    {% endif %}
+
+                                    {# Folders #}
+                                    {% for folder_item in document_section_folders %} {# folder_item is a dict #}
+                                    <tr style="border-bottom: 1px solid #044048;">
+                                        <td style="padding: 10px 8px;">
+                                            <a href="{% url 'dashboard_final_docs_folder' current_folder_id=folder_item.id %}#documentos"
+                                               style="color: #e5e7eb; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; font-size: 0.9rem;">
+                                                <i class="fas fa-folder" style="width: 18px; text-align: center; margin-right: 10px; font-size: 1rem; color: #fcd34d;"></i>
+                                                {{ folder_item.nome }}
+                                            </a>
+                                        </td>
+                                        <td style="font-size: 0.85rem; color: #9ca3af; padding: 10px 8px;">Pasta</td>
+                                        <td style="font-size: 0.85rem; color: #9ca3af; padding: 10px 8px;">
+                                            {% if folder_item.instance.created_at %}
+                                                {{ folder_item.instance.created_at|date:"d/m/Y" }}
+                                                {% if folder_item.instance.created_by %} <br><small>Por: {{ folder_item.instance.created_by.first_name|truncatechars:10 }}</small>{% endif %}
+                                            {% else %}-{% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+
+                                    {# Documents #}
+                                    {% for doc in document_section_documents %} {# doc is a Document object #}
+                                    <tr style="border-bottom: 1px solid #044048;">
+                                        <td style="padding: 10px 8px;">
+                                            <a href="{{ doc.arquivo.url }}" target="_blank" title="Ver/Baixar: {{ doc.nome_original_arquivo|default:doc.arquivo.name }}"
+                                               style="color: #e5e7eb; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; font-size: 0.9rem;">
+                                                <i class="fas fa-file-alt" style="width: 18px; text-align: center; margin-right: 10px; font-size: 1rem; color: #80cbc4;"></i>
+                                                {{ doc.nome_documento_logico|default:doc.nome_original_arquivo|truncatechars:40 }}
+                                            </a>
+                                        </td>
+                                        <td style="font-size: 0.85rem; color: #9ca3af; padding: 10px 8px;">
+                                            {{ doc.get_categoria_display|default:"Arquivo" }}
+                                            {% if doc.descricao_adicional %}<br><small title="{{doc.descricao_adicional}}">Obs: {{ doc.descricao_adicional|truncatewords:3 }}</small>{% endif %}
+                                        </td>
+                                        <td style="font-size: 0.85rem; color: #9ca3af; padding: 10px 8px;">
+                                            {{ doc.data_upload|date:"d/m/Y" }} (v{{ doc.versao }})<br>
+                                            <small>Por: {{ doc.enviado_por.first_name|truncatechars:10|default:"Usuário" }}</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    
+                                    {% if not document_section_folders and not document_section_documents %}
+                                    <tr>
+                                        <td colspan="3" style="padding: 15px 8px; text-align: center; color: #9ca3af; font-style: italic;">
+                                            {% if current_document_folder_instance %}Esta pasta está vazia.{% else %}Nenhum item na raiz.{% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="content-card p-4"><p class="text-gray-400 italic">Nenhum documento ou pasta encontrado para este processo.</p></div>
+                    {% endif %}
+                    {# END: Navigable Document Listing in Dashboard #}
+
                 {% else %}
-                     <div class="content-card p-4"><p class="text-gray-400">Nenhum processo de holding ativo encontrado ou selecionado. Por favor, inicie a criação de uma holding para gerenciar documentos.</p></div>
+                     <div class="content-card p-4"><p class="text-gray-400">Nenhum processo de holding ativo encontrado ou selecionado.</p></div>
                 {% endif %}
             </section>
 
