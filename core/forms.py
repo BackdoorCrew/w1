@@ -363,7 +363,7 @@ class DocumentUploadForm(forms.ModelForm):
             'descricao_adicional': 'Descrição/Observações da Versão (Opcional)',
         }
         help_texts = {
-            'nome_documento_logico': 'Use um nome claro que identifique o documento. Todas as versões deste documento serão agrupadas sob este nome.',
+            'nome_documento_logico': 'Use um nome claro que identifique o documento.',
         }
 
     def __init__(self, *args, **kwargs):

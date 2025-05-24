@@ -255,8 +255,8 @@ class Documento(models.Model):
     nome_documento_logico = models.CharField(
         max_length=255,
         verbose_name='Nome/Tipo do Documento (Ex: Contrato Social, RG Sócio)',
-        help_text="Nome descritivo para agrupar versões. Ex: 'Contrato Social', 'RG do Sócio X'.",
-        default='[Nome Lógico Não Especificado]'
+        help_text="Nome descritivo. Ex: 'Contrato Social', 'RG do Sócio X'.",
+        default='Título do documento'
     )
     arquivo = models.FileField(upload_to='documentos_holdings/%Y/%m/%d/', verbose_name='Arquivo')
     categoria = models.CharField(max_length=30, choices=CATEGORIA_CHOICES, verbose_name='Categoria') # Max length adjusted
