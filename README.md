@@ -1,4 +1,6 @@
-https://w1-production-f1be.up.railway.app/
+(https://w1-production-f1be.up.railway.app/)
+tinha feito deploy, mas acabou os créditos
+
 FEITO POR:
 Guilherme Beccato Stern
 Diogo Musso Coutinho
