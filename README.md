@@ -92,6 +92,6 @@ Este projeto é uma plataforma web desenvolvida para facilitar a criação, gest
     * O painel administrativo do Django estará em: `http://localhost:8000/admin/`
         * As credenciais do superusuário padrão são definidas pelas variáveis `DJANGO_SUPERUSER_EMAIL` e `DJANGO_SUPERUSER_PASSWORD` no seu arquivo `.env` (ou pelos defaults em `create_dev_admin.py` caso as variáveis não sejam definidas).
 
-https://w1-production-f1be.up.railway.app/
+https://w1-production-f1be.up.railway.app/ (parou de funcionar pois paramos de pagar)
 Para acessar a página de editar holding, clica em cima do nome da holding, tendo feito login com o superadmin
 
